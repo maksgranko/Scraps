@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AssemblyVersion>1.2026.54.2</AssemblyVersion>
-    <FileVersion>1.2026.54.2</FileVersion>
+    <AssemblyVersion>1.2026.54.5</AssemblyVersion>
+    <FileVersion>1.2026.54.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

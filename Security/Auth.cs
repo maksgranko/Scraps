@@ -1,7 +1,7 @@
 ﻿using Scraps.Configs;
 using Scraps.Databases;
 using System;
-using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Scraps.Security
 {
@@ -10,6 +10,21 @@ namespace Scraps.Security
     /// </summary>
     public static class Auth
     {
+        /// <summary>
+        /// Доступные простые алгоритмы хэширования.
+        /// </summary>
+        /// <summary>
+        /// Доступные алгоритмы хэширования.
+        /// </summary>
+        public enum HashAlgorithmKind
+        {
+            /// <summary>SHA-256.</summary>
+            Sha256,
+            /// <summary>SHA-1.</summary>
+            Sha1,
+            /// <summary>MD5.</summary>
+            Md5
+        }
         /// <summary>
         /// Получить отображаемое имя роли пользователя.
         /// </summary>
@@ -44,14 +59,44 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Проверить пароль на простые требования (длина, заглавная буква, спецсимвол).
+        /// Проверить пароль на требования (длина, заглавная буква, спецсимвол).
         /// </summary>
         public static bool IsPasswordValid(string password)
         {
-            if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+            return IsPasswordValid(password, minLength: 8, requireUpper: true, requireSpecial: true, specialChars: "!@#$%^&*");
+        }
+
+        /// <summary>
+        /// Проверить пароль на требования (длина, заглавная буква, спецсимвол).
+        /// </summary>
+        public static bool IsPasswordValid(
+            string password,
+            int minLength,
+            bool requireUpper,
+            bool requireSpecial,
+            string specialChars)
+        {
+            if (string.IsNullOrWhiteSpace(password))
                 return false;
 
-            return Regex.IsMatch(password, @"^(?=.*[A-Z])(?=.*[!@#$%^&*]).+$");
+            if (minLength < 1) minLength = 1;
+            if (password.Length < minLength)
+                return false;
+
+            if (requireUpper && !password.Any(char.IsUpper))
+                return false;
+
+            if (requireSpecial)
+            {
+                if (string.IsNullOrEmpty(specialChars))
+                    return false;
+
+                bool hasSpecial = password.Any(c => specialChars.IndexOf(c) >= 0);
+                if (!hasSpecial)
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -74,14 +119,36 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Простой SHA256-хэш пароля.
+        /// Простой SHA256-хэш строки.
         /// </summary>
         public static string SimpleHash(string input)
         {
-            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            return SimpleHash(input, HashAlgorithmKind.Sha256);
+        }
+
+        /// <summary>
+        /// Простой хэш строки с выбором алгоритма.
+        /// </summary>
+        public static string SimpleHash(string input, HashAlgorithmKind algorithm)
+        {
+            using (var algo = CreateAlgorithm(algorithm))
             {
-                var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+                var bytes = algo.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
                 return Convert.ToBase64String(bytes);
+            }
+        }
+
+        private static System.Security.Cryptography.HashAlgorithm CreateAlgorithm(HashAlgorithmKind algorithm)
+        {
+            switch (algorithm)
+            {
+                case HashAlgorithmKind.Md5:
+                    return System.Security.Cryptography.MD5.Create();
+                case HashAlgorithmKind.Sha1:
+                    return System.Security.Cryptography.SHA1.Create();
+                case HashAlgorithmKind.Sha256:
+                default:
+                    return System.Security.Cryptography.SHA256.Create();
             }
         }
     }
