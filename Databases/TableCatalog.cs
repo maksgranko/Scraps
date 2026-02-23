@@ -1,0 +1,76 @@
+﻿using Scraps.Localization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Scraps.Databases
+{
+    /// <summary>
+    /// Каталог таблиц и утилиты инициализации списка.
+    /// </summary>
+    public static class TableCatalog
+    {
+        /// <summary>
+        /// Инициализировать список таблиц с возможностью автодетекта, виртуальных таблиц и фильтрации.
+        /// </summary>
+        public static string[] InitializeTables(
+            bool autodetect,
+            string[] manualTables,
+            string[] removeOnStart = null,
+            string[] removeOnAutodetect = null,
+            string[] virtualTables = null)
+        {
+            List<string> tablesTemp;
+            List<string> tempDelete = new List<string>();
+
+            if (removeOnStart != null) tempDelete.AddRange(removeOnStart);
+
+            if (autodetect)
+            {
+                tablesTemp = MSSQL.GetTables().ToList();
+                if (removeOnAutodetect != null) tempDelete.AddRange(removeOnAutodetect);
+            }
+            else
+            {
+                tablesTemp = manualTables?.ToList() ?? new List<string>();
+            }
+
+            if (virtualTables != null && virtualTables.Length > 0)
+            {
+                tablesTemp.AddRange(virtualTables);
+            }
+
+            tablesTemp.RemoveAll(x => tempDelete.Contains(x));
+            return tablesTemp.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        /// <summary>
+        /// Инициализировать список таблиц с учётом VirtualTableRegistry.
+        /// </summary>
+        public static string[] InitializeTablesWithRegistry(
+            bool autodetect,
+            string[] manualTables,
+            string[] removeOnStart = null,
+            string[] removeOnAutodetect = null)
+        {
+            var virtualTables = VirtualTableRegistry.GetNames();
+            return InitializeTables(autodetect, manualTables, removeOnStart, removeOnAutodetect, virtualTables);
+        }
+
+        /// <summary>
+        /// Перевести название таблицы для UI.
+        /// </summary>
+        public static string TranslateTableName(string value)
+        {
+            return TranslationManager.TranslateTableName(value);
+        }
+
+        /// <summary>
+        /// Вернуть оригинальное название таблицы по переводу.
+        /// </summary>
+        public static string UntranslateTableName(string value)
+        {
+            return TranslationManager.UntranslateTableName(value);
+        }
+    }
+}

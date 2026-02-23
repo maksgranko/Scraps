@@ -28,13 +28,6 @@ namespace Scraps.Databases
             return $"Data Source={Environment.MachineName};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False;Connection Timeout=3;";
         }
 
-        /// <summary>
-        /// Сформировать строку подключения (с автопоиском) используя ScrapsConfig.DatabaseName.
-        /// </summary>
-        public static string ConnectionStringBuilder(bool auto = true)
-        {
-            return ConnectionStringBuilder(ScrapsConfig.DatabaseName, auto);
-        }
 
         /// <summary>Попытаться найти SQL Server среди популярных вариантов.</summary>
         public static string ParseFirstSQLServer(string databaseName)
