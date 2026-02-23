@@ -191,6 +191,29 @@ namespace Scraps.Security
         }
 
         /// <summary>
+        /// Получить эффективные права роли на таблицу (с учётом default).
+        /// </summary>
+        public static PermissionFlags GetEffectivePermissions(string roleName, string tableName)
+        {
+            if (!string.IsNullOrWhiteSpace(roleName) && Roles.TryGetValue(roleName, out var role))
+            {
+                var permission = role.TablePermissions.FirstOrDefault(p =>
+                    p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+
+                if (permission != null)
+                    return permission.Flags;
+            }
+
+            if (DefaultPermissions.TryGetValue(tableName, out var perm))
+                return perm;
+
+            if (DefaultPermissions.TryGetValue("*", out var permGlobal))
+                return permGlobal;
+
+            return PermissionFlags.None;
+        }
+
+        /// <summary>
         /// Удобное строковое представление флагов прав (для отладки/логов).
         /// </summary>
         public static string PrintPermissions(PermissionFlags flags)

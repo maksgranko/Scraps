@@ -32,6 +32,20 @@ namespace Scraps.Localization
         }
 
         /// <summary>
+        /// Перевести список названий таблиц.
+        /// </summary>
+        public static string[] TranslateTableList(string[] tableNames)
+        {
+            if (tableNames == null) return Array.Empty<string>();
+            var result = new string[tableNames.Length];
+            for (int i = 0; i < tableNames.Length; i++)
+            {
+                result[i] = TranslateTableName(tableNames[i]);
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Вернуть оригинальное название таблицы по переводу.
         /// </summary>
         public static string UntranslateTableName(string translated)
@@ -40,6 +54,20 @@ namespace Scraps.Localization
             var match = TableTranslations.FirstOrDefault(x =>
                 string.Equals(x.Value, translated, StringComparison.OrdinalIgnoreCase));
             return string.IsNullOrEmpty(match.Key) ? translated : match.Key;
+        }
+
+        /// <summary>
+        /// Вернуть оригинальные названия таблиц по списку переводов.
+        /// </summary>
+        public static string[] UntranslateTableList(string[] translatedTableNames)
+        {
+            if (translatedTableNames == null) return Array.Empty<string>();
+            var result = new string[translatedTableNames.Length];
+            for (int i = 0; i < translatedTableNames.Length; i++)
+            {
+                result[i] = UntranslateTableName(translatedTableNames[i]);
+            }
+            return result;
         }
 
         /// <summary>
