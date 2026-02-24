@@ -9,11 +9,17 @@ namespace Scraps.Databases
 {
     public static partial class MSSQL
     {
-        /// <summary>Получить все записи из таблицы.</summary>
+        /// <summary>Получить все записи из таблицы (из ScrapsConfig.ConnectionString).</summary>
         public static DataTable GetTableData(string tableName)
         {
+            return GetTableData(tableName, ScrapsConfig.ConnectionString);
+        }
+
+        /// <summary>Получить все записи из таблицы с указанной строкой подключения.</summary>
+        public static DataTable GetTableData(string tableName, string connectionString)
+        {
             DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {QuoteIdentifier(tableName)}", conn);
                 da.Fill(dt);
@@ -37,11 +43,17 @@ namespace Scraps.Databases
             return TranslationManager.TranslateDataTable(dt, tableName);
         }
 
-        /// <summary>Найти записи по значению колонки (LIKE для строк, = для остальных).</summary>
+        /// <summary>Найти записи по значению колонки (из ScrapsConfig.ConnectionString).</summary>
         public static DataTable FindByColumn(string tableName, string columnName, object value, bool useLike = true)
         {
+            return FindByColumn(tableName, columnName, value, ScrapsConfig.ConnectionString, useLike);
+        }
+
+        /// <summary>Найти записи по значению колонки с указанной строкой подключения.</summary>
+        public static DataTable FindByColumn(string tableName, string columnName, object value, string connectionString, bool useLike = true)
+        {
             DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 if (value == null)
                 {
@@ -64,10 +76,16 @@ namespace Scraps.Databases
             return dt;
         }
 
-        /// <summary>Применить изменения DataTable в БД (insert/update/delete).</summary>
+        /// <summary>Применить изменения DataTable в БД (из ScrapsConfig.ConnectionString).</summary>
         public static int ApplyTableChanges(string tableName, DataTable data)
         {
-            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+            return ApplyTableChanges(tableName, data, ScrapsConfig.ConnectionString);
+        }
+
+        /// <summary>Применить изменения DataTable в БД с указанной строкой подключения.</summary>
+        public static int ApplyTableChanges(string tableName, DataTable data, string connectionString)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {QuoteIdentifier(tableName)}", conn);
                 SqlCommandBuilder cb = new SqlCommandBuilder(da);
@@ -80,15 +98,21 @@ namespace Scraps.Databases
             }
         }
 
-        /// <summary>Массовая вставка (SqlBulkCopy) с учётом переводов.</summary>
+        /// <summary>Массовая вставка (из ScrapsConfig.ConnectionString).</summary>
         public static int BulkInsert(string tableName, DataTable data)
+        {
+            return BulkInsert(tableName, data, ScrapsConfig.ConnectionString);
+        }
+
+        /// <summary>Массовая вставка с указанной строкой подключения.</summary>
+        public static int BulkInsert(string tableName, DataTable data, string connectionString)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
 
             DataTable importData = data.Copy();
             TranslationManager.UntranslateDataTable(importData, tableName);
 
-            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))

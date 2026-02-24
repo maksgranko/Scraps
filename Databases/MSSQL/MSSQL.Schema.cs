@@ -9,11 +9,17 @@ namespace Scraps.Databases
 {
     public static partial class MSSQL
     {
-        /// <summary>Получить список таблиц базы данных.</summary>
+        /// <summary>Получить список таблиц базы данных (из ScrapsConfig.DatabaseName).</summary>
         public static string[] GetTables(bool includeSystemTables = false)
         {
+            return GetTables(ScrapsConfig.DatabaseName, includeSystemTables);
+        }
+
+        /// <summary>Получить список таблиц указанной базы данных.</summary>
+        public static string[] GetTables(string databaseName, bool includeSystemTables = false)
+        {
             DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(ConnectionStringBuilder("master")))
             {
                 string query = @"SELECT TABLE_NAME
                                 FROM INFORMATION_SCHEMA.TABLES
@@ -25,7 +31,7 @@ namespace Scraps.Databases
                 }
 
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                da.SelectCommand.Parameters.AddWithValue("@DatabaseName", ScrapsConfig.DatabaseName);
+                da.SelectCommand.Parameters.AddWithValue("@DatabaseName", databaseName ?? ScrapsConfig.DatabaseName);
                 da.Fill(dt);
             }
             return dt.Rows.Cast<DataRow>().Select(r => r[0].ToString()).ToArray();

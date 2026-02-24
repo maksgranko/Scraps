@@ -1,4 +1,5 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Configs;
+using Scraps.Databases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +54,20 @@ namespace Scraps.Security
         public PermissionFlags Flags { get; set; }
 
         /// <summary>
+        /// Конструктор по умолчанию.
+        /// </summary>
+        public TablePermission() { }
+
+        /// <summary>
+        /// Конструктор с таблицей и флагами.
+        /// </summary>
+        public TablePermission(string tableName, PermissionFlags flags)
+        {
+            TableName = tableName;
+            Flags = flags;
+        }
+
+        /// <summary>
         /// Удобный конструктор прав из булевых значений.
         /// </summary>
         public static TablePermission FromBooleans(string tableName, bool canRead, bool canWrite, bool canDelete, bool canExport, bool canImport)
@@ -63,7 +78,7 @@ namespace Scraps.Security
             if (canDelete) flags |= PermissionFlags.Delete;
             if (canExport) flags |= PermissionFlags.Export;
             if (canImport) flags |= PermissionFlags.Import;
-            return new TablePermission { TableName = tableName, Flags = flags };
+            return new TablePermission(tableName, flags);
         }
     }
 
@@ -81,6 +96,49 @@ namespace Scraps.Security
         /// Права по таблицам.
         /// </summary>
         public List<TablePermission> TablePermissions { get; set; } = new List<TablePermission>();
+
+        /// <summary>
+        /// Конструктор по умолчанию.
+        /// </summary>
+        public Role() { }
+
+        /// <summary>
+        /// Конструктор с названием.
+        /// </summary>
+        public Role(string name)
+        {
+            Name = name;
+        }
+
+        /// <summary>
+        /// Конструктор с названием и правами на одну таблицу.
+        /// </summary>
+        public Role(string name, string tableName, PermissionFlags flags)
+        {
+            Name = name;
+            TablePermissions.Add(new TablePermission(tableName, flags));
+        }
+
+        /// <summary>
+        /// Конструктор с названием и правами на несколько таблиц.
+        /// </summary>
+        public Role(string name, params (string tableName, PermissionFlags flags)[] permissions)
+        {
+            Name = name;
+            foreach (var (tableName, flags) in permissions)
+            {
+                TablePermissions.Add(new TablePermission(tableName, flags));
+            }
+        }
+
+        /// <summary>
+        /// Добавить права на таблицу.
+        /// </summary>
+        public Role WithPermission(string tableName, PermissionFlags flags)
+        {
+            TablePermissions.Add(new TablePermission(tableName, flags));
+            return this;
+        }
 
         /// <summary>
         /// Проверить, есть ли у роли нужные права на таблицу.
@@ -119,9 +177,18 @@ namespace Scraps.Security
 
         /// <summary>
         /// Инициализация ролей и прав из БД (Roles + RolePermissions).
+        /// Работает только в режимах Standard и Full.
         /// </summary>
         public static void InitializeFromDb()
         {
+            if (!ScrapsConfig.UseRoleIdMapping)
+            {
+                // Simple режим — роли как строки, без системы прав
+                Roles.Clear();
+                DefaultPermissions.Clear();
+                return;
+            }
+
             Roles.Clear();
             DefaultPermissions.Clear();
 
@@ -175,11 +242,138 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Добавить роль в менеджер.
+        /// Добавить роль в менеджер (только кэш, без записи в БД).
         /// </summary>
         public static void AddRole(Role role)
         {
             Roles[role.Name] = role;
+        }
+
+        /// <summary>
+        /// Создать роль в БД и добавить в кэш.
+        /// </summary>
+        public static int? CreateRole(string roleName)
+        {
+            if (!ScrapsConfig.UseRoleIdMapping) return null;
+            
+            var id = MSSQL.Roles.Create(roleName);
+            if (id != null)
+            {
+                Roles[roleName] = new Role(roleName);
+            }
+            return id;
+        }
+
+        /// <summary>
+        /// Создать роль с правами в БД.
+        /// </summary>
+        public static int? CreateRole(string roleName, params (string tableName, PermissionFlags flags)[] permissions)
+        {
+            var id = CreateRole(roleName);
+            if (id == null) return null;
+
+            var role = Roles[roleName];
+            foreach (var (tableName, flags) in permissions)
+            {
+                if (MSSQL.RolePermissions.Set(id.Value, tableName, flags))
+                {
+                    role.TablePermissions.Add(new TablePermission(tableName, flags));
+                }
+            }
+            return id;
+        }
+
+        /// <summary>
+        /// Удалить роль из БД и кэша.
+        /// </summary>
+        public static bool DeleteRole(string roleName)
+        {
+            if (!ScrapsConfig.UseRoleIdMapping) return false;
+            
+            var roleId = MSSQL.Roles.GetRoleIdByName(roleName);
+            if (roleId == null) return false;
+
+            // Удаляем права роли
+            MSSQL.RolePermissions.DeleteAllForRole(roleId.Value);
+            
+            // Удаляем роль
+            if (MSSQL.Roles.Delete(roleName))
+            {
+                Roles.Remove(roleName);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Переименовать роль в БД и кэше.
+        /// </summary>
+        public static bool RenameRole(string oldName, string newName)
+        {
+            if (!ScrapsConfig.UseRoleIdMapping) return false;
+            
+            if (MSSQL.Roles.Rename(oldName, newName))
+            {
+                if (Roles.TryGetValue(oldName, out var role))
+                {
+                    Roles.Remove(oldName);
+                    role.Name = newName;
+                    Roles[newName] = role;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Установить права роли на таблицу (БД + кэш).
+        /// </summary>
+        public static bool SetPermission(string roleName, string tableName, PermissionFlags flags)
+        {
+            if (!ScrapsConfig.UseRoleIdMapping) return false;
+            
+            if (MSSQL.RolePermissions.Set(roleName, tableName, flags))
+            {
+                if (Roles.TryGetValue(roleName, out var role))
+                {
+                    var existing = role.TablePermissions.FirstOrDefault(p => 
+                        p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (existing != null)
+                        existing.Flags = flags;
+                    else
+                        role.TablePermissions.Add(new TablePermission(tableName, flags));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Удалить права роли на таблицу (БД + кэш).
+        /// </summary>
+        public static bool RemovePermission(string roleName, string tableName)
+        {
+            if (!ScrapsConfig.UseRoleIdMapping) return false;
+            
+            if (MSSQL.RolePermissions.Delete(roleName, tableName))
+            {
+                if (Roles.TryGetValue(roleName, out var role))
+                {
+                    role.TablePermissions.RemoveAll(p => 
+                        p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Обновить кэш из БД.
+        /// </summary>
+        public static void RefreshCache()
+        {
+            InitializeFromDb();
         }
 
         /// <summary>

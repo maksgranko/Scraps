@@ -1,8 +1,11 @@
 ﻿using Scraps.Configs;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Scraps.Databases
 {
@@ -11,6 +14,15 @@ namespace Scraps.Databases
     /// </summary>
     public static partial class MSSQL
     {
+        private static string _cachedServerConnectionString;
+
+        /// <summary>
+        /// Сбросить кэшированный сервер (полезно при смене конфигурации).
+        /// </summary>
+        public static void ClearServerCache()
+        {
+            _cachedServerConnectionString = null;
+        }
         /// <summary>
         /// Безопасно обернуть имя таблицы/колонки в [].
         /// </summary>
@@ -50,9 +62,23 @@ namespace Scraps.Databases
         }
 
 
-        /// <summary>Попытаться найти SQL Server среди популярных вариантов.</summary>
+        /// <summary>Попытаться найти SQL Server среди популярных вариантов (оптимизировано).</summary>
         public static string ParseFirstSQLServer(string databaseName)
         {
+            if (ScrapsConfig.CacheDiscoveredServer && !string.IsNullOrWhiteSpace(_cachedServerConnectionString))
+                return _cachedServerConnectionString;
+
+            if (!string.IsNullOrWhiteSpace(ScrapsConfig.ExplicitServerName))
+            {
+                string explicitResult = TestServer(ScrapsConfig.ExplicitServerName, databaseName);
+                if (explicitResult != null)
+                {
+                    if (ScrapsConfig.CacheDiscoveredServer)
+                        _cachedServerConnectionString = explicitResult;
+                    return explicitResult;
+                }
+            }
+
             string[] defaultServers = {
                 ".\\SQLEXPRESS",
                 "localhost",
@@ -63,42 +89,122 @@ namespace Scraps.Databases
                 $"{Environment.MachineName}\\SQLSERVER01",
             };
 
-            foreach (var server in defaultServers)
+            string result = ScrapsConfig.UseParallelServerDiscovery
+                ? TestServersParallel(defaultServers, databaseName)
+                : TestServersSequential(defaultServers, databaseName);
+
+            if (result != null)
             {
-                try
-                {
-                    using (var conn = new SqlConnection($"Data Source={server};Initial Catalog=master;Integrated Security=True;Connection Timeout=3;"))
-                    {
-                        conn.Open();
-                        return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
-                    }
-                }
-                catch { }
+                if (ScrapsConfig.CacheDiscoveredServer)
+                    _cachedServerConnectionString = result;
+                return result;
             }
 
-            var instances = TryGetSqlDataSources();
-            if (instances != null)
+            if (ScrapsConfig.UseExtendedDiscovery)
             {
-                foreach (DataRow row in instances.Rows)
+                var instances = TryGetSqlDataSources();
+                if (instances != null)
                 {
-                    string serverName = row["ServerName"].ToString();
-                    string instanceName = row["InstanceName"].ToString();
-                    string fullServerName = string.IsNullOrEmpty(instanceName)
-                        ? serverName
-                        : $"{serverName}\\{instanceName}";
-
-                    try
+                    var extendedServers = new List<string>();
+                    foreach (DataRow row in instances.Rows)
                     {
-                        using (var conn = new SqlConnection($"Data Source={fullServerName};Initial Catalog=master;Integrated Security=True;Connection Timeout=3;"))
-                        {
-                            conn.Open();
-                            return $"Data Source={fullServerName};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
-                        }
+                        string serverName = row["ServerName"].ToString();
+                        string instanceName = row["InstanceName"].ToString();
+                        string fullServerName = string.IsNullOrEmpty(instanceName)
+                            ? serverName
+                            : $"{serverName}\\{instanceName}";
+                        extendedServers.Add(fullServerName);
                     }
-                    catch { }
+
+                    result = ScrapsConfig.UseParallelServerDiscovery
+                        ? TestServersParallel(extendedServers.ToArray(), databaseName)
+                        : TestServersSequential(extendedServers.ToArray(), databaseName);
+
+                    if (result != null)
+                    {
+                        if (ScrapsConfig.CacheDiscoveredServer)
+                            _cachedServerConnectionString = result;
+                        return result;
+                    }
                 }
             }
 
+            return null;
+        }
+
+        /// <summary>Параллельный тест серверов (возвращает первый успешный).</summary>
+        private static string TestServersParallel(string[] servers, string databaseName)
+        {
+            if (servers == null || servers.Length == 0) return null;
+
+            int timeout = ScrapsConfig.ServerDiscoveryTimeout > 0 ? ScrapsConfig.ServerDiscoveryTimeout : 1;
+            var cts = new CancellationTokenSource();
+            var tasks = new List<Task<string>>();
+
+            foreach (var server in servers)
+            {
+                tasks.Add(Task.Run(() => TestServerAsync(server, databaseName, timeout, cts.Token), cts.Token));
+            }
+
+            try
+            {
+                Task<string> firstCompleted = Task.WhenAny(tasks).Result;
+                cts.Cancel();
+                return firstCompleted.Result;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                cts.Dispose();
+            }
+        }
+
+        /// <summary>Последовательный тест серверов.</summary>
+        private static string TestServersSequential(string[] servers, string databaseName)
+        {
+            if (servers == null || servers.Length == 0) return null;
+
+            foreach (var server in servers)
+            {
+                string result = TestServer(server, databaseName);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
+
+        /// <summary>Асинхронный тест сервера с поддержкой отмены.</summary>
+        private static string TestServerAsync(string server, string databaseName, int timeout, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                using (var conn = new SqlConnection($"Data Source={server};Initial Catalog=master;Integrated Security=True;Connection Timeout={timeout};"))
+                {
+                    conn.Open();
+                    return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        /// <summary>Проверить соединение с сервером (с настраиваемым таймаутом).</summary>
+        private static string TestServer(string server, string databaseName)
+        {
+            try
+            {
+                int timeout = ScrapsConfig.ServerDiscoveryTimeout > 0 ? ScrapsConfig.ServerDiscoveryTimeout : 1;
+                using (var conn = new SqlConnection($"Data Source={server};Initial Catalog=master;Integrated Security=True;Connection Timeout={timeout};"))
+                {
+                    conn.Open();
+                    return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
+                }
+            }
+            catch { }
             return null;
         }
 

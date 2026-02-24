@@ -1,33 +1,80 @@
-﻿using System.Collections.Generic;
+﻿using Scraps.Configs;
+using System.Collections.Generic;
 
 namespace Scraps.Databases
 {
+    /// <summary>
+    /// Режим генерации схемы базы данных.
+    /// </summary>
+    public enum DatabaseGenerationMode
+    {
+        /// <summary>
+        /// Минимум: только таблица Users (Role как строка).
+        /// </summary>
+        Simple,
+        /// <summary>
+        /// Стандарт: Users + Roles (Role как внешний ключ).
+        /// </summary>
+        Standard,
+        /// <summary>
+        /// Полный: Users + Roles + RolePermissions (система прав).
+        /// </summary>
+        Full
+    }
+
     /// <summary>
     /// Опции генерации схемы базы данных.
     /// </summary>
     public class DatabaseGenerationOptions
     {
-        /// <summary>Название базы данных.</summary>
-        public string DatabaseName { get; set; }
-        /// <summary>Строка подключения.</summary>
-        public string ConnectionString { get; set; }
-        /// <summary>Название таблицы пользователей.</summary>
-        public string UsersTableName { get; set; }
+        /// <summary>Режим генерации (по умолчанию Full).</summary>
+        public DatabaseGenerationMode Mode { get; set; } = DatabaseGenerationMode.Full;
+
+        /// <summary>Название базы данных (по умолчанию из ScrapsConfig).</summary>
+        public string DatabaseName { get; set; } = ScrapsConfig.DatabaseName;
+
+        /// <summary>Строка подключения (по умолчанию из ScrapsConfig).</summary>
+        public string ConnectionString { get; set; } = ScrapsConfig.ConnectionString;
+
+        /// <summary>Название таблицы пользователей (по умолчанию "Users").</summary>
+        public string UsersTableName { get; set; } = ScrapsConfig.UsersTableName;
+
         /// <summary>Сопоставление логических ключей колонок с реальными именами.</summary>
-        public Dictionary<string, string> UsersTableColumnsNames { get; set; }
-        /// <summary>Обязательные логические ключи для таблицы пользователей.</summary>
-        public string[] UsersRequiredColumnKeys { get; set; }
-        /// <summary>Если true, Users.Role хранит RoleID (int). Если false, хранит RoleName (string).</summary>
-        public bool UseRoleIdMapping { get; set; }
-        /// <summary>Название роли по умолчанию (RoleID = 0).</summary>
-        public string DefaultRoleName { get; set; }
-        /// <summary>Роли для первичного заполнения.</summary>
-        public string[] SeedRoles { get; set; }
-        /// <summary>Создать таблицу Roles.</summary>
-        public bool CreateRolesTable { get; set; }
-        /// <summary>Создать таблицу RolePermissions.</summary>
-        public bool CreateRolePermissionsTable { get; set; }
-        /// <summary>Создать таблицу Users.</summary>
-        public bool CreateUsersTable { get; set; }
+        public Dictionary<string, string> UsersTableColumnsNames { get; set; } = ScrapsConfig.UsersTableColumnsNames;
+
+        /// <summary>Название роли по умолчанию (RoleID = 0 или строка).</summary>
+        public string DefaultRoleName { get; set; } = ScrapsConfig.DefaultRoleName;
+
+        /// <summary>Роли для первичного заполнения (только для Standard/Full).</summary>
+        public string[] SeedRoles { get; set; } = ScrapsConfig.SeedRoles;
+
+        /// <summary>
+        /// Создать опции с значениями по умолчанию из ScrapsConfig.
+        /// </summary>
+        public static DatabaseGenerationOptions Default() => new DatabaseGenerationOptions();
+
+        /// <summary>
+        /// Создать опции для указанной базы данных.
+        /// </summary>
+        public static DatabaseGenerationOptions ForDatabase(string databaseName, DatabaseGenerationMode mode = DatabaseGenerationMode.Full) 
+            => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = mode };
+
+        /// <summary>
+        /// Простой режим: только Users (Role как строка).
+        /// </summary>
+        public static DatabaseGenerationOptions Simple(string databaseName = null) 
+            => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = DatabaseGenerationMode.Simple };
+
+        /// <summary>
+        /// Стандартный режим: Users + Roles.
+        /// </summary>
+        public static DatabaseGenerationOptions Standard(string databaseName = null) 
+            => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = DatabaseGenerationMode.Standard };
+
+        /// <summary>
+        /// Полный режим: Users + Roles + RolePermissions.
+        /// </summary>
+        public static DatabaseGenerationOptions Full(string databaseName = null) 
+            => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = DatabaseGenerationMode.Full };
     }
 }

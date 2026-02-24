@@ -44,15 +44,91 @@ namespace Scraps.Databases
             /// <summary>Получить ID роли по названию.</summary>
             public static int? GetRoleIdByName(string roleName)
             {
-                using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                try
                 {
-                    string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)} FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName";
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@RoleName", roleName);
-                    conn.Open();
-                    var result = cmd.ExecuteScalar();
-                    if (result == null || result == DBNull.Value) return null;
-                    return Convert.ToInt32(result);
+                    using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                    {
+                        string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)} FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName";
+                        SqlCommand cmd = new SqlCommand(query, conn);
+                        cmd.Parameters.AddWithValue("@RoleName", roleName);
+                        conn.Open();
+                        var result = cmd.ExecuteScalar();
+                        if (result == null || result == DBNull.Value) return null;
+                        return Convert.ToInt32(result);
+                    }
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            /// <summary>Создать новую роль. Возвращает ID созданной роли или null.</summary>
+            public static int? Create(string roleName)
+            {
+                if (string.IsNullOrWhiteSpace(roleName)) return null;
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                    {
+                        var cmd = new SqlCommand(
+                            $"IF NOT EXISTS (SELECT 1 FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName) " +
+                            $"BEGIN INSERT INTO {QuoteIdentifier(RolesTableName)} ({QuoteIdentifier(RoleNameColumnName)}) OUTPUT INSERTED.{QuoteIdentifier(RoleIdColumnName)} VALUES (@RoleName) END",
+                            conn);
+                        cmd.Parameters.AddWithValue("@RoleName", roleName);
+                        conn.Open();
+                        var result = cmd.ExecuteScalar();
+                        return result != null && result != DBNull.Value ? Convert.ToInt32(result) : (int?)null;
+                    }
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            /// <summary>Удалить роль по названию.</summary>
+            public static bool Delete(string roleName)
+            {
+                if (string.IsNullOrWhiteSpace(roleName)) return false;
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                    {
+                        var cmd = new SqlCommand(
+                            $"DELETE FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName",
+                            conn);
+                        cmd.Parameters.AddWithValue("@RoleName", roleName);
+                        conn.Open();
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            /// <summary>Переименовать роль.</summary>
+            public static bool Rename(string oldName, string newName)
+            {
+                if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName)) return false;
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                    {
+                        var cmd = new SqlCommand(
+                            $"UPDATE {QuoteIdentifier(RolesTableName)} SET {QuoteIdentifier(RoleNameColumnName)} = @NewName WHERE {QuoteIdentifier(RoleNameColumnName)} = @OldName",
+                            conn);
+                        cmd.Parameters.AddWithValue("@NewName", newName);
+                        cmd.Parameters.AddWithValue("@OldName", oldName);
+                        conn.Open();
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+                catch
+                {
+                    return false;
                 }
             }
 
@@ -60,22 +136,29 @@ namespace Scraps.Databases
             public static List<RoleInfo> GetAll()
             {
                 var result = new List<RoleInfo>();
-                using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                try
                 {
-                    string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)}, {QuoteIdentifier(RoleNameColumnName)} FROM {QuoteIdentifier(RolesTableName)}";
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    conn.Open();
-                    using (var reader = cmd.ExecuteReader())
+                    using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                     {
-                        while (reader.Read())
+                        string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)}, {QuoteIdentifier(RoleNameColumnName)} FROM {QuoteIdentifier(RolesTableName)}";
+                        SqlCommand cmd = new SqlCommand(query, conn);
+                        conn.Open();
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            result.Add(new RoleInfo
+                            while (reader.Read())
                             {
-                                Id = Convert.ToInt32(reader[RoleIdColumnName]),
-                                Name = reader[RoleNameColumnName].ToString()
-                            });
+                                result.Add(new RoleInfo
+                                {
+                                    Id = Convert.ToInt32(reader[RoleIdColumnName]),
+                                    Name = reader[RoleNameColumnName].ToString()
+                                });
+                            }
                         }
                     }
+                }
+                catch
+                {
+                    // Таблица не существует (Simple режим)
                 }
                 return result;
             }

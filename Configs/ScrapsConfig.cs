@@ -40,6 +40,7 @@ namespace Scraps.Configs
 
         /// <summary>
         /// Если true, Users.Role хранит RoleID (int). Если false, хранит строку RoleName.
+        /// Автоматически устанавливается при Initialize() в зависимости от режима.
         /// </summary>
         public static bool UseRoleIdMapping = true;
 
@@ -74,5 +75,35 @@ namespace Scraps.Configs
         //     ["Password"] = "Пароль",
         //     ["Role"] = "Роль"
         // };
+
+        /// <summary>
+        /// Явно указанный SQL Server (пропускает автопоиск).
+        /// </summary>
+        public static string ExplicitServerName = "";
+
+        /// <summary>
+        /// Таймаут подключения при поиске сервера (секунды).
+        /// </summary>
+        public static int ServerDiscoveryTimeout = 1;
+
+        /// <summary>
+        /// Кэшировать найденный сервер для последующих вызовов.
+        /// </summary>
+        public static bool CacheDiscoveredServer = true;
+
+        /// <summary>
+        /// Использовать расширенный поиск через SqlDataSourceEnumerator.
+        /// </summary>
+        public static bool UseExtendedDiscovery = true;
+
+        /// <summary>
+        /// Использовать параллельный поиск серверов (ускоряет в 3-7 раз).
+        /// </summary>
+        public static bool UseParallelServerDiscovery = true;
+
+        /// <summary>
+        /// Максимальное количество параллельных подключений при поиске.
+        /// </summary>
+        public static int MaxParallelConnections = 10;
     }
 }
