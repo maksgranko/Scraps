@@ -89,7 +89,7 @@ namespace Scraps.Databases
                 "IF NOT EXISTS (SELECT 1 FROM [Roles] WHERE [RoleID] = 0) " +
                 "INSERT INTO [Roles]([RoleID], [RoleName]) VALUES (0, @RoleName); " +
                 "SET IDENTITY_INSERT [Roles] OFF;", conn)
-            { Parameters = { { "@RoleName", options.DefaultRoleName ?? "default" } } }
+            { Parameters = { "@RoleName", options.DefaultRoleName ?? "default" } }
             .ExecuteNonQuery();
 
             if (options.SeedRoles != null)
@@ -99,7 +99,7 @@ namespace Scraps.Databases
                     new SqlCommand(
                         "IF NOT EXISTS (SELECT 1 FROM [Roles] WHERE [RoleName] = @RoleName) " +
                         "INSERT INTO [Roles]([RoleName]) VALUES (@RoleName)", conn)
-                    { Parameters = { { "@RoleName", roleName } } }
+                    { Parameters = { "@RoleName", roleName } }
                     .ExecuteNonQuery();
                 }
             }

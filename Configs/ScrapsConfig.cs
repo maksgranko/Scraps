@@ -3,6 +3,19 @@
 namespace Scraps.Configs
 {
     /// <summary>
+    /// Алгоритмы хэширования паролей.
+    /// </summary>
+    public enum HashAlgorithm
+    {
+        /// <summary>SHA-256 (по умолчанию).</summary>
+        SHA256,
+        /// <summary>SHA-1.</summary>
+        SHA1,
+        /// <summary>MD5.</summary>
+        MD5
+    }
+
+    /// <summary>
     /// Глобальные настройки библиотеки.
     /// </summary>
     public static class ScrapsConfig
@@ -55,9 +68,14 @@ namespace Scraps.Configs
         public static string[] SeedRoles = new string[] { };
 
         /// <summary>
-        /// Хэшировать пароли при регистрации/проверке.
+        /// Хэшировать пароли при регистрации/смене/проверке.
         /// </summary>
         public static bool AuthHashPasswords = true;
+
+        /// <summary>
+        /// Алгоритм хэширования паролей (по умолчанию SHA-256).
+        /// </summary>
+        public static HashAlgorithm AuthHashAlgorithm = HashAlgorithm.SHA256;
 
         // Пример переводов (таблицы, которые гарантированно есть в БД).
         // Рекомендуется задавать в месте инициализации приложения:

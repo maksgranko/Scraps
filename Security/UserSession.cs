@@ -17,19 +17,6 @@ namespace Scraps.Security
         public static class Utilities
         {
             /// <summary>
-            /// Доступные алгоритмы хэширования.
-            /// </summary>
-            public enum HashAlgorithmKind
-            {
-                /// <summary>SHA-256.</summary>
-                Sha256,
-                /// <summary>SHA-1.</summary>
-                Sha1,
-                /// <summary>MD5.</summary>
-                Md5
-            }
-
-            /// <summary>
             /// Проверить пароль на требования (длина, заглавная буква, спецсимвол).
             /// </summary>
             public static bool IsPasswordValid(string password)
@@ -71,17 +58,17 @@ namespace Scraps.Security
             }
 
             /// <summary>
-            /// Простой SHA256-хэш строки.
+            /// Хэшировать строку с использованием алгоритма из ScrapsConfig.AuthHashAlgorithm.
             /// </summary>
-            public static string SimpleHash(string input)
+            public static string HashPassword(string input)
             {
-                return SimpleHash(input, HashAlgorithmKind.Sha256);
+                return HashPassword(input, ScrapsConfig.AuthHashAlgorithm);
             }
 
             /// <summary>
-            /// Простой хэш строки с выбором алгоритма.
+            /// Хэшировать строку с указанным алгоритмом.
             /// </summary>
-            public static string SimpleHash(string input, HashAlgorithmKind algorithm)
+            public static string HashPassword(string input, HashAlgorithm algorithm)
             {
                 using (var algo = CreateAlgorithm(algorithm))
                 {
@@ -90,15 +77,15 @@ namespace Scraps.Security
                 }
             }
 
-            private static System.Security.Cryptography.HashAlgorithm CreateAlgorithm(HashAlgorithmKind algorithm)
+            private static System.Security.Cryptography.HashAlgorithm CreateAlgorithm(HashAlgorithm algorithm)
             {
                 switch (algorithm)
                 {
-                    case HashAlgorithmKind.Md5:
+                    case HashAlgorithm.MD5:
                         return System.Security.Cryptography.MD5.Create();
-                    case HashAlgorithmKind.Sha1:
+                    case HashAlgorithm.SHA1:
                         return System.Security.Cryptography.SHA1.Create();
-                    case HashAlgorithmKind.Sha256:
+                    case HashAlgorithm.SHA256:
                     default:
                         return System.Security.Cryptography.SHA256.Create();
                 }
@@ -117,49 +104,74 @@ namespace Scraps.Security
         /// <summary>
         /// Обновить сессию по текущему логину.
         /// </summary>
+        /// <exception cref="InvalidOperationException">Пользователь не авторизован</exception>
         public static void Reload()
         {
+            if (string.IsNullOrWhiteSpace(UserLogin))
+                throw new InvalidOperationException("Пользователь не авторизован.");
+
             string tempLogin = UserLogin;
             Logout();
-            if (!string.IsNullOrWhiteSpace(tempLogin))
-            {
-                LoginByName(tempLogin);
-            }
+            LoginByName(tempLogin);
         }
 
         /// <summary>
         /// Войти по логину (загружает роль и данные пользователя).
         /// </summary>
+        /// <exception cref="ArgumentException">Пустой логин</exception>
+        /// <exception cref="InvalidOperationException">Пользователь не найден</exception>
         public static void LoginByName(string login)
         {
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+
             UserLogin = login;
-            UserRole = GetUserStatus(login);
+            UserRole = MSSQL.Users.GetUserStatus(login);
             UserData = MSSQL.Users.GetByLogin(login);
-            UserId = UserData == null ? -1 : (int)UserData[0];
+            UserId = (int)UserData[0];
         }
 
         /// <summary>
-        /// Войти по логину и паролю (с проверкой).
+        /// Войти по логину и паролю.
         /// </summary>
-        public static bool Login(string login, string password)
+        /// <exception cref="ArgumentException">Пустой логин или пароль</exception>
+        /// <exception cref="InvalidOperationException">Пользователь не найден или неверный пароль</exception>
+        public static void Login(string login, string password)
         {
-            if (!CheckIsUserValid(login, password))
-                return false;
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
+
+            var user = MSSQL.Users.GetByLogin(login);
+            string storedValue = user[ScrapsConfig.UsersTableColumnsNames["Password"]].ToString();
+
+            bool valid;
+            if (ScrapsConfig.AuthHashPasswords)
+            {
+                string inputHash = Utilities.HashPassword(password);
+                valid = storedValue == inputHash;
+            }
+            else
+            {
+                valid = storedValue == password;
+            }
+
+            if (!valid)
+                throw new InvalidOperationException("Неверный пароль.");
 
             LoginByName(login);
-            return true;
         }
 
         /// <summary>
-        /// Зарегистрировать пользователя и при успехе выполнить вход.
+        /// Зарегистрировать пользователя и выполнить вход.
         /// </summary>
-        public static bool Register(string login, string password, string role)
+        /// <exception cref="ArgumentException">Пустой логин, пароль или роль</exception>
+        /// <exception cref="InvalidOperationException">Пользователь уже существует или пароль не соответствует требованиям</exception>
+        public static void Register(string login, string password, string role)
         {
-            if (!RegisterUser(login, password, role))
-                return false;
-
+            RegisterUser(login, password, role);
             LoginByName(login);
-            return true;
         }
 
         /// <summary>
@@ -176,6 +188,8 @@ namespace Scraps.Security
         /// <summary>
         /// Получить отображаемое имя роли пользователя.
         /// </summary>
+        /// <exception cref="ArgumentException">Пустой логин</exception>
+        /// <exception cref="InvalidOperationException">Пользователь не найден</exception>
         public static string GetUserStatus(string login)
         {
             return MSSQL.Users.GetUserStatus(login);
@@ -184,15 +198,21 @@ namespace Scraps.Security
         /// <summary>
         /// Проверить логин и пароль.
         /// </summary>
+        /// <exception cref="ArgumentException">Пустой логин или пароль</exception>
+        /// <exception cref="InvalidOperationException">Пользователь не найден или неверный пароль</exception>
         public static bool CheckIsUserValid(string login, string password)
         {
-            var user = MSSQL.Users.GetByLogin(login);
-            if (user == null) return false;
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
 
+            var user = MSSQL.Users.GetByLogin(login);
             string storedValue = user[ScrapsConfig.UsersTableColumnsNames["Password"]].ToString();
+
             if (ScrapsConfig.AuthHashPasswords)
             {
-                string inputHash = Utilities.SimpleHash(password);
+                string inputHash = Utilities.HashPassword(password);
                 return storedValue == inputHash;
             }
             return storedValue == password;
@@ -201,28 +221,65 @@ namespace Scraps.Security
         /// <summary>
         /// Проверить, существует ли пользователь.
         /// </summary>
+        /// <exception cref="ArgumentException">Пустой логин</exception>
         public static bool CheckIsUserExists(string login)
         {
-            return MSSQL.Users.GetByLogin(login) != null;
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+
+            try
+            {
+                MSSQL.Users.GetByLogin(login);
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
         /// Зарегистрировать пользователя.
         /// </summary>
-        public static bool RegisterUser(string login, string password, string role)
+        /// <exception cref="ArgumentException">Пустой логин, пароль или роль</exception>
+        /// <exception cref="InvalidOperationException">Пользователь уже существует или пароль не соответствует требованиям</exception>
+        public static void RegisterUser(string login, string password, string role)
         {
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
+            if (string.IsNullOrWhiteSpace(role))
+                throw new ArgumentException("Роль не может быть пустой.", nameof(role));
+
             if (CheckIsUserExists(login))
-            {
-                return false;
-            }
+                throw new InvalidOperationException($"Пользователь '{login}' уже существует.");
 
             if (!Utilities.IsPasswordValid(password))
-            {
-                return false;
-            }
+                throw new InvalidOperationException("Пароль не соответствует требованиям (минимум 8 символов, заглавная буква, спецсимвол).");
 
-            string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.SimpleHash(password) : password;
-            return MSSQL.Users.Create(login, storedPassword, role);
+            string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(password) : password;
+            MSSQL.Users.Create(login, storedPassword, role);
+        }
+
+        /// <summary>
+        /// Изменить пароль текущего пользователя.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Пользователь не авторизован</exception>
+        /// <exception cref="ArgumentException">Пароль не соответствует требованиям</exception>
+        public static void ChangePassword(string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(UserLogin))
+                throw new InvalidOperationException("Пользователь не авторизован.");
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+                throw new ArgumentException("Пароль не может быть пустым.", nameof(newPassword));
+
+            if (!Utilities.IsPasswordValid(newPassword))
+                throw new ArgumentException("Пароль не соответствует требованиям (минимум 8 символов, заглавная буква, спецсимвол).", nameof(newPassword));
+
+            string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(newPassword) : newPassword;
+            MSSQL.Users.ChangePassword(UserLogin, storedPassword);
         }
     }
 }

@@ -3,15 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.11</Version>
+    <Version>0.12</Version>
     <Authors>Maks Granko</Authors>
     <Company></Company>
     <Description>DPGT Helper, precreated methods, samples</Description>
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.2026.54.14</AssemblyVersion>
-    <FileVersion>1.2026.54.14</FileVersion>
+    <AssemblyVersion>1.2026.55.16</AssemblyVersion>
+    <FileVersion>1.2026.55.16</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

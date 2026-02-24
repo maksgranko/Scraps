@@ -242,6 +242,55 @@ namespace Scraps.Security
         }
 
         /// <summary>
+        /// Создать роль в БД и добавить в кэш.
+        /// </summary>
+        /// <exception cref="ArgumentException">Пустое название роли</exception>
+        /// <exception cref="InvalidOperationException">Роль уже существует или система ролей отключена</exception>
+        public static int CreateRole(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Название роли не может быть пустым.", nameof(roleName));
+
+            if (!ScrapsConfig.UseRoleIdMapping)
+                throw new InvalidOperationException("Система ролей отключена (UseRoleIdMapping = false).");
+
+            var id = MSSQL.Roles.Create(roleName);
+            Roles[roleName] = new Role(roleName);
+            return id;
+        }
+
+        /// <summary>
+        /// Создать роль с правами в БД.
+        /// </summary>
+        /// <exception cref="ArgumentException">Пустое название роли</exception>
+        /// <exception cref="InvalidOperationException">Роль уже существует или система ролей отключена</exception>
+        public static int CreateRole(string roleName, params (string tableName, PermissionFlags flags)[] permissions)
+        {
+            var id = CreateRole(roleName);
+            var role = Roles[roleName];
+
+            foreach (var (tableName, flags) in permissions)
+            {
+                MSSQL.RolePermissions.Set(id, tableName, flags);
+                role.TablePermissions.Add(new TablePermission(tableName, flags));
+            }
+            return id;
+        }
+
+        /// <summary>
+        /// Проверить существование роли.
+        /// </summary>
+        /// <exception cref="ArgumentException">Пустое название роли</exception>
+        public static bool RoleExists(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Название роли не может быть пустым.", nameof(roleName));
+
+            if (!ScrapsConfig.UseRoleIdMapping) return false;
+            return MSSQL.Roles.GetRoleIdByName(roleName) != null;
+        }
+
+        /// <summary>
         /// Добавить роль в менеджер (только кэш, без записи в БД).
         /// </summary>
         public static void AddRole(Role role)
@@ -250,122 +299,106 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Создать роль в БД и добавить в кэш.
-        /// </summary>
-        public static int? CreateRole(string roleName)
-        {
-            if (!ScrapsConfig.UseRoleIdMapping) return null;
-            
-            var id = MSSQL.Roles.Create(roleName);
-            if (id != null)
-            {
-                Roles[roleName] = new Role(roleName);
-            }
-            return id;
-        }
-
-        /// <summary>
-        /// Создать роль с правами в БД.
-        /// </summary>
-        public static int? CreateRole(string roleName, params (string tableName, PermissionFlags flags)[] permissions)
-        {
-            var id = CreateRole(roleName);
-            if (id == null) return null;
-
-            var role = Roles[roleName];
-            foreach (var (tableName, flags) in permissions)
-            {
-                if (MSSQL.RolePermissions.Set(id.Value, tableName, flags))
-                {
-                    role.TablePermissions.Add(new TablePermission(tableName, flags));
-                }
-            }
-            return id;
-        }
-
-        /// <summary>
         /// Удалить роль из БД и кэша.
         /// </summary>
-        public static bool DeleteRole(string roleName)
+        /// <exception cref="ArgumentException">Пустое название роли</exception>
+        /// <exception cref="InvalidOperationException">Роль не найдена или система ролей отключена</exception>
+        public static void DeleteRole(string roleName)
         {
-            if (!ScrapsConfig.UseRoleIdMapping) return false;
-            
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Название роли не может быть пустым.", nameof(roleName));
+
+            if (!ScrapsConfig.UseRoleIdMapping)
+                throw new InvalidOperationException("Система ролей отключена (UseRoleIdMapping = false).");
+
             var roleId = MSSQL.Roles.GetRoleIdByName(roleName);
-            if (roleId == null) return false;
+            if (roleId == null)
+                throw new InvalidOperationException($"Роль '{roleName}' не найдена.");
 
             // Удаляем права роли
             MSSQL.RolePermissions.DeleteAllForRole(roleId.Value);
-            
+
             // Удаляем роль
-            if (MSSQL.Roles.Delete(roleName))
-            {
-                Roles.Remove(roleName);
-                return true;
-            }
-            return false;
+            MSSQL.Roles.Delete(roleName);
+            Roles.Remove(roleName);
         }
 
         /// <summary>
         /// Переименовать роль в БД и кэше.
         /// </summary>
-        public static bool RenameRole(string oldName, string newName)
+        /// <exception cref="ArgumentException">Пустое название роли</exception>
+        /// <exception cref="InvalidOperationException">Роль не найдена, новое имя занято или система ролей отключена</exception>
+        public static void RenameRole(string oldName, string newName)
         {
-            if (!ScrapsConfig.UseRoleIdMapping) return false;
-            
-            if (MSSQL.Roles.Rename(oldName, newName))
+            if (string.IsNullOrWhiteSpace(oldName))
+                throw new ArgumentException("Старое название роли не может быть пустым.", nameof(oldName));
+            if (string.IsNullOrWhiteSpace(newName))
+                throw new ArgumentException("Новое название роли не может быть пустым.", nameof(newName));
+
+            if (!ScrapsConfig.UseRoleIdMapping)
+                throw new InvalidOperationException("Система ролей отключена (UseRoleIdMapping = false).");
+
+            MSSQL.Roles.Rename(oldName, newName);
+
+            if (Roles.TryGetValue(oldName, out var role))
             {
-                if (Roles.TryGetValue(oldName, out var role))
-                {
-                    Roles.Remove(oldName);
-                    role.Name = newName;
-                    Roles[newName] = role;
-                }
-                return true;
+                Roles.Remove(oldName);
+                role.Name = newName;
+                Roles[newName] = role;
             }
-            return false;
         }
 
         /// <summary>
         /// Установить права роли на таблицу (БД + кэш).
         /// </summary>
-        public static bool SetPermission(string roleName, string tableName, PermissionFlags flags)
+        /// <exception cref="ArgumentException">Пустое название роли или таблицы</exception>
+        /// <exception cref="InvalidOperationException">Роль не найдена или система ролей отключена</exception>
+        public static void SetPermission(string roleName, string tableName, PermissionFlags flags)
         {
-            if (!ScrapsConfig.UseRoleIdMapping) return false;
-            
-            if (MSSQL.RolePermissions.Set(roleName, tableName, flags))
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Название роли не может быть пустым.", nameof(roleName));
+            if (string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
+
+            if (!ScrapsConfig.UseRoleIdMapping)
+                throw new InvalidOperationException("Система ролей отключена (UseRoleIdMapping = false).");
+
+            MSSQL.RolePermissions.Set(roleName, tableName, flags);
+
+            if (Roles.TryGetValue(roleName, out var role))
             {
-                if (Roles.TryGetValue(roleName, out var role))
-                {
-                    var existing = role.TablePermissions.FirstOrDefault(p => 
-                        p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
-                    
-                    if (existing != null)
-                        existing.Flags = flags;
-                    else
-                        role.TablePermissions.Add(new TablePermission(tableName, flags));
-                }
-                return true;
+                var existing = role.TablePermissions.FirstOrDefault(p =>
+                    p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+
+                if (existing != null)
+                    existing.Flags = flags;
+                else
+                    role.TablePermissions.Add(new TablePermission(tableName, flags));
             }
-            return false;
         }
 
         /// <summary>
         /// Удалить права роли на таблицу (БД + кэш).
         /// </summary>
-        public static bool RemovePermission(string roleName, string tableName)
+        /// <exception cref="ArgumentException">Пустое название роли или таблицы</exception>
+        /// <exception cref="InvalidOperationException">Роль или права не найдены или система ролей отключена</exception>
+        public static void RemovePermission(string roleName, string tableName)
         {
-            if (!ScrapsConfig.UseRoleIdMapping) return false;
-            
-            if (MSSQL.RolePermissions.Delete(roleName, tableName))
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Название роли не может быть пустым.", nameof(roleName));
+            if (string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
+
+            if (!ScrapsConfig.UseRoleIdMapping)
+                throw new InvalidOperationException("Система ролей отключена (UseRoleIdMapping = false).");
+
+            MSSQL.RolePermissions.Delete(roleName, tableName);
+
+            if (Roles.TryGetValue(roleName, out var role))
             {
-                if (Roles.TryGetValue(roleName, out var role))
-                {
-                    role.TablePermissions.RemoveAll(p => 
-                        p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
-                }
-                return true;
+                role.TablePermissions.RemoveAll(p =>
+                    p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
             }
-            return false;
         }
 
         /// <summary>
