@@ -12,6 +12,27 @@ namespace Scraps.Databases
     public static partial class MSSQL
     {
         /// <summary>
+        /// Безопасно обернуть имя таблицы/колонки в [].
+        /// </summary>
+        public static string QuoteIdentifier(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return name;
+            var trimmed = name.Trim();
+            if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                return trimmed;
+            if (trimmed.Contains("."))
+            {
+                var parts = trimmed.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    var part = parts[i].Trim();
+                    parts[i] = "[" + part.Replace("]", "]]") + "]";
+                }
+                return string.Join(".", parts);
+            }
+            return "[" + trimmed.Replace("]", "]]") + "]";
+        }
+        /// <summary>
         /// Сформировать строку подключения (с автопоиском).
         /// Если databaseName не задан, берётся ScrapsConfig.DatabaseName.
         /// </summary>

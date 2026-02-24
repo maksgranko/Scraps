@@ -34,7 +34,7 @@ namespace Scraps.Databases
                 var result = new List<RolePermissionInfo>();
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"SELECT RoleID, TableName, CanRead, CanWrite, CanDelete, CanExport, CanImport FROM {RolePermissionsTableName}";
+                    string query = $"SELECT RoleID, TableName, CanRead, CanWrite, CanDelete, CanExport, CanImport FROM {QuoteIdentifier(RolePermissionsTableName)}";
                     SqlCommand cmd = new SqlCommand(query, conn);
                     conn.Open();
                     using (var reader = cmd.ExecuteReader())

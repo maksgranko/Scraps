@@ -32,7 +32,7 @@ namespace Scraps.Databases
             {
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"SELECT {RoleNameColumnName} FROM {RolesTableName} WHERE {RoleIdColumnName} = @RoleID";
+                    string query = $"SELECT {QuoteIdentifier(RoleNameColumnName)} FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleIdColumnName)} = @RoleID";
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@RoleID", roleId);
                     conn.Open();
@@ -46,7 +46,7 @@ namespace Scraps.Databases
             {
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"SELECT {RoleIdColumnName} FROM {RolesTableName} WHERE {RoleNameColumnName} = @RoleName";
+                    string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)} FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName";
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@RoleName", roleName);
                     conn.Open();
@@ -62,7 +62,7 @@ namespace Scraps.Databases
                 var result = new List<RoleInfo>();
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"SELECT {RoleIdColumnName}, {RoleNameColumnName} FROM {RolesTableName}";
+                    string query = $"SELECT {QuoteIdentifier(RoleIdColumnName)}, {QuoteIdentifier(RoleNameColumnName)} FROM {QuoteIdentifier(RolesTableName)}";
                     SqlCommand cmd = new SqlCommand(query, conn);
                     conn.Open();
                     using (var reader = cmd.ExecuteReader())

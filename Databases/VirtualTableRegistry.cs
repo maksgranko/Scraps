@@ -28,6 +28,58 @@ namespace Scraps.Databases
         }
 
         /// <summary>
+        /// Зарегистрировать виртуальную таблицу как простой SELECT из таблицы (с экранированием).
+        /// </summary>
+        public static void RegisterSelect(string name, string tableName, PermissionFlags required = PermissionFlags.Read)
+        {
+            RegisterSelect(name, tableName, columns: null, where: null, required: required);
+        }
+
+        /// <summary>
+        /// Зарегистрировать виртуальную таблицу как SELECT из таблицы (с экранированием).
+        /// </summary>
+        public static void RegisterSelect(
+            string name,
+            string tableName,
+            string[] columns,
+            string where,
+            PermissionFlags required = PermissionFlags.Read)
+        {
+            var sql = BuildSelectQuery(tableName, columns, where);
+            Register(name, sql, required);
+        }
+
+        /// <summary>
+        /// Собрать безопасный SELECT по таблице (экранирует имена).
+        /// </summary>
+        public static string BuildSelectQuery(string tableName, string[] columns = null, string where = null)
+        {
+            if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentNullException(nameof(tableName));
+
+            string selectColumns;
+            if (columns == null || columns.Length == 0)
+            {
+                selectColumns = "*";
+            }
+            else
+            {
+                var quoted = new string[columns.Length];
+                for (int i = 0; i < columns.Length; i++)
+                {
+                    quoted[i] = MSSQL.QuoteIdentifier(columns[i]);
+                }
+                selectColumns = string.Join(", ", quoted);
+            }
+
+            var sql = $"SELECT {selectColumns} FROM {MSSQL.QuoteIdentifier(tableName)}";
+            if (!string.IsNullOrWhiteSpace(where))
+            {
+                sql += " WHERE " + where;
+            }
+            return sql;
+        }
+
+        /// <summary>
         /// Зарегистрировать виртуальную таблицу с правилами по ролям.
         /// </summary>
         public static void Register(string name, string sql, IDictionary<string, PermissionFlags> rolePermissions)

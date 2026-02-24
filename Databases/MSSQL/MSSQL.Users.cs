@@ -22,7 +22,7 @@ namespace Scraps.Databases
                 DataTable dt = new DataTable();
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"SELECT * FROM {UsersTableName} WHERE {UsersTableColumnsNames["Login"]} = @Login";
+                    string query = $"SELECT * FROM {QuoteIdentifier(UsersTableName)} WHERE {QuoteIdentifier(UsersTableColumnsNames["Login"])} = @Login";
                     SqlDataAdapter da = new SqlDataAdapter(query, conn);
                     da.SelectCommand.Parameters.AddWithValue("@Login", login);
                     try
@@ -56,10 +56,10 @@ namespace Scraps.Databases
             {
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    string query = $"INSERT INTO {UsersTableName}" +
-                                   $"({UsersTableColumnsNames["Login"]}, " +
-                                   $"{UsersTableColumnsNames["Password"]}, " +
-                                   $"{UsersTableColumnsNames["Role"]}) " +
+                    string query = $"INSERT INTO {QuoteIdentifier(UsersTableName)}" +
+                                   $"({QuoteIdentifier(UsersTableColumnsNames["Login"])}, " +
+                                   $"{QuoteIdentifier(UsersTableColumnsNames["Password"])}, " +
+                                   $"{QuoteIdentifier(UsersTableColumnsNames["Role"])}) " +
                                    $"VALUES (@Login, @Password, @Role)";
 
                     SqlCommand cmd = new SqlCommand(query, conn);

@@ -61,8 +61,9 @@ namespace Scraps.Databases
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    $"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '{options.DatabaseName}') " +
-                    $"CREATE DATABASE {options.DatabaseName}", conn);
+                    "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DbName) " +
+                    $"CREATE DATABASE {QuoteIdentifier(options.DatabaseName)}", conn);
+                cmd.Parameters.AddWithValue("@DbName", options.DatabaseName);
                 cmd.ExecuteNonQuery();
             }
 
@@ -138,20 +139,26 @@ namespace Scraps.Databases
                 {
                     string tableName = options.UsersTableName;
                     var cols = options.UsersTableColumnsNames;
+                    string quotedTable = QuoteIdentifier(tableName);
+                    string quotedUserId = QuoteIdentifier(cols["UserID"]);
+                    string quotedLogin = QuoteIdentifier(cols["Login"]);
+                    string quotedPassword = QuoteIdentifier(cols["Password"]);
+                    string quotedRole = QuoteIdentifier(cols["Role"]);
 
                     var createCmd = new SqlCommand(
-                        $"IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}') " +
+                        $"IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName) " +
                         "BEGIN " +
-                        $"CREATE TABLE [{tableName}] (" +
-                        $"[{cols["UserID"]}] int IDENTITY(1,1) PRIMARY KEY, " +
-                        $"[{cols["Login"]}] nvarchar(64) NOT NULL, " +
-                        $"[{cols["Password"]}] nvarchar(64) NOT NULL, " +
+                        $"CREATE TABLE {quotedTable} (" +
+                        $"{quotedUserId} int IDENTITY(1,1) PRIMARY KEY, " +
+                        $"{quotedLogin} nvarchar(64) NOT NULL, " +
+                        $"{quotedPassword} nvarchar(64) NOT NULL, " +
                         (options.UseRoleIdMapping
-                            ? $"[{cols["Role"]}] int NOT NULL); " +
-                              $"ALTER TABLE [{tableName}] ADD CONSTRAINT [FK_Users_Roles] FOREIGN KEY ([{cols["Role"]}]) REFERENCES [Roles]([RoleID]); "
-                            : $"[{cols["Role"]}] nvarchar(64) NOT NULL); ") +
-                        $"CREATE INDEX [IX_Users_Login] ON [{tableName}]([{cols["Login"]}]); " +
+                            ? $"{quotedRole} int NOT NULL); " +
+                              $"ALTER TABLE {quotedTable} ADD CONSTRAINT [FK_Users_Roles] FOREIGN KEY ({quotedRole}) REFERENCES [Roles]([RoleID]); "
+                            : $"{quotedRole} nvarchar(64) NOT NULL); ") +
+                        $"CREATE INDEX [IX_Users_Login] ON {quotedTable}({quotedLogin}); " +
                         "END", conn);
+                    createCmd.Parameters.AddWithValue("@TableName", tableName);
                     createCmd.ExecuteNonQuery();
                 }
             }

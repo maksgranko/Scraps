@@ -15,7 +15,7 @@ namespace Scraps.Databases
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
             {
-                SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {tableName}", conn);
+                SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {QuoteIdentifier(tableName)}", conn);
                 da.Fill(dt);
             }
             return dt;
@@ -45,7 +45,7 @@ namespace Scraps.Databases
             {
                 if (value == null)
                 {
-                    string queryNull = $"SELECT * FROM [{tableName}] WHERE [{columnName}] IS NULL";
+                    string queryNull = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} IS NULL";
                     SqlDataAdapter daNull = new SqlDataAdapter(queryNull, conn);
                     daNull.Fill(dt);
                     return dt;
@@ -54,7 +54,7 @@ namespace Scraps.Databases
                 bool isString = value is string;
                 string op = (useLike && isString) ? "LIKE" : "=";
 
-                string query = $"SELECT * FROM [{tableName}] WHERE [{columnName}] {op} @Value";
+                string query = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} {op} @Value";
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 object paramValue = (useLike && isString) ? $"%{value}%" : value;
                 da.SelectCommand.Parameters.AddWithValue("@Value", paramValue);
@@ -69,7 +69,7 @@ namespace Scraps.Databases
         {
             using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
             {
-                SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {tableName}", conn);
+                SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {QuoteIdentifier(tableName)}", conn);
                 SqlCommandBuilder cb = new SqlCommandBuilder(da);
                 da.UpdateCommand = cb.GetUpdateCommand();
                 da.InsertCommand = cb.GetInsertCommand();
@@ -93,7 +93,7 @@ namespace Scraps.Databases
                 conn.Open();
                 using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                 {
-                    bulkCopy.DestinationTableName = tableName;
+                    bulkCopy.DestinationTableName = QuoteIdentifier(tableName);
 
                     foreach (DataColumn column in importData.Columns)
                     {
