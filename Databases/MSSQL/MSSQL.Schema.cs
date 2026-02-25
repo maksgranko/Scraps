@@ -25,7 +25,7 @@ namespace Scraps.Databases
                 throw new ArgumentException("Название базы данных не может быть пустым.", nameof(databaseName));
 
             DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(ConnectionStringBuilder("master")))
+            using (SqlConnection conn = new SqlConnection(GetMasterConnectionString()))
             {
                 string query = @"SELECT TABLE_NAME
                                 FROM INFORMATION_SCHEMA.TABLES

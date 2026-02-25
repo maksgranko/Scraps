@@ -20,7 +20,7 @@ namespace Scraps.Databases
             ScrapsConfig.UseRoleIdMapping = mode >= DatabaseGenerationMode.Standard;
 
             if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-                ScrapsConfig.ConnectionString = ConnectionStringBuilder();
+                throw new InvalidOperationException("ScrapsConfig.ConnectionString не задан. Укажите его вручную (можно через MSSQL.ConnectionStringBuilder).");
 
             GenerateIfNotExists(new DatabaseGenerationOptions { Mode = mode });
         }
@@ -46,7 +46,7 @@ namespace Scraps.Databases
             if (string.IsNullOrEmpty(options.DatabaseName))
                 throw new InvalidOperationException("Не задано DatabaseName (укажите в ScrapsConfig.DatabaseName или через параметр).");
 
-            using (var conn = new SqlConnection(ConnectionStringBuilder("master")))
+            using (var conn = new SqlConnection(GetMasterConnectionString()))
             {
                 conn.Open();
                 var cmd = new SqlCommand(
@@ -56,7 +56,7 @@ namespace Scraps.Databases
                 cmd.ExecuteNonQuery();
             }
 
-            using (var conn = new SqlConnection(ConnectionStringBuilder(options.DatabaseName)))
+            using (var conn = new SqlConnection(GetDatabaseConnectionString(options.DatabaseName)))
             {
                 conn.Open();
 

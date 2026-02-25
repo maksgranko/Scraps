@@ -44,12 +44,48 @@ namespace Scraps.Databases
             }
             return "[" + trimmed.Replace("]", "]]") + "]";
         }
+
+        /// <summary>
+        /// Строка подключения к master на базе ScrapsConfig.ConnectionString.
+        /// </summary>
+        private static string GetMasterConnectionString()
+        {
+            if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                throw new InvalidOperationException("ScrapsConfig.ConnectionString не задан.");
+
+            var builder = new SqlConnectionStringBuilder(ScrapsConfig.ConnectionString)
+            {
+                InitialCatalog = "master"
+            };
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Строка подключения к указанной БД на базе ScrapsConfig.ConnectionString.
+        /// </summary>
+        private static string GetDatabaseConnectionString(string databaseName)
+        {
+            if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                throw new InvalidOperationException("ScrapsConfig.ConnectionString не задан.");
+            if (string.IsNullOrWhiteSpace(databaseName))
+                throw new ArgumentException("Название базы данных не может быть пустым.", nameof(databaseName));
+
+            var builder = new SqlConnectionStringBuilder(ScrapsConfig.ConnectionString)
+            {
+                InitialCatalog = databaseName
+            };
+            return builder.ToString();
+        }
         /// <summary>
         /// Сформировать строку подключения (с автопоиском).
         /// Если databaseName не задан, берётся ScrapsConfig.DatabaseName.
+        /// Можно передать готовую строку подключения напрямую.
         /// </summary>
         public static string ConnectionStringBuilder(string databaseName = null, bool auto = true)
         {
+            if (LooksLikeConnectionString(databaseName))
+                return databaseName;
+
             if (string.IsNullOrWhiteSpace(databaseName))
                 databaseName = ScrapsConfig.DatabaseName;
 
@@ -58,7 +94,34 @@ namespace Scraps.Databases
                 string result = ParseFirstSQLServer(databaseName);
                 if (result != null) return result;
             }
-            return $"Data Source={Environment.MachineName};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False;Connection Timeout=3;";
+            return BuildDefaultConnectionString(Environment.MachineName, databaseName, timeout: 3);
+        }
+
+        /// <summary>
+        /// Сформировать строку подключения по серверу и базе данных.
+        /// </summary>
+        public static string ConnectionStringBuilder(string serverName, string databaseName)
+        {
+            if (LooksLikeConnectionString(serverName))
+                return serverName;
+            if (string.IsNullOrWhiteSpace(serverName))
+                serverName = Environment.MachineName;
+            if (string.IsNullOrWhiteSpace(databaseName))
+                databaseName = ScrapsConfig.DatabaseName;
+            return BuildDefaultConnectionString(serverName, databaseName, timeout: 3);
+        }
+
+        private static bool LooksLikeConnectionString(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            return value.IndexOf("Data Source=", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("Server=", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("Initial Catalog=", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string BuildDefaultConnectionString(string server, string databaseName, int timeout)
+        {
+            return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False;TrustServerCertificate=True;Connection Timeout={timeout};";
         }
 
 
@@ -182,10 +245,10 @@ namespace Scraps.Databases
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                using (var conn = new SqlConnection($"Data Source={server};Initial Catalog=master;Integrated Security=True;Connection Timeout={timeout};"))
+                using (var conn = new SqlConnection(BuildDefaultConnectionString(server, "master", timeout)))
                 {
                     conn.Open();
-                    return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
+                    return BuildDefaultConnectionString(server, databaseName, timeout);
                 }
             }
             catch { }
@@ -198,10 +261,10 @@ namespace Scraps.Databases
             try
             {
                 int timeout = ScrapsConfig.ServerDiscoveryTimeout > 0 ? ScrapsConfig.ServerDiscoveryTimeout : 1;
-                using (var conn = new SqlConnection($"Data Source={server};Initial Catalog=master;Integrated Security=True;Connection Timeout={timeout};"))
+                using (var conn = new SqlConnection(BuildDefaultConnectionString(server, "master", timeout)))
                 {
                     conn.Open();
-                    return $"Data Source={server};Initial Catalog={databaseName};Integrated Security=True;Encrypt=False";
+                    return BuildDefaultConnectionString(server, databaseName, timeout);
                 }
             }
             catch { }
@@ -236,7 +299,9 @@ namespace Scraps.Databases
         {
             try
             {
-                using (var conn = new SqlConnection(ConnectionStringBuilder("master")))
+                if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                    return false;
+                using (var conn = new SqlConnection(GetMasterConnectionString()))
                 {
                     conn.Open();
                     return true;
