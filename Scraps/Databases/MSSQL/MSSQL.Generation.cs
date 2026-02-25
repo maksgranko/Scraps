@@ -90,23 +90,23 @@ namespace Scraps.Databases
                 "[RoleName] nvarchar(64) NOT NULL UNIQUE); " +
                 "END", conn).ExecuteNonQuery();
 
-            new SqlCommand(
+            var cmdDefault = new SqlCommand(
                 "SET IDENTITY_INSERT [Roles] ON; " +
                 "IF NOT EXISTS (SELECT 1 FROM [Roles] WHERE [RoleID] = 0) " +
                 "INSERT INTO [Roles]([RoleID], [RoleName]) VALUES (0, @RoleName); " +
-                "SET IDENTITY_INSERT [Roles] OFF;", conn)
-            { Parameters = { "@RoleName", options.DefaultRoleName ?? "default" } }
-            .ExecuteNonQuery();
+                "SET IDENTITY_INSERT [Roles] OFF;", conn);
+            cmdDefault.Parameters.AddWithValue("@RoleName", options.DefaultRoleName ?? "default");
+            cmdDefault.ExecuteNonQuery();
 
             if (options.SeedRoles != null)
             {
                 foreach (var roleName in options.SeedRoles)
                 {
-                    new SqlCommand(
+                    var cmdSeed = new SqlCommand(
                         "IF NOT EXISTS (SELECT 1 FROM [Roles] WHERE [RoleName] = @RoleName) " +
-                        "INSERT INTO [Roles]([RoleName]) VALUES (@RoleName)", conn)
-                    { Parameters = { "@RoleName", roleName } }
-                    .ExecuteNonQuery();
+                        "INSERT INTO [Roles]([RoleName]) VALUES (@RoleName)", conn);
+                    cmdSeed.Parameters.AddWithValue("@RoleName", roleName);
+                    cmdSeed.ExecuteNonQuery();
                 }
             }
         }

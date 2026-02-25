@@ -2,3 +2,6 @@
 /Scraps/obj
 /bin
 /obj
+/Scraps.Tests/bin
+/Scraps.Tests/obj
+/Scraps.Tests/.vs
