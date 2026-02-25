@@ -105,16 +105,6 @@ namespace Scraps.Configs
         public static int ServerDiscoveryTimeout = 1;
 
         /// <summary>
-        /// Кэшировать найденный сервер для последующих вызовов.
-        /// </summary>
-        public static bool CacheDiscoveredServer = true;
-
-        /// <summary>
-        /// Использовать расширенный поиск через SqlDataSourceEnumerator.
-        /// </summary>
-        public static bool UseExtendedDiscovery = true;
-
-        /// <summary>
         /// Использовать параллельный поиск серверов (ускоряет в 3-7 раз).
         /// </summary>
         public static bool UseParallelServerDiscovery = true;

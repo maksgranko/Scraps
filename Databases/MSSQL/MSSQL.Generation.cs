@@ -20,7 +20,13 @@ namespace Scraps.Databases
             ScrapsConfig.UseRoleIdMapping = mode >= DatabaseGenerationMode.Standard;
 
             if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-                throw new InvalidOperationException("ScrapsConfig.ConnectionString не задан. Укажите его вручную (можно через MSSQL.ConnectionStringBuilder).");
+            {
+                ScrapsConfig.ConnectionString = ConnectionStringBuilder();
+                if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                {
+                    throw new InvalidOperationException("ScrapsConfig.ConnectionString не задан. Автоматически строку подобрать не удалось. Укажите её вручную (можно через MSSQL.ConnectionStringBuilder).");
+                }
+            }
 
             GenerateIfNotExists(new DatabaseGenerationOptions { Mode = mode });
         }

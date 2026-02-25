@@ -14,15 +14,7 @@ namespace Scraps.Databases
     /// </summary>
     public static partial class MSSQL
     {
-        private static string _cachedServerConnectionString;
-
-        /// <summary>
-        /// Сбросить кэшированный сервер (полезно при смене конфигурации).
-        /// </summary>
-        public static void ClearServerCache()
-        {
-            _cachedServerConnectionString = null;
-        }
+        
         /// <summary>
         /// Безопасно обернуть имя таблицы/колонки в [].
         /// </summary>
@@ -128,16 +120,16 @@ namespace Scraps.Databases
         /// <summary>Попытаться найти SQL Server среди популярных вариантов (оптимизировано).</summary>
         public static string ParseFirstSQLServer(string databaseName)
         {
-            if (ScrapsConfig.CacheDiscoveredServer && !string.IsNullOrWhiteSpace(_cachedServerConnectionString))
-                return _cachedServerConnectionString;
+            if (!string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                return ScrapsConfig.ConnectionString;
 
             if (!string.IsNullOrWhiteSpace(ScrapsConfig.ExplicitServerName))
             {
                 string explicitResult = TestServer(ScrapsConfig.ExplicitServerName, databaseName);
                 if (explicitResult != null)
                 {
-                    if (ScrapsConfig.CacheDiscoveredServer)
-                        _cachedServerConnectionString = explicitResult;
+                    if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                        ScrapsConfig.ConnectionString = explicitResult;
                     return explicitResult;
                 }
             }
@@ -147,9 +139,11 @@ namespace Scraps.Databases
                 "localhost",
                 ".",
                 ".\\SQLSERVER01",
+                ".\\MSSQLSERVER01",
                 Environment.MachineName,
                 $"{Environment.MachineName}\\SQLEXPRESS",
                 $"{Environment.MachineName}\\SQLSERVER01",
+                $"{Environment.MachineName}\\MSSQLSERVER01",
             };
 
             string result = ScrapsConfig.UseParallelServerDiscovery
@@ -158,37 +152,34 @@ namespace Scraps.Databases
 
             if (result != null)
             {
-                if (ScrapsConfig.CacheDiscoveredServer)
-                    _cachedServerConnectionString = result;
+                if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                    ScrapsConfig.ConnectionString = result;
                 return result;
             }
 
-            if (ScrapsConfig.UseExtendedDiscovery)
+            var instances = TryGetSqlDataSources();
+            if (instances != null)
             {
-                var instances = TryGetSqlDataSources();
-                if (instances != null)
+                var extendedServers = new List<string>();
+                foreach (DataRow row in instances.Rows)
                 {
-                    var extendedServers = new List<string>();
-                    foreach (DataRow row in instances.Rows)
-                    {
-                        string serverName = row["ServerName"].ToString();
-                        string instanceName = row["InstanceName"].ToString();
-                        string fullServerName = string.IsNullOrEmpty(instanceName)
-                            ? serverName
-                            : $"{serverName}\\{instanceName}";
-                        extendedServers.Add(fullServerName);
-                    }
+                    string serverName = row["ServerName"].ToString();
+                    string instanceName = row["InstanceName"].ToString();
+                    string fullServerName = string.IsNullOrEmpty(instanceName)
+                        ? serverName
+                        : $"{serverName}\\{instanceName}";
+                    extendedServers.Add(fullServerName);
+                }
 
-                    result = ScrapsConfig.UseParallelServerDiscovery
-                        ? TestServersParallel(extendedServers.ToArray(), databaseName)
-                        : TestServersSequential(extendedServers.ToArray(), databaseName);
+                result = ScrapsConfig.UseParallelServerDiscovery
+                    ? TestServersParallel(extendedServers.ToArray(), databaseName)
+                    : TestServersSequential(extendedServers.ToArray(), databaseName);
 
-                    if (result != null)
-                    {
-                        if (ScrapsConfig.CacheDiscoveredServer)
-                            _cachedServerConnectionString = result;
-                        return result;
-                    }
+                if (result != null)
+                {
+                    if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                        ScrapsConfig.ConnectionString = result;
+                    return result;
                 }
             }
 
