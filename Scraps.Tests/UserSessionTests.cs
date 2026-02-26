@@ -1,4 +1,4 @@
-﻿using Scraps.Configs;
+using Scraps.Configs;
 using Scraps.Databases;
 using Scraps.Security;
 using Xunit;
@@ -34,7 +34,23 @@ namespace Scraps.Tests
             var hash = UserSession.Utilities.HashPassword("test");
             Assert.False(string.IsNullOrWhiteSpace(hash));
         }
+        [Fact]
+        public void RegisterUser_InvalidPassword_Throws()
+        {
+            var login = "user_" + System.Guid.NewGuid().ToString("N");
+            var badPassword = "short";
+            var role = "default";
 
+            Assert.Throws<System.InvalidOperationException>(() =>
+                UserSession.RegisterUser(login, badPassword, role));
+        }
+
+        [Fact]
+        public void CheckIsUserExists_ReturnsFalse_WhenMissing()
+        {
+            var login = "missing_" + System.Guid.NewGuid().ToString("N");
+            Assert.False(UserSession.CheckIsUserExists(login));
+        }
         [Fact]
         public void AuthHashing_RespectsConfig()
         {
@@ -59,5 +75,30 @@ namespace Scraps.Tests
                 UserSession.Logout();
             }
         }
+
+        [Fact]
+        public void ChangePassword_UpdatesStoredValue()
+        {
+            var login = "user_" + System.Guid.NewGuid().ToString("N");
+            var password = "TestPass1!";
+            var newPassword = "NewPass1!";
+            var role = "default";
+
+            UserSession.RegisterUser(login, password, role);
+            try
+            {
+                UserSession.Login(login, password);
+                UserSession.ChangePassword(newPassword);
+                UserSession.Logout();
+
+                Assert.True(UserSession.CheckIsUserValid(login, newPassword));
+            }
+            finally
+            {
+                MSSQL.Users.Delete(login);
+                UserSession.Logout();
+            }
+        }
     }
 }
+

@@ -40,6 +40,13 @@ namespace Scraps.Tests
         }
 
         [Fact]
+        public void IsNullableColumn_ThrowsOnMissingColumn()
+        {
+            Assert.Throws<System.InvalidOperationException>(() =>
+                MSSQL.IsNullableColumn("Таблица 1", "MissingColumn"));
+        }
+
+        [Fact]
         public void RolePermissions_DefaultRowExists()
         {
             RoleManager.InitializeFromDb();

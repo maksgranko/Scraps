@@ -27,5 +27,28 @@ namespace Scraps.Tests
             var tables = TableCatalog.InitializeTablesWithRegistry(autodetect: false, manualTables: new string[0]);
             Assert.Contains("Virtual_Reg", tables);
         }
+
+        [Fact]
+        public void InitializeTables_RemoveOnStart_Works()
+        {
+            var tables = TableCatalog.InitializeTables(
+                autodetect: false,
+                manualTables: new[] { "A", "B" },
+                removeOnStart: new[] { "B" });
+
+            Assert.Contains("A", tables);
+            Assert.DoesNotContain("B", tables);
+        }
+
+        [Fact]
+        public void InitializeTables_RemoveOnAutodetect_Works()
+        {
+            var tables = TableCatalog.InitializeTables(
+                autodetect: true,
+                manualTables: null,
+                removeOnAutodetect: new[] { "Users" });
+
+            Assert.DoesNotContain("Users", tables);
+        }
     }
 }

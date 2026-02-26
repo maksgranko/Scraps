@@ -106,6 +106,13 @@ DataImportService.ImportToTableSafe(
 );
 ```
 
+## Парс DataTable из строки
+
+```csharp
+var input = "Name,Age\nIvan,20";
+var dt = DataTableParser.ParseDelimited(input, delimiter: ',', hasHeader: true);
+```
+
 ## Экспорт
 
 ```csharp

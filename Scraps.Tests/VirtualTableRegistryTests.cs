@@ -23,5 +23,25 @@ namespace Scraps.Tests
             Assert.True(VirtualTableRegistry.CheckAccess("Virtual_Role", "Admin", PermissionFlags.Read, out _));
             Assert.False(VirtualTableRegistry.CheckAccess("Virtual_Role", "User", PermissionFlags.Read, out _));
         }
+
+        [Fact]
+        public void MissingVirtualTable_ReturnsError()
+        {
+            VirtualTableRegistry.Clear();
+            var ok = VirtualTableRegistry.CheckAccess("Missing", "Admin", PermissionFlags.Read, out var error);
+
+            Assert.False(ok);
+            Assert.False(string.IsNullOrWhiteSpace(error));
+        }
+
+        [Fact]
+        public void BuildSelectQuery_QuotesColumnsAndTable()
+        {
+            var sql = VirtualTableRegistry.BuildSelectQuery("dbo.Table 1", new[] { "Col 1", "Col]2" }, "Id > 1");
+            Assert.Contains("[dbo].[Table 1]", sql);
+            Assert.Contains("[Col 1]", sql);
+            Assert.Contains("[Col]]2]", sql);
+            Assert.Contains("WHERE Id > 1", sql);
+        }
     }
 }
