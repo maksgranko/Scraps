@@ -13,6 +13,7 @@ namespace Scraps.Tests
         {
             var tables = MSSQL.GetTables();
             Assert.Contains("Users", tables);
+            Assert.Contains("Таблица 1", tables);
         }
 
         [Fact]

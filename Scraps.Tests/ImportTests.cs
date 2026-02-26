@@ -13,6 +13,9 @@ namespace Scraps.Tests
         [Fact]
         public void ValidateColumns_WithTranslations()
         {
+            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.TableTranslations.Clear();
+
             TranslationManager.ColumnTranslations["ImportTest"] = new Dictionary<string, string>
             {
                 ["Name"] = "Имя"
@@ -30,6 +33,9 @@ namespace Scraps.Tests
         [Fact]
         public void ValidateColumnCount_Works()
         {
+            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.TableTranslations.Clear();
+
             var dt = new DataTable();
             dt.Columns.Add("Name");
             var ok = DataImportService.ValidateColumnCount(dt, "ImportTest", out int expected, out int actual);
@@ -41,6 +47,9 @@ namespace Scraps.Tests
         [Fact]
         public void ValidateTypes_DetectsMismatch()
         {
+            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.TableTranslations.Clear();
+
             var dt = new DataTable();
             dt.Columns.Add("Id");
             dt.Columns.Add("Name");
@@ -54,6 +63,9 @@ namespace Scraps.Tests
         [Fact]
         public void ImportToTable_Works()
         {
+            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.TableTranslations.Clear();
+
             var dt = new DataTable();
             dt.Columns.Add("Name");
             dt.Rows.Add("Petr");

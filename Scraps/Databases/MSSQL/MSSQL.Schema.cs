@@ -25,7 +25,7 @@ namespace Scraps.Databases
                 throw new ArgumentException("Название базы данных не может быть пустым.", nameof(databaseName));
 
             DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(GetMasterConnectionString()))
+            using (SqlConnection conn = new SqlConnection(GetDatabaseConnectionString(db)))
             {
                 string query = @"SELECT TABLE_NAME
                                 FROM INFORMATION_SCHEMA.TABLES
@@ -33,11 +33,10 @@ namespace Scraps.Databases
 
                 if (!includeSystemTables)
                 {
-                    query += " AND TABLE_CATALOG = @DatabaseName";
+                    query += " AND TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')";
                 }
 
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                da.SelectCommand.Parameters.AddWithValue("@DatabaseName", db);
                 da.Fill(dt);
             }
             return dt.Rows.Cast<DataRow>().Select(r => r[0].ToString()).ToArray();

@@ -56,6 +56,7 @@ namespace Scraps.Data
             public DataCellMatch Prev(bool wrap = false)
             {
                 if (_matches.Count == 0) return null;
+                if (_index == -1 && !wrap) return null;
                 if (_index - 1 < 0)
                 {
                     if (!wrap) return _matches[_index];

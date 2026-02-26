@@ -128,7 +128,15 @@ namespace Scraps.Security
             UserLogin = login;
             UserRole = MSSQL.Users.GetUserStatus(login);
             UserData = MSSQL.Users.GetByLogin(login);
-            UserId = (int)UserData[0];
+            if (ScrapsConfig.UsersTableColumnsNames != null &&
+                ScrapsConfig.UsersTableColumnsNames.TryGetValue("UserID", out var idColumn))
+            {
+                UserId = Convert.ToInt32(UserData[idColumn]);
+            }
+            else
+            {
+                UserId = Convert.ToInt32(UserData[0]);
+            }
         }
 
         /// <summary>

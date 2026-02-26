@@ -202,12 +202,25 @@ namespace Scraps.Databases
 
             try
             {
-                Task<string> firstCompleted = Task.WhenAny(tasks).Result;
-                cts.Cancel();
-                return firstCompleted.Result;
-            }
-            catch
-            {
+                while (tasks.Count > 0)
+                {
+                    Task<string> completed = Task.WhenAny(tasks).Result;
+                    tasks.Remove(completed);
+
+                    try
+                    {
+                        var result = completed.Result;
+                        if (result != null)
+                        {
+                            cts.Cancel();
+                            return result;
+                        }
+                    }
+                    catch
+                    {
+                        // ignore failed task and keep waiting for others
+                    }
+                }
                 return null;
             }
             finally

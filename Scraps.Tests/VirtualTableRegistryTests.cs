@@ -10,6 +10,7 @@ namespace Scraps.Tests
         [Fact]
         public void RolePermissions_Applied()
         {
+            VirtualTableRegistry.Clear();
             VirtualTableRegistry.Register(
                 name: "Virtual_Role",
                 sql: "SELECT Name FROM [Таблица 1]",

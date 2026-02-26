@@ -20,8 +20,7 @@ namespace Scraps.Tests
             Assert.True(registered);
 
             UserSession.Login(login, password);
-            var ok = UserSession.UserLogin!=null;
-            Assert.True(ok);
+            Assert.False(string.IsNullOrWhiteSpace(UserSession.UserLogin));
             Assert.Equal(login, UserSession.UserLogin);
             Assert.NotEqual(-1, UserSession.UserId);
 
@@ -43,13 +42,22 @@ namespace Scraps.Tests
             var password = "TestPass1!";
             var role = "default";
 
+            var prev = ScrapsConfig.AuthHashPasswords;
             ScrapsConfig.AuthHashPasswords = true;
-            UserSession.RegisterUser(login, password, role);
-            var registered = UserSession.CheckIsUserExists(login);
-            Assert.True(registered);
+            try
+            {
+                UserSession.RegisterUser(login, password, role);
+                var registered = UserSession.CheckIsUserExists(login);
+                Assert.True(registered);
 
-            var ok = UserSession.CheckIsUserValid(login, password);
-            Assert.True(ok);
+                var ok = UserSession.CheckIsUserValid(login, password);
+                Assert.True(ok);
+            }
+            finally
+            {
+                ScrapsConfig.AuthHashPasswords = prev;
+                UserSession.Logout();
+            }
         }
     }
 }

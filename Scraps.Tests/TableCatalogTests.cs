@@ -9,6 +9,7 @@ namespace Scraps.Tests
         [Fact]
         public void InitializeTables_WithVirtuals()
         {
+            VirtualTableRegistry.Clear();
             var tables = TableCatalog.InitializeTables(
                 autodetect: false,
                 manualTables: new[] { "Users" },
@@ -21,6 +22,7 @@ namespace Scraps.Tests
         [Fact]
         public void InitializeTablesWithRegistry_Works()
         {
+            VirtualTableRegistry.Clear();
             VirtualTableRegistry.RegisterSelect("Virtual_Reg", "Таблица 1");
             var tables = TableCatalog.InitializeTablesWithRegistry(autodetect: false, manualTables: new string[0]);
             Assert.Contains("Virtual_Reg", tables);

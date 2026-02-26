@@ -1,11 +1,10 @@
-﻿# Scraps
+# Scraps
 
-Scraps — небольшая библиотека помощник. Тут собраны повторно используемые методы для работы с БД, правами, переводами, авторизацией/сессией, импортом и экспортом.
- 
+Scraps — небольшая библиотека‑помощник. Здесь собраны повторно используемые методы для работы с БД, правами, переводами, авторизацией/сессией, импортом и экспортом.
 
-## НЕ РЕКОМЕНДУЕТСЯ В ОБЫЧНЫХ ПРОЕКТАХ, ПОСКОЛЬКУ ЭТО НЕ ГОДИТСЯ К ИСПОЛЬЗОВАНИЮ ИЗ-ЗА ПРОБЛЕМ С БЕЗОПАСНОСТЬЮ.
-Однако, в то же время, это может помочь студентам, которым нужно часто создавать формочки, работать с ними, и создавать базы данных с различными требованиями на C#, в основном .NET Framework 4, однако может быть совместимо и с другими версиями.
+## Важно про безопасность
 
+Это учебная библиотека. Для реальных проектов **не рекомендуется**, потому что многие решения упрощены (например, авто‑поиск SQL Server, хранение паролей, прямой SQL и т.п.).
 
 ## Структура
 
@@ -25,7 +24,7 @@ Scraps — небольшая библиотека помощник. Тут со
 - `Scraps/Export`
   - `ReportDataBuilder.cs`, `ReportExporter.cs` — экспорт Excel/PDF
 
-## Быстрый старт (самое главное)
+## Быстрый старт
 
 ```csharp
 // 1) Настройки
@@ -33,18 +32,20 @@ ScrapsConfig.DatabaseName = "MyDb";
 ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder();
 
 // 2) Создать базовую схему (Users/Roles/RolePermissions), если нет
-MSSQL.PreCheck();
+MSSQL.Initialize(databaseName: "MyDb", mode: DatabaseGenerationMode.Full);
 
 // 3) Подгрузить роли/права из БД
 RoleManager.InitializeFromDb();
 
 // 4) Вход и сессия
-var ok = UserSession.Login("admin", "Password123!");
-if (ok)
-{
-    var role = UserSession.UserRole;
-}
+UserSession.Login("admin", "Password123!");
+var role = UserSession.UserRole;
 ```
+
+## Поддерживаемые платформы
+
+- Библиотека: `netstandard2.0`
+- Тесты: `net48` (есть WinForms/STA‑тесты)
 
 ## Права (PermissionFlags)
 
@@ -59,7 +60,8 @@ var flags = PermissionFlags.Read | PermissionFlags.Export;
 ```csharp
 var all = PermissionFlags.Read | PermissionFlags.Write | PermissionFlags.Delete | PermissionFlags.Export | PermissionFlags.Import;
 ```
-Так работает ВЕЗДЕ, где можно указывать права.
+
+Так работает везде, где можно указывать права.
 
 ## Виртуальные таблицы (только SELECT)
 
@@ -112,9 +114,30 @@ ReportExporter.ExportToExcel(dt, "users.xlsx");
 ReportExporter.ExportToPdf(dt, "users.pdf");
 ```
 
+## Конфигурация (важные поля)
+
+- `ScrapsConfig.DatabaseName` — имя БД.
+- `ScrapsConfig.ConnectionString` — строка подключения (если не задана, можно попробовать `MSSQL.ConnectionStringBuilder()`).
+- `ScrapsConfig.UseRoleIdMapping` — роль как `RoleID` (Standard/Full) или строка (Simple).
+- `ScrapsConfig.AuthHashPasswords` и `AuthHashAlgorithm` — хэширование паролей.
+
+## Тесты
+
+Тесты делятся на:
+
+- DB‑тесты (нужен доступный SQL Server, права на создание БД).
+- UI‑тесты (WinForms, STA).
+
+Запуск:
+
+```bash
+dotnet test Scraps.Tests/Scraps.Tests.csproj
+```
+
+Если SQL Server недоступен, DB‑тесты будут автоматически пропущены.
+
 ## Полезные заметки
 
 - `UserSession.Utilities` — проверка пароля и хэши.
 - `TranslationManager` меняет названия колонок прямо в `DataTable`.
 - В `VirtualTableRegistry` можно задавать права по ролям, есть правило `*` (для всех).
-

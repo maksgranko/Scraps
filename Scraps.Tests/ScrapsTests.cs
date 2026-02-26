@@ -26,6 +26,14 @@ namespace Scraps.Tests
         }
 
         [Fact]
+        public void QuoteIdentifier_EscapesClosingBracket()
+        {
+            var name = "na]me";
+            var quoted = MSSQL.QuoteIdentifier(name);
+            Assert.Equal("[na]]me]", quoted);
+        }
+
+        [Fact]
         public void ConnectionStringBuilder_AllowsDirectString()
         {
             var input = "Data Source=.;Initial Catalog=Test;Integrated Security=True;";
@@ -44,6 +52,7 @@ namespace Scraps.Tests
         [Fact]
         public void VirtualTableRegistry_SelectWorks()
         {
+            VirtualTableRegistry.Clear();
             VirtualTableRegistry.RegisterSelect("Virtual_Test", "Таблица 1");
             var dt = VirtualTableRegistry.GetData("Virtual_Test", roleName: null, required: PermissionFlags.Read);
             Assert.NotNull(dt);

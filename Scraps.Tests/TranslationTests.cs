@@ -10,6 +10,9 @@ namespace Scraps.Tests
         [Fact]
         public void TranslateTableName_Works()
         {
+            TranslationManager.TableTranslations.Clear();
+            TranslationManager.ColumnTranslations.Clear();
+
             TranslationManager.TableTranslations["Users"] = "Пользователи";
             Assert.Equal("Пользователи", TranslationManager.TranslateTableName("Users"));
             Assert.Equal("Users", TranslationManager.UntranslateTableName("Пользователи"));
@@ -18,6 +21,9 @@ namespace Scraps.Tests
         [Fact]
         public void TranslateDataTable_Works()
         {
+            TranslationManager.TableTranslations.Clear();
+            TranslationManager.ColumnTranslations.Clear();
+
             TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
             {
                 ["Login"] = "Логин"
@@ -37,6 +43,9 @@ namespace Scraps.Tests
         [Fact]
         public void TranslateTableList_Works()
         {
+            TranslationManager.TableTranslations.Clear();
+            TranslationManager.ColumnTranslations.Clear();
+
             TranslationManager.TableTranslations["ImportTest"] = "Импорт";
             var list = TranslationManager.TranslateTableList(new[] { "ImportTest" });
             Assert.Equal("Импорт", list[0]);
