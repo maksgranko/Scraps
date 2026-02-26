@@ -3,20 +3,23 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.12</Version>
+    <Version>0.13</Version>
     <Authors>Maks Granko</Authors>
     <Company></Company>
     <Description>DPGT Helper, precreated methods, samples</Description>
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.2026.56.22</AssemblyVersion>
-    <FileVersion>1.2026.56.22</FileVersion>
+    <AssemblyVersion>1.2026.56.24</AssemblyVersion>
+    <FileVersion>1.2026.56.24</FileVersion>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="EPPlus" Version="7.0.6" />
     <PackageReference Include="iTextSharp" Version="5.5.13.5" />
+
+	  <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
