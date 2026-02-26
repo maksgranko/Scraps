@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Data;
 
-namespace Scraps.Data
+namespace Scraps.Data.DataTable
 {
     /// <summary>
     /// Утилиты парсинга DataTable из строк.

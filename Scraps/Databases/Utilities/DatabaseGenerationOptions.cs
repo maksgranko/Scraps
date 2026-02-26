@@ -1,13 +1,17 @@
 ﻿using Scraps.Configs;
 using System.Collections.Generic;
 
-namespace Scraps.Databases
+namespace Scraps.Databases.Utilities
 {
     /// <summary>
     /// Режим генерации схемы базы данных.
     /// </summary>
     public enum DatabaseGenerationMode
     {
+        /// <summary>
+        /// Только создать базу данных, без таблиц.
+        /// </summary>
+        None,
         /// <summary>
         /// Минимум: только таблица Users (Role как строка).
         /// </summary>
@@ -58,6 +62,12 @@ namespace Scraps.Databases
         /// </summary>
         public static DatabaseGenerationOptions ForDatabase(string databaseName, DatabaseGenerationMode mode = DatabaseGenerationMode.Full) 
             => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = mode };
+
+        /// <summary>
+        /// Только база данных, без таблиц.
+        /// </summary>
+        public static DatabaseGenerationOptions None(string databaseName = null)
+            => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = DatabaseGenerationMode.None };
 
         /// <summary>
         /// Простой режим: только Users (Role как строка).

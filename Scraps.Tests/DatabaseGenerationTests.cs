@@ -1,5 +1,6 @@
 using Scraps.Configs;
 using Scraps.Databases;
+using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -24,9 +25,19 @@ namespace Scraps.Tests
                 Assert.Equal("nvarchar", schema["Role"]);
             }
         }
-
         [Fact]
-        public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()
+        public void GenerateIfNotExists_None_CreatesDatabaseOnly()
+        {
+            using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
+            {
+                var tables = MSSQL.GetTables();
+                Assert.DoesNotContain("Users", tables);
+                Assert.DoesNotContain("Roles", tables);
+                Assert.DoesNotContain("RolePermissions", tables);
+            }
+        }
+        [Fact]
+        public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()\r
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
@@ -306,3 +317,6 @@ namespace Scraps.Tests
         }
     }
 }
+
+
+

@@ -1,4 +1,5 @@
 ﻿using Scraps.Configs;
+using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -65,6 +66,8 @@ namespace Scraps.Databases
             using (var conn = new SqlConnection(GetDatabaseConnectionString(options.DatabaseName)))
             {
                 conn.Open();
+                if (options.Mode == DatabaseGenerationMode.None)
+                    return;
 
                 bool createRoles = options.Mode >= DatabaseGenerationMode.Standard;
                 bool createPermissions = options.Mode >= DatabaseGenerationMode.Full;
@@ -163,3 +166,7 @@ namespace Scraps.Databases
         }
     }
 }
+
+
+
+

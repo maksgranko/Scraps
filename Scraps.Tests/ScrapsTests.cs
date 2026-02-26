@@ -71,7 +71,7 @@ namespace Scraps.Tests
         public void DataGridView_Smoke_SelectMatch()
         {
             var dt = MSSQL.GetTableData("Таблица 1");
-            var match = Scraps.Data.DataTableSearch.FindMatches(dt, "Ivan").FirstOrDefault();
+            var match = Scraps.Data.DataTable.DataTableSearch.FindMatches(dt, "Ivan").FirstOrDefault();
             Assert.NotNull(match);
 
             var grid = new DataGridView();
@@ -90,3 +90,4 @@ namespace Scraps.Tests
         }
     }
 }
+

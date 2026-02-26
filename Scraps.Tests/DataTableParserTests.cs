@@ -1,4 +1,4 @@
-using Scraps.Data;
+﻿using Scraps.Data.DataTable;
 using System.Data;
 using Xunit;
 
@@ -53,3 +53,4 @@ namespace Scraps.Tests
         }
     }
 }
+

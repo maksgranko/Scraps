@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace Scraps.Data
+namespace Scraps.Data.DataTable
 {
     /// <summary>
     /// Простые методы поиска и фильтрации по DataTable.
@@ -262,3 +262,6 @@ namespace Scraps.Data
         }
     }
 }
+
+
+

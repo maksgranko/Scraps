@@ -1,9 +1,9 @@
-﻿using Scraps.Localization;
+﻿using Scraps.Databases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Scraps.Databases
+namespace Scraps.Databases.Utilities
 {
     /// <summary>
     /// Каталог таблиц и утилиты инициализации списка.
@@ -56,21 +56,11 @@ namespace Scraps.Databases
             var virtualTables = VirtualTableRegistry.GetNames();
             return InitializeTables(autodetect, manualTables, removeOnStart, removeOnAutodetect, virtualTables);
         }
-
-        /// <summary>
-        /// Перевести название таблицы для UI.
-        /// </summary>
-        public static string TranslateTableName(string value)
-        {
-            return TranslationManager.TranslateTableName(value);
-        }
-
-        /// <summary>
-        /// Вернуть оригинальное название таблицы по переводу.
-        /// </summary>
-        public static string UntranslateTableName(string value)
-        {
-            return TranslationManager.UntranslateTableName(value);
-        }
     }
 }
+
+
+
+
+
+
