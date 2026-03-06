@@ -1,4 +1,4 @@
-﻿using Scraps.Data.DataTable;
+﻿using Scraps.Data.DataTables;
 using System.Data;
 using Xunit;
 
@@ -13,7 +13,7 @@ namespace Scraps.Tests
             dt.Columns.Add("Name");
             dt.Rows.Add("Ivan");
 
-            var nav = DataTableSearch.CreateNavigator(dt, "Ivan");
+            var nav = Search.CreateNavigator(dt, "Ivan");
             var prev = nav.Prev();
 
             Assert.Null(prev);
@@ -27,7 +27,7 @@ namespace Scraps.Tests
             dt.Rows.Add("Ivan");
             dt.Rows.Add("Ivan");
 
-            var nav = DataTableSearch.CreateNavigator(dt, "Ivan");
+            var nav = Search.CreateNavigator(dt, "Ivan");
             var prev = nav.Prev(wrap: true);
 
             Assert.NotNull(prev);
@@ -35,4 +35,8 @@ namespace Scraps.Tests
         }
     }
 }
+
+
+
+
 

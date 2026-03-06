@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 
 namespace Scraps.Import
 {
@@ -52,8 +53,17 @@ namespace Scraps.Import
         /// </summary>
         public static DataTable LoadCsvToDataTable(string filePath, char delimiter = ',')
         {
+            return LoadCsvToDataTable(filePath, new[] { delimiter }, autoDetectDelimiter: false);
+        }
+
+        /// <summary>
+        /// Загрузить CSV в DataTable с поддержкой нескольких разделителей.
+        /// </summary>
+        public static DataTable LoadCsvToDataTable(string filePath, char[] delimiters, bool autoDetectDelimiter = true)
+        {
             if (string.IsNullOrWhiteSpace(filePath)) throw new ArgumentNullException(nameof(filePath));
             if (!File.Exists(filePath)) throw new FileNotFoundException("Файл не найден.", filePath);
+            if (delimiters == null || delimiters.Length == 0) throw new ArgumentNullException(nameof(delimiters));
 
             var dt = new DataTable();
             using (var reader = new StreamReader(filePath))
@@ -61,7 +71,8 @@ namespace Scraps.Import
                 string headerLine = reader.ReadLine();
                 if (headerLine == null) return dt;
 
-                string[] headers = headerLine.Split(delimiter);
+                char activeDelimiter = autoDetectDelimiter ? DetectDelimiter(headerLine, delimiters) : delimiters[0];
+                string[] headers = ParseCsvLine(headerLine, activeDelimiter);
                 foreach (string header in headers)
                 {
                     dt.Columns.Add(header);
@@ -69,7 +80,9 @@ namespace Scraps.Import
 
                 while (!reader.EndOfStream)
                 {
-                    string[] rows = reader.ReadLine().Split(delimiter);
+                    var line = reader.ReadLine();
+                    if (line == null) continue;
+                    string[] rows = ParseCsvLine(line, activeDelimiter);
                     dt.Rows.Add(rows);
                 }
             }
@@ -162,11 +175,13 @@ namespace Scraps.Import
 
                 if (dbSchema.TryGetValue(originalName, out var dbType))
                 {
-                    if ((dbType == "int" || dbType == "decimal") &&
-                        importData.Rows.Count > 0 &&
-                        !double.TryParse(importData.Rows[0][column].ToString(), out _))
+                    for (int i = 0; i < importData.Rows.Count; i++)
                     {
-                        typeErrors.Add($"{columnName}: ожидается {dbType}, получено string");
+                        var raw = importData.Rows[i][column];
+                        if (!IsDbTypeCompatible(raw, dbType))
+                        {
+                            typeErrors.Add($"{columnName}: ожидается {dbType}, строка {i + 1} содержит '{raw}'");
+                        }
                     }
                 }
             }
@@ -224,6 +239,101 @@ namespace Scraps.Import
             return errors.Count == 0;
         }
 
+        private static bool IsDbTypeCompatible(object raw, string dbType)
+        {
+            if (raw == null || raw == DBNull.Value) return true;
+            var value = raw.ToString();
+            if (string.IsNullOrWhiteSpace(value)) return true;
+
+            switch ((dbType ?? string.Empty).ToLowerInvariant())
+            {
+                case "int":
+                case "smallint":
+                case "tinyint":
+                    return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)
+                        || int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out _);
+                case "bigint":
+                    return long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)
+                        || long.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out _);
+                case "decimal":
+                case "numeric":
+                case "money":
+                case "smallmoney":
+                    return decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out _)
+                        || decimal.TryParse(value, NumberStyles.Number, CultureInfo.CurrentCulture, out _);
+                case "float":
+                case "real":
+                    return double.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out _)
+                        || double.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out _);
+                case "bit":
+                    return bool.TryParse(value, out _)
+                        || value == "0"
+                        || value == "1";
+                case "date":
+                case "datetime":
+                case "datetime2":
+                case "smalldatetime":
+                    return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out _)
+                        || DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out _);
+                case "uniqueidentifier":
+                    return Guid.TryParse(value, out _);
+                default:
+                    return true;
+            }
+        }
+
+        private static char DetectDelimiter(string line, char[] delimiters)
+        {
+            char best = delimiters[0];
+            int bestCount = -1;
+            for (int i = 0; i < delimiters.Length; i++)
+            {
+                var count = ParseCsvLine(line, delimiters[i]).Length;
+                if (count > bestCount)
+                {
+                    bestCount = count;
+                    best = delimiters[i];
+                }
+            }
+            return best;
+        }
+
+        private static string[] ParseCsvLine(string line, char delimiter)
+        {
+            if (line == null) return new string[0];
+            var result = new List<string>();
+            var current = new System.Text.StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '"')
+                {
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        current.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (c == delimiter && !inQuotes)
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+            result.Add(current.ToString());
+            return result.ToArray();
+        }
+
         /// <summary>
         /// Импортировать данные в таблицу (с учётом переводов колонок).
         /// </summary>
@@ -255,3 +365,7 @@ namespace Scraps.Import
         }
     }
 }
+
+
+
+

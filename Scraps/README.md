@@ -113,3 +113,7 @@ ReportExporter.ExportToPdf(dt, "users.pdf");
 - `TranslationManager` меняет названия колонок прямо в `DataTable`.
 - В `VirtualTableRegistry` можно задавать права по ролям, есть правило `*` (для всех).
 
+
+
+
+

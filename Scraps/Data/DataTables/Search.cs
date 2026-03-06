@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace Scraps.Data.DataTable
+namespace Scraps.Data.DataTables
 {
     /// <summary>
     /// Простые методы поиска и фильтрации по DataTable.
     /// </summary>
-    public static class DataTableSearch
+    public static class Search
     {
         /// <summary>
         /// Навигатор по результатам поиска.
@@ -18,6 +18,9 @@ namespace Scraps.Data.DataTable
             private readonly List<DataCellMatch> _matches;
             private int _index = -1;
 
+            /// <summary>
+            /// Создать навигатор по набору найденных совпадений.
+            /// </summary>
             public MatchNavigator(List<DataCellMatch> matches)
             {
                 _matches = matches ?? new List<DataCellMatch>();
@@ -262,6 +265,13 @@ namespace Scraps.Data.DataTable
         }
     }
 }
+
+
+
+
+
+
+
 
 
 

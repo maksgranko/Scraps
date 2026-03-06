@@ -7,14 +7,14 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class DataTests
     {
-        [Fact]
+        [DbFact]
         public void FindByColumn_Works()
         {
             var dt = MSSQL.FindByColumn("Таблица 1", "Name", "Ivan", useLike: true);
             Assert.True(dt.Rows.Count >= 1);
         }
 
-        [Fact]
+        [DbFact]
         public void ApplyTableChanges_InsertsRow()
         {
             var dt = MSSQL.GetTableData("Таблица 1");
@@ -26,7 +26,7 @@ namespace Scraps.Tests
             Assert.True(affected >= 1);
         }
 
-        [Fact]
+        [DbFact]
         public void FindByColumn_NullValue_Works()
         {
             const string table = "FindNullTest";
@@ -47,3 +47,4 @@ namespace Scraps.Tests
         }
     }
 }
+

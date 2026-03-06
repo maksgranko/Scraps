@@ -7,7 +7,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class VirtualTableRegistryTests
     {
-        [Fact]
+        [DbFact]
         public void RolePermissions_Applied()
         {
             VirtualTableRegistry.Clear();
@@ -24,7 +24,7 @@ namespace Scraps.Tests
             Assert.False(VirtualTableRegistry.CheckAccess("Virtual_Role", "User", PermissionFlags.Read, out _));
         }
 
-        [Fact]
+        [DbFact]
         public void MissingVirtualTable_ReturnsError()
         {
             VirtualTableRegistry.Clear();
@@ -34,7 +34,7 @@ namespace Scraps.Tests
             Assert.False(string.IsNullOrWhiteSpace(error));
         }
 
-        [Fact]
+        [DbFact]
         public void BuildSelectQuery_QuotesColumnsAndTable()
         {
             var sql = VirtualTableRegistry.BuildSelectQuery("dbo.Table 1", new[] { "Col 1", "Col]2" }, "Id > 1");
@@ -43,5 +43,17 @@ namespace Scraps.Tests
             Assert.Contains("[Col]]2]", sql);
             Assert.Contains("WHERE Id > 1", sql);
         }
+
+        [DbFact]
+        public void EmptyRole_Denied()
+        {
+            VirtualTableRegistry.Clear();
+            VirtualTableRegistry.Register("Virtual_EmptyRole", "SELECT 1", PermissionFlags.Read);
+
+            var ok = VirtualTableRegistry.CheckAccess("Virtual_EmptyRole", "", PermissionFlags.Read, out var error);
+            Assert.False(ok);
+            Assert.False(string.IsNullOrWhiteSpace(error));
+        }
     }
 }
+

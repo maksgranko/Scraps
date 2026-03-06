@@ -88,3 +88,7 @@ namespace Scraps.Databases.Utilities
             => new DatabaseGenerationOptions { DatabaseName = databaseName, Mode = DatabaseGenerationMode.Full };
     }
 }
+
+
+
+

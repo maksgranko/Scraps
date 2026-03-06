@@ -1,4 +1,4 @@
-using Scraps.Configs;
+﻿using Scraps.Configs;
 using Scraps.Databases;
 using Scraps.Security;
 using Xunit;
@@ -8,7 +8,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class UserSessionTests
     {
-        [Fact]
+        [DbFact]
         public void RegisterAndLogin_Works()
         {
             var login = "user_" + System.Guid.NewGuid().ToString("N");
@@ -27,14 +27,14 @@ namespace Scraps.Tests
             UserSession.Logout();
         }
 
-        [Fact]
+        [DbFact]
         public void PasswordUtilities_Work()
         {
             Assert.True(UserSession.Utilities.IsPasswordValid("Abcdef1!"));
             var hash = UserSession.Utilities.HashPassword("test");
             Assert.False(string.IsNullOrWhiteSpace(hash));
         }
-        [Fact]
+        [DbFact]
         public void RegisterUser_InvalidPassword_Throws()
         {
             var login = "user_" + System.Guid.NewGuid().ToString("N");
@@ -45,13 +45,13 @@ namespace Scraps.Tests
                 UserSession.RegisterUser(login, badPassword, role));
         }
 
-        [Fact]
+        [DbFact]
         public void CheckIsUserExists_ReturnsFalse_WhenMissing()
         {
             var login = "missing_" + System.Guid.NewGuid().ToString("N");
             Assert.False(UserSession.CheckIsUserExists(login));
         }
-        [Fact]
+        [DbFact]
         public void AuthHashing_RespectsConfig()
         {
             var login = "user_" + System.Guid.NewGuid().ToString("N");
@@ -76,7 +76,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void ChangePassword_UpdatesStoredValue()
         {
             var login = "user_" + System.Guid.NewGuid().ToString("N");
@@ -101,4 +101,5 @@ namespace Scraps.Tests
         }
     }
 }
+
 

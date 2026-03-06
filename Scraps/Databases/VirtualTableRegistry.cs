@@ -163,7 +163,8 @@ namespace Scraps.Databases
 
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                return true;
+                error = "Роль не может быть пустой.";
+                return false;
             }
 
             if (entry.RolePermissions.TryGetValue(roleName, out var flags))
@@ -195,3 +196,7 @@ namespace Scraps.Databases
         }
     }
 }
+
+
+
+

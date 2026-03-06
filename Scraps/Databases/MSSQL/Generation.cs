@@ -3,6 +3,7 @@ using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Text;
 
 namespace Scraps.Databases
 {
@@ -147,6 +148,9 @@ namespace Scraps.Databases
             string quotedLogin = QuoteIdentifier(cols?["Login"] ?? "Login");
             string quotedPassword = QuoteIdentifier(cols?["Password"] ?? "Password");
             string quotedRole = QuoteIdentifier(cols?["Role"] ?? "Role");
+            string objectSuffix = BuildSqlObjectSafeSuffix(tableName);
+            string fkUsersRoles = QuoteIdentifier("FK_" + objectSuffix + "_Roles");
+            string ixUsersLogin = QuoteIdentifier("IX_" + objectSuffix + "_Login");
 
             var createCmd = new SqlCommand(
                 $"IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName) " +
@@ -157,15 +161,37 @@ namespace Scraps.Databases
                 $"{quotedPassword} nvarchar(64) NOT NULL, " +
                 (useRoleIdMapping
                     ? $"{quotedRole} int NOT NULL); " +
-                      $"ALTER TABLE {quotedTable} ADD CONSTRAINT [FK_Users_Roles] FOREIGN KEY ({quotedRole}) REFERENCES [Roles]([RoleID]); "
+                      $"ALTER TABLE {quotedTable} ADD CONSTRAINT {fkUsersRoles} FOREIGN KEY ({quotedRole}) REFERENCES [Roles]([RoleID]); "
                     : $"{quotedRole} nvarchar(64) NOT NULL); ") +
-                $"CREATE INDEX [IX_Users_Login] ON {quotedTable}({quotedLogin}); " +
+                $"CREATE INDEX {ixUsersLogin} ON {quotedTable}({quotedLogin}); " +
                 "END", conn);
             createCmd.Parameters.AddWithValue("@TableName", tableName);
             createCmd.ExecuteNonQuery();
         }
+
+        private static string BuildSqlObjectSafeSuffix(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "Users";
+
+            var sb = new StringBuilder(value.Length);
+            foreach (var ch in value)
+                sb.Append(char.IsLetterOrDigit(ch) ? ch : '_');
+
+            var safe = sb.ToString().Trim('_');
+            if (safe.Length == 0)
+                safe = "Users";
+            if (safe.Length > 90)
+                safe = safe.Substring(0, 90);
+
+            return safe;
+        }
     }
 }
+
+
+
+
 
 
 

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Data;
 
-namespace Scraps.Data.DataTable
+namespace Scraps.Data.DataTables
 {
     /// <summary>
     /// Утилиты парсинга DataTable из строк.
     /// </summary>
-    public static class DataTableParser
+    public static class Parser
     {
         /// <summary>
         /// Простой парс строк с разделителем без поддержки кавычек/экранирования.
@@ -93,3 +93,10 @@ namespace Scraps.Data.DataTable
         }
     }
 }
+
+
+
+
+
+
+

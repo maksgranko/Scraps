@@ -7,7 +7,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class TableCatalogTests
     {
-        [Fact]
+        [DbFact]
         public void InitializeTables_WithVirtuals()
         {
             VirtualTableRegistry.Clear();
@@ -20,7 +20,7 @@ namespace Scraps.Tests
             Assert.Contains("Virtual_One", tables);
         }
 
-        [Fact]
+        [DbFact]
         public void InitializeTablesWithRegistry_Works()
         {
             VirtualTableRegistry.Clear();
@@ -29,7 +29,7 @@ namespace Scraps.Tests
             Assert.Contains("Virtual_Reg", tables);
         }
 
-        [Fact]
+        [DbFact]
         public void InitializeTables_RemoveOnStart_Works()
         {
             var tables = TableCatalog.InitializeTables(
@@ -41,7 +41,7 @@ namespace Scraps.Tests
             Assert.DoesNotContain("B", tables);
         }
 
-        [Fact]
+        [DbFact]
         public void InitializeTables_RemoveOnAutodetect_Works()
         {
             var tables = TableCatalog.InitializeTables(
@@ -53,6 +53,7 @@ namespace Scraps.Tests
         }
     }
 }
+
 
 
 

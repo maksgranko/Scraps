@@ -1,5 +1,6 @@
 ﻿using Scraps.Databases;
 using Scraps.Security;
+using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 using Xunit;
@@ -9,7 +10,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class ScrapsTests
     {
-        [Fact]
+        [DbFact]
         public void QuoteIdentifier_WrapsNamesWithSpaces()
         {
             var name = "Таблица 1";
@@ -17,7 +18,7 @@ namespace Scraps.Tests
             Assert.Equal("[Таблица 1]", quoted);
         }
 
-        [Fact]
+        [DbFact]
         public void QuoteIdentifier_WrapsSchemaQualified()
         {
             var name = "dbo.Table";
@@ -25,7 +26,7 @@ namespace Scraps.Tests
             Assert.Equal("[dbo].[Table]", quoted);
         }
 
-        [Fact]
+        [DbFact]
         public void QuoteIdentifier_EscapesClosingBracket()
         {
             var name = "na]me";
@@ -33,7 +34,7 @@ namespace Scraps.Tests
             Assert.Equal("[na]]me]", quoted);
         }
 
-        [Fact]
+        [DbFact]
         public void ConnectionStringBuilder_AllowsDirectString()
         {
             var input = "Data Source=.;Initial Catalog=Test;Integrated Security=True;";
@@ -41,7 +42,7 @@ namespace Scraps.Tests
             Assert.Equal(input, output);
         }
 
-        [Fact]
+        [DbFact]
         public void GetTableData_WorksWithSpaceInName()
         {
             var dt = MSSQL.GetTableData("Таблица 1");
@@ -49,17 +50,17 @@ namespace Scraps.Tests
             Assert.True(dt.Rows.Count > 0);
         }
 
-        [Fact]
+        [DbFact]
         public void VirtualTableRegistry_SelectWorks()
         {
             VirtualTableRegistry.Clear();
             VirtualTableRegistry.RegisterSelect("Virtual_Test", "Таблица 1");
-            var dt = VirtualTableRegistry.GetData("Virtual_Test", roleName: null, required: PermissionFlags.Read);
+            var dt = VirtualTableRegistry.GetData("Virtual_Test", roleName: "default", required: PermissionFlags.Read);
             Assert.NotNull(dt);
             Assert.True(dt.Rows.Count > 0);
         }
 
-        [Fact]
+        [DbFact]
         public void RoleManager_EffectivePermissions_Default()
         {
             RoleManager.InitializeFromDb();
@@ -67,17 +68,28 @@ namespace Scraps.Tests
             Assert.Equal(PermissionFlags.None, flags);
         }
 
-        [StaFact]
+        [DbStaFact]
         public void DataGridView_Smoke_SelectMatch()
         {
-            var dt = MSSQL.GetTableData("Таблица 1");
-            var match = Scraps.Data.DataTable.DataTableSearch.FindMatches(dt, "Ivan").FirstOrDefault();
+            var dt = new DataTable();
+            dt.Columns.Add("Id", typeof(int));
+            dt.Columns.Add("Name", typeof(string));
+            dt.Rows.Add(1, "Ivan");
+
+            var match = Scraps.Data.DataTables.Search.FindMatches(dt, "Ivan").FirstOrDefault();
             Assert.NotNull(match);
 
             var grid = new DataGridView();
-            grid.DataSource = dt;
+            grid.AutoGenerateColumns = false;
+            grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Id", DataPropertyName = "Id" });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Name", DataPropertyName = "Name" });
+            grid.Rows.Add(1, "Ivan");
 
-            var col = grid.Columns[match.ColumnName];
+            var col = grid.Columns
+                .Cast<DataGridViewColumn>()
+                .FirstOrDefault(c =>
+                    string.Equals(c.DataPropertyName, match.ColumnName, System.StringComparison.Ordinal) ||
+                    string.Equals(c.Name, match.ColumnName, System.StringComparison.Ordinal));
             Assert.NotNull(col);
 
             grid.ClearSelection();
@@ -90,4 +102,3 @@ namespace Scraps.Tests
         }
     }
 }
-

@@ -1,9 +1,10 @@
-using Scraps.Databases;
+Ôªøusing Scraps.Databases;
 using Scraps.Import;
 using Scraps.Localization;
 using Scraps.Security;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using Xunit;
 
 namespace Scraps.Tests
@@ -11,7 +12,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class ImportTests
     {
-        [Fact]
+        [DbFact]
         public void ValidateColumns_WithTranslations()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -19,11 +20,11 @@ namespace Scraps.Tests
 
             TranslationManager.ColumnTranslations["ImportTest"] = new Dictionary<string, string>
             {
-                ["Name"] = "»Ïˇ"
+                ["Name"] = "–ò–º—è"
             };
 
             var dt = new DataTable();
-            dt.Columns.Add("»Ïˇ");
+            dt.Columns.Add("–ò–º—è");
             dt.Rows.Add("Ivan");
 
             var ok = DataImportService.ValidateColumns(dt, "ImportTest", out var missing, allowTranslatedColumns: true);
@@ -31,7 +32,7 @@ namespace Scraps.Tests
             Assert.Empty(missing);
         }
 
-        [Fact]
+        [DbFact]
         public void ValidateColumnCount_Works()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -45,7 +46,7 @@ namespace Scraps.Tests
             Assert.Equal(1, actual);
         }
 
-        [Fact]
+        [DbFact]
         public void ValidateTypes_DetectsMismatch()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -56,12 +57,47 @@ namespace Scraps.Tests
             dt.Columns.Add("Name");
             dt.Rows.Add("abc", "Ivan");
 
-            var ok = DataImportService.ValidateTypes(dt, "“‡·ÎËˆ‡ 1", out var errors, allowTranslatedColumns: true);
+            var ok = DataImportService.ValidateTypes(dt, "–¢–∞–±–ª–∏—Ü–∞ 1", out var errors, allowTranslatedColumns: true);
             Assert.False(ok);
             Assert.NotEmpty(errors);
         }
 
-        [Fact]
+        [DbFact]
+        public void ValidateTypes_ChecksAllRows()
+        {
+            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.TableTranslations.Clear();
+
+            var dt = new DataTable();
+            dt.Columns.Add("Id");
+            dt.Columns.Add("Name");
+            dt.Rows.Add("1", "Ivan");
+            dt.Rows.Add("bad-int", "Petr");
+
+            var ok = DataImportService.ValidateTypes(dt, "–¢–∞–±–ª–∏—Ü–∞ 1", out var errors, allowTranslatedColumns: true);
+            Assert.False(ok);
+            Assert.NotEmpty(errors);
+        }
+
+        [DbFact]
+        public void LoadCsvToDataTable_AutoDetectDelimiter_Works()
+        {
+            var file = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(file, "Name;Age\nIvan;20");
+                var dt = DataImportService.LoadCsvToDataTable(file, new[] { ',', ';', '\t' }, autoDetectDelimiter: true);
+                Assert.Equal(2, dt.Columns.Count);
+                Assert.Equal("Ivan", dt.Rows[0]["Name"]);
+                Assert.Equal("20", dt.Rows[0]["Age"]);
+            }
+            finally
+            {
+                if (File.Exists(file)) File.Delete(file);
+            }
+        }
+
+        [DbFact]
         public void ImportToTable_Works()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -86,7 +122,7 @@ namespace Scraps.Tests
             }
             Assert.True(found);
         }
-        [Fact]
+        [DbFact]
         public void ValidateColumns_MissingColumns_ReturnsErrors()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -102,7 +138,7 @@ namespace Scraps.Tests
             Assert.Contains("Name", missing);
         }
 
-        [Fact]
+        [DbFact]
         public void BulkInsert_UsesTranslatedColumns()
         {
             TranslationManager.ColumnTranslations.Clear();
@@ -110,11 +146,11 @@ namespace Scraps.Tests
 
             TranslationManager.ColumnTranslations["ImportTest"] = new Dictionary<string, string>
             {
-                ["Name"] = "»Ïˇ"
+                ["Name"] = "–ò–º—è"
             };
 
             var dt = new DataTable();
-            dt.Columns.Add("»Ïˇ");
+            dt.Columns.Add("–ò–º—è");
             dt.Rows.Add("Alex");
 
             var count = MSSQL.BulkInsert("ImportTest", dt);
@@ -132,8 +168,8 @@ namespace Scraps.Tests
             }
             Assert.True(found);
         }
-        [Fact]
-        public void ValidateImportAccess_DeniesWhenNoRights()\r
+        [DbFact]
+        public void ValidateImportAccess_DeniesWhenNoRights()
         {
             RoleManager.Initialize(new[]
             {
@@ -146,5 +182,10 @@ namespace Scraps.Tests
         }
     }
 }
+
+
+
+
+
 
 

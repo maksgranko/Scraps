@@ -1,4 +1,4 @@
-using Scraps.Security;
+﻿using Scraps.Security;
 using System;
 using Xunit;
 
@@ -7,7 +7,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class RoleManagerTests
     {
-        [Fact]
+        [DbFact]
         public void CreateRole_SetPermission_CheckAccess()
         {
             RoleManager.InitializeFromDb();
@@ -29,7 +29,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void RenameRole_Works()
         {
             RoleManager.InitializeFromDb();
@@ -50,7 +50,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void DeleteRole_Works()
         {
             RoleManager.InitializeFromDb();
@@ -64,3 +64,4 @@ namespace Scraps.Tests
         }
     }
 }
+

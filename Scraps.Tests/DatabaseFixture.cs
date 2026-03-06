@@ -3,13 +3,13 @@ using Scraps.Databases;
 using Scraps.Databases.Utilities;
 using System;
 using System.Data.SqlClient;
-using Xunit.Sdk;
 
 namespace Scraps.Tests
 {
     public class DatabaseFixture : IDisposable
     {
         public string DatabaseName { get; }
+        private readonly string _fixtureConnectionString;
 
         private readonly string _prevDatabaseName;
         private readonly string _prevConnectionString;
@@ -51,16 +51,13 @@ namespace Scraps.Tests
 
             DatabaseName = "Scraps_Test_" + Guid.NewGuid().ToString("N");
             ScrapsConfig.DatabaseName = DatabaseName;
-
+            ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder(DatabaseName);
             if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-            {
-                ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder(DatabaseName);
-                if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-                    throw new SkipException("SQL Server не найден. Установите ScrapsConfig.ConnectionString вручную, чтобы запустить DB-тесты.");
-            }
+                throw new InvalidOperationException("Не удалось подобрать строку подключения к SQL Server для тестов.");
+            _fixtureConnectionString = ScrapsConfig.ConnectionString;
 
             if (!MSSQL.CheckConnection())
-                throw new SkipException("Нет доступа к SQL Server. Пропускаем DB-тесты.");
+                throw new InvalidOperationException("SQL Server недоступен для запуска DB-тестов.");
 
             try
             {
@@ -68,7 +65,7 @@ namespace Scraps.Tests
             }
             catch (Exception ex)
             {
-                throw new SkipException("Не удалось создать/инициализировать тестовую БД. Пропускаем DB-тесты. " + ex.Message);
+                throw new InvalidOperationException("Не удалось инициализировать тестовую БД.", ex);
             }
 
             // Таблица с пробелом в названии
@@ -88,7 +85,7 @@ namespace Scraps.Tests
         {
             try
             {
-                var builder = new SqlConnectionStringBuilder(ScrapsConfig.ConnectionString)
+                var builder = new SqlConnectionStringBuilder(_fixtureConnectionString)
                 {
                     InitialCatalog = "master"
                 };
@@ -128,8 +125,14 @@ namespace Scraps.Tests
             ScrapsConfig.UseParallelServerDiscovery = _prevUseParallelServerDiscovery;
             ScrapsConfig.MaxParallelConnections = _prevMaxParallelConnections;
         }
+
     }
 }
+
+
+
+
+
 
 
 

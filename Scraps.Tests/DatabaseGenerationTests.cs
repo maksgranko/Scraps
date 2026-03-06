@@ -1,17 +1,16 @@
-using Scraps.Configs;
+﻿using Scraps.Configs;
 using Scraps.Databases;
 using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Scraps.Tests
 {
     public class DatabaseGenerationTests
     {
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_Simple_CreatesUsersOnly()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
@@ -25,7 +24,7 @@ namespace Scraps.Tests
                 Assert.Equal("nvarchar", schema["Role"]);
             }
         }
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_None_CreatesDatabaseOnly()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
@@ -36,8 +35,8 @@ namespace Scraps.Tests
                 Assert.DoesNotContain("RolePermissions", tables);
             }
         }
-        [Fact]
-        public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()\r
+        [DbFact]
+        public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
@@ -51,7 +50,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_Full_CreatesAllTables()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
@@ -66,7 +65,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_CanRunTwice()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
@@ -79,7 +78,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_UsesCustomUsersTableAndColumns()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
@@ -108,7 +107,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_SeedsRoles()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
@@ -127,7 +126,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void Initialize_SetsUseRoleIdMapping_ByMode()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: true))
@@ -146,7 +145,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void SimpleMode_UsersStoreRoleAsString()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
@@ -163,7 +162,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void StandardMode_UsersStoreRoleAsId()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
@@ -180,7 +179,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void GenerateIfNotExists_ThrowsWhenDatabaseNameMissing()
         {
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
@@ -238,20 +237,16 @@ namespace Scraps.Tests
             public static TempDb Create(DatabaseGenerationMode mode, bool viaInitialize)
             {
                 var temp = new TempDb();
-
-                ScrapsConfig.DatabaseName = temp.DatabaseName;
-                if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-                {
-                    ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder(temp.DatabaseName);
-                    if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
-                        throw new SkipException("SQL Server не найден. Пропускаем DB-тесты.");
-                }
-
-                if (!MSSQL.CheckConnection())
-                    throw new SkipException("Нет доступа к SQL Server. Пропускаем DB-тесты.");
-
                 try
                 {
+                    ScrapsConfig.DatabaseName = temp.DatabaseName;
+                    ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder(temp.DatabaseName);
+                    if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+                        throw new InvalidOperationException("Не удалось подобрать строку подключения к SQL Server для тестов.");
+
+                    if (!MSSQL.CheckConnection())
+                        throw new InvalidOperationException("SQL Server недоступен для запуска DB-тестов.");
+
                     if (viaInitialize)
                     {
                         MSSQL.Initialize(temp.DatabaseName, mode);
@@ -264,7 +259,7 @@ namespace Scraps.Tests
                 catch (Exception ex)
                 {
                     temp.Dispose();
-                    throw new SkipException("Не удалось создать/инициализировать тестовую БД. Пропускаем DB-тесты. " + ex.Message);
+                    throw new InvalidOperationException("Не удалось создать/инициализировать временную БД для теста.", ex);
                 }
 
                 return temp;
@@ -314,9 +309,15 @@ namespace Scraps.Tests
                 ScrapsConfig.UseParallelServerDiscovery = _prevUseParallelServerDiscovery;
                 ScrapsConfig.MaxParallelConnections = _prevMaxParallelConnections;
             }
+
         }
     }
 }
+
+
+
+
+
 
 
 

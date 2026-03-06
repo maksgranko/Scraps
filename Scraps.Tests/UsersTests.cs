@@ -1,4 +1,4 @@
-using Scraps.Databases;
+﻿using Scraps.Databases;
 using System;
 using Xunit;
 
@@ -7,7 +7,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class UsersTests
     {
-        [Fact]
+        [DbFact]
         public void ChangeRole_Works()
         {
             var login = "user_" + Guid.NewGuid().ToString("N");
@@ -30,7 +30,7 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void ChangePassword_Works()
         {
             var login = "user_" + Guid.NewGuid().ToString("N");
@@ -50,11 +50,17 @@ namespace Scraps.Tests
             }
         }
 
-        [Fact]
+        [DbFact]
         public void Delete_ThrowsWhenMissing()
         {
             var login = "missing_" + Guid.NewGuid().ToString("N");
             Assert.Throws<InvalidOperationException>(() => MSSQL.Users.Delete(login));
         }
     }
+
 }
+
+
+
+
+

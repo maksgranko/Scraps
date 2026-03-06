@@ -8,7 +8,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class SchemaTests
     {
-        [Fact]
+        [DbFact]
         public void GetTables_ReturnsCurrentDbTables()
         {
             var tables = MSSQL.GetTables();
@@ -16,7 +16,14 @@ namespace Scraps.Tests
             Assert.Contains("Таблица 1", tables);
         }
 
-        [Fact]
+        [DbFact]
+        public void GetTables_WithSchemaName_Works()
+        {
+            var tables = MSSQL.GetTables(includeSchemaInName: true);
+            Assert.Contains("dbo.Users", tables);
+        }
+
+        [DbFact]
         public void GetTableColumns_Works()
         {
             var cols = MSSQL.GetTableColumns("Таблица 1");
@@ -24,7 +31,7 @@ namespace Scraps.Tests
             Assert.Contains("Name", cols);
         }
 
-        [Fact]
+        [DbFact]
         public void GetTableSchema_Works()
         {
             var schema = MSSQL.GetTableSchema("Таблица 1");
@@ -32,21 +39,21 @@ namespace Scraps.Tests
             Assert.True(schema.ContainsKey("Name"));
         }
 
-        [Fact]
+        [DbFact]
         public void IdentityAndNullable_Works()
         {
             Assert.True(MSSQL.IsIdentityColumn("Таблица 1", "Id"));
             Assert.False(MSSQL.IsNullableColumn("Таблица 1", "Name"));
         }
 
-        [Fact]
+        [DbFact]
         public void IsNullableColumn_ThrowsOnMissingColumn()
         {
             Assert.Throws<System.InvalidOperationException>(() =>
                 MSSQL.IsNullableColumn("Таблица 1", "MissingColumn"));
         }
 
-        [Fact]
+        [DbFact]
         public void RolePermissions_DefaultRowExists()
         {
             RoleManager.InitializeFromDb();
@@ -55,3 +62,4 @@ namespace Scraps.Tests
         }
     }
 }
+

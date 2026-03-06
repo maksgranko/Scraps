@@ -1,4 +1,4 @@
-using Scraps.Export;
+﻿using Scraps.Export;
 using Scraps.Localization;
 using System.Data;
 using Xunit;
@@ -8,7 +8,7 @@ namespace Scraps.Tests
     [Collection("Db")]
     public class ReportDataBuilderTests
     {
-        [Fact]
+        [DbFact]
         public void GetTableTranslated_UsesTranslations()
         {
             TranslationManager.TableTranslations.Clear();
@@ -23,7 +23,7 @@ namespace Scraps.Tests
             Assert.True(dt.Columns.Contains("Имя"));
         }
 
-        [Fact]
+        [DbFact]
         public void GetBySql_TranslatesWhenRequested()
         {
             TranslationManager.TableTranslations.Clear();
@@ -39,3 +39,4 @@ namespace Scraps.Tests
         }
     }
 }
+

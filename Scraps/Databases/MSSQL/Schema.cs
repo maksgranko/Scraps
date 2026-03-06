@@ -11,14 +11,14 @@ namespace Scraps.Databases
     {
         /// <summary>Получить список таблиц базы данных (из ScrapsConfig.DatabaseName).</summary>
         /// <exception cref="ArgumentException">Пустое название базы данных</exception>
-        public static string[] GetTables(bool includeSystemTables = false)
+        public static string[] GetTables(bool includeSystemTables = false, bool includeSchemaInName = false)
         {
-            return GetTables(ScrapsConfig.DatabaseName, includeSystemTables);
+            return GetTables(ScrapsConfig.DatabaseName, includeSystemTables, includeSchemaInName);
         }
 
         /// <summary>Получить список таблиц указанной базы данных.</summary>
         /// <exception cref="ArgumentException">Пустое название базы данных</exception>
-        public static string[] GetTables(string databaseName, bool includeSystemTables = false)
+        public static string[] GetTables(string databaseName, bool includeSystemTables = false, bool includeSchemaInName = false)
         {
             var db = databaseName ?? ScrapsConfig.DatabaseName;
             if (string.IsNullOrWhiteSpace(db))
@@ -27,16 +27,16 @@ namespace Scraps.Databases
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(GetDatabaseConnectionString(db)))
             {
-                string query = @"SELECT TABLE_NAME
-                                FROM INFORMATION_SCHEMA.TABLES
-                                WHERE TABLE_TYPE = 'BASE TABLE'";
-
-                if (!includeSystemTables)
-                {
-                    query += " AND TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')";
-                }
+                string query = @"
+                    SELECT " +
+                    (includeSchemaInName ? "[s].[name] + '.' + [t].[name]" : "[t].[name]") + @"
+                    FROM [sys].[tables] [t]
+                    INNER JOIN [sys].[schemas] [s] ON [s].[schema_id] = [t].[schema_id]
+                    WHERE (@IncludeSystem = 1 OR ([t].[is_ms_shipped] = 0 AND [s].[name] NOT IN ('sys', 'INFORMATION_SCHEMA')))
+                    ORDER BY [s].[name], [t].[name]";
 
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                da.SelectCommand.Parameters.AddWithValue("@IncludeSystem", includeSystemTables ? 1 : 0);
                 da.Fill(dt);
             }
             return dt.Rows.Cast<DataRow>().Select(r => r[0].ToString()).ToArray();
@@ -47,8 +47,17 @@ namespace Scraps.Databases
         /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
         public static string[] GetTableColumns(string tableName)
         {
+            return GetTableColumns(tableName, null);
+        }
+
+        /// <summary>Получить список колонок таблицы.</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы</exception>
+        /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
+        public static string[] GetTableColumns(string tableName, string tableSchema)
+        {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
+            ResolveSchemaAndTable(tableName, tableSchema, out var resolvedSchema, out var resolvedTable);
 
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
@@ -57,10 +66,12 @@ namespace Scraps.Databases
                     SELECT COLUMN_NAME
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_NAME = @TableName
+                      AND (@TableSchema IS NULL OR TABLE_SCHEMA = @TableSchema)
                     ORDER BY ORDINAL_POSITION";
 
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                da.SelectCommand.Parameters.AddWithValue("@TableName", tableName);
+                da.SelectCommand.Parameters.AddWithValue("@TableName", resolvedTable);
+                da.SelectCommand.Parameters.AddWithValue("@TableSchema", (object)resolvedSchema ?? DBNull.Value);
                 da.Fill(dt);
             }
 
@@ -75,8 +86,17 @@ namespace Scraps.Databases
         /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
         public static Dictionary<string, string> GetTableSchema(string tableName)
         {
+            return GetTableSchema(tableName, null);
+        }
+
+        /// <summary>Получить схему таблицы (ColumnName -> DataType).</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы</exception>
+        /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
+        public static Dictionary<string, string> GetTableSchema(string tableName, string tableSchema)
+        {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
+            ResolveSchemaAndTable(tableName, tableSchema, out var resolvedSchema, out var resolvedTable);
 
             var schema = new Dictionary<string, string>();
             using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
@@ -86,10 +106,12 @@ namespace Scraps.Databases
                         COLUMN_NAME,
                         DATA_TYPE
                     FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = @TableName";
+                    WHERE TABLE_NAME = @TableName
+                      AND (@TableSchema IS NULL OR TABLE_SCHEMA = @TableSchema)";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@TableName", tableName);
+                cmd.Parameters.AddWithValue("@TableName", resolvedTable);
+                cmd.Parameters.AddWithValue("@TableSchema", (object)resolvedSchema ?? DBNull.Value);
                 conn.Open();
 
                 using (var reader = cmd.ExecuteReader())
@@ -112,10 +134,18 @@ namespace Scraps.Databases
         /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
         public static bool IsIdentityColumn(string tableName, string columnName)
         {
+            return IsIdentityColumn(tableName, columnName, null);
+        }
+
+        /// <summary>Проверить, является ли колонка identity.</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
+        public static bool IsIdentityColumn(string tableName, string columnName, string tableSchema)
+        {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
             if (string.IsNullOrWhiteSpace(columnName))
                 throw new ArgumentException("Название колонки не может быть пустым.", nameof(columnName));
+            ResolveSchemaAndTable(tableName, tableSchema, out var resolvedSchema, out var resolvedTable);
 
             using (var conn = new SqlConnection(ScrapsConfig.ConnectionString))
             {
@@ -123,7 +153,8 @@ namespace Scraps.Databases
                     SELECT COLUMNPROPERTY(OBJECT_ID(@TableName), @ColumnName, 'IsIdentity') AS IsIdentity";
 
                 var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@TableName", tableName);
+                var objName = string.IsNullOrWhiteSpace(resolvedSchema) ? resolvedTable : resolvedSchema + "." + resolvedTable;
+                cmd.Parameters.AddWithValue("@TableName", objName);
                 cmd.Parameters.AddWithValue("@ColumnName", columnName);
 
                 conn.Open();
@@ -137,19 +168,29 @@ namespace Scraps.Databases
         /// <exception cref="InvalidOperationException">Колонка не найдена</exception>
         public static bool IsNullableColumn(string tableName, string columnName)
         {
+            return IsNullableColumn(tableName, columnName, null);
+        }
+
+        /// <summary>Проверить, допускает ли колонка NULL.</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
+        /// <exception cref="InvalidOperationException">Колонка не найдена</exception>
+        public static bool IsNullableColumn(string tableName, string columnName, string tableSchema)
+        {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
             if (string.IsNullOrWhiteSpace(columnName))
                 throw new ArgumentException("Название колонки не может быть пустым.", nameof(columnName));
+            ResolveSchemaAndTable(tableName, tableSchema, out var resolvedSchema, out var resolvedTable);
 
             using (var connection = new SqlConnection(ScrapsConfig.ConnectionString))
             {
                 connection.Open();
                 var command = new SqlCommand(
-                    "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName AND COLUMN_NAME = @columnName",
+                    "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName AND COLUMN_NAME = @columnName AND (@tableSchema IS NULL OR TABLE_SCHEMA = @tableSchema)",
                     connection);
-                command.Parameters.AddWithValue("@tableName", tableName);
+                command.Parameters.AddWithValue("@tableName", resolvedTable);
                 command.Parameters.AddWithValue("@columnName", columnName);
+                command.Parameters.AddWithValue("@tableSchema", (object)resolvedSchema ?? DBNull.Value);
 
                 var isNullable = command.ExecuteScalar();
                 if (isNullable == null)
@@ -158,5 +199,25 @@ namespace Scraps.Databases
                 return isNullable.ToString().ToLower() == "yes";
             }
         }
+
+        private static void ResolveSchemaAndTable(string tableName, string tableSchema, out string resolvedSchema, out string resolvedTable)
+        {
+            resolvedSchema = string.IsNullOrWhiteSpace(tableSchema) ? null : tableSchema.Trim();
+            resolvedTable = tableName.Trim();
+
+            if (resolvedTable.Contains("."))
+            {
+                var parts = resolvedTable.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 2)
+                {
+                    resolvedSchema = string.IsNullOrWhiteSpace(resolvedSchema) ? parts[0].Trim().Trim('[', ']') : resolvedSchema;
+                    resolvedTable = parts[1].Trim().Trim('[', ']');
+                }
+            }
+        }
     }
 }
+
+
+
+

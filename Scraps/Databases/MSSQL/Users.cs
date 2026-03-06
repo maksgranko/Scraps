@@ -68,16 +68,19 @@ namespace Scraps.Databases
                 if (string.IsNullOrWhiteSpace(role))
                     throw new ArgumentException("Роль не может быть пустой.", nameof(role));
 
-                // Проверяем существование пользователя
+                // Проверяем существование пользователя без зависимости от текста исключения.
+                var exists = false;
                 try
                 {
                     GetByLogin(login);
-                    throw new InvalidOperationException($"Пользователь '{login}' уже существует.");
+                    exists = true;
                 }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("не найден"))
+                catch (InvalidOperationException)
                 {
-                    // Пользователь не найден - можно создавать
+                    exists = false;
                 }
+                if (exists)
+                    throw new InvalidOperationException($"Пользователь '{login}' уже существует.");
 
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
@@ -196,3 +199,7 @@ namespace Scraps.Databases
         }
     }
 }
+
+
+
+

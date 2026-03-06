@@ -81,6 +81,21 @@ namespace Scraps.Databases
             if (string.IsNullOrWhiteSpace(databaseName))
                 databaseName = ScrapsConfig.DatabaseName;
 
+            if (!string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
+            {
+                try
+                {
+                    var builder = new SqlConnectionStringBuilder(ScrapsConfig.ConnectionString);
+                    if (!string.IsNullOrWhiteSpace(databaseName))
+                        builder.InitialCatalog = databaseName;
+                    return builder.ToString();
+                }
+                catch
+                {
+                    return ScrapsConfig.ConnectionString;
+                }
+            }
+
             if (auto)
             {
                 string result = ParseFirstSQLServer(databaseName);
@@ -358,3 +373,7 @@ namespace Scraps.Databases
         }
     }
 }
+
+
+
+

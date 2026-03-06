@@ -4,14 +4,13 @@ using System;
 using System.Data;
 using System.IO;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Scraps.Tests
 {
     [Collection("Db")]
     public class ExportTests
     {
-        [Fact]
+        [DbFact]
         public void ExportToExcel_WritesFile()
         {
             var dt = MSSQL.GetTableData("Таблица 1");
@@ -24,11 +23,11 @@ namespace Scraps.Tests
             File.Delete(path);
         }
 
-        [Fact]
+        [DbFact]
         public void ExportToPdf_WritesFile()
         {
             if (!File.Exists("c:\\windows\\fonts\\arial.ttf"))
-                throw new SkipException("Шрифт Arial не найден. Пропускаем PDF-тест.");
+                throw new FileNotFoundException("Для PDF-теста нужен шрифт Arial.", "c:\\windows\\fonts\\arial.ttf");
 
             var dt = MSSQL.GetTableData("Таблица 1");
             var path = Path.Combine(Path.GetTempPath(), "scraps_test_" + Guid.NewGuid().ToString("N") + ".pdf");
@@ -41,3 +40,5 @@ namespace Scraps.Tests
         }
     }
 }
+
+
