@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.13</Version>
+    <Version>0.13.1</Version>
     <Authors>Maks Granko</Authors>
     <Company></Company>
     <Description>Student helper, precreated methods, samples</Description>
