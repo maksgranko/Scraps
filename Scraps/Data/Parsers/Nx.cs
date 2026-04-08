@@ -4,6 +4,9 @@ using System.Data;
 
 namespace Scraps.Data.Parsers
 {
+    /// <summary>
+    /// Парсер Nx-форматов (Nx1/Nx2) из текста и <see cref="DataTable"/>.
+    /// </summary>
     public static class Nx
     {
         /// <summary>

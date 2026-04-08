@@ -6,6 +6,9 @@ using Scraps.Data.Parsers.Internal;
 
 namespace Scraps.Data.Parsers
 {
+    /// <summary>
+    /// CSV/DSV парсер с поддержкой кавычек, экранирования и настраиваемых разделителей.
+    /// </summary>
     public static class Csv
     {
         /// <summary>

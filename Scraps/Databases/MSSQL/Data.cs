@@ -38,8 +38,14 @@ namespace Scraps.Databases
             /// </summary>
             public string AliasPrefix { get; set; }
 
+            /// <summary>
+            /// Создать пустое описание JOIN по внешнему ключу.
+            /// </summary>
             public ForeignKeyJoin() { }
 
+            /// <summary>
+            /// Создать описание JOIN по внешнему ключу.
+            /// </summary>
             public ForeignKeyJoin(string baseColumn, string referenceTable, string referenceColumn, params string[] referenceColumns)
             {
                 BaseColumn = baseColumn;

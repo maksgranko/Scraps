@@ -10,8 +10,8 @@
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.2026.98.33</AssemblyVersion>
-    <FileVersion>1.2026.98.33</FileVersion>
+    <AssemblyVersion>1.2026.98.34</AssemblyVersion>
+    <FileVersion>1.2026.98.34</FileVersion>
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

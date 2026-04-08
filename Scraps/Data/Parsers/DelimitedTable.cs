@@ -4,6 +4,9 @@ using Scraps.Data.Parsers.Internal;
 
 namespace Scraps.Data.Parsers
 {
+    /// <summary>
+    /// Простой парсер разделённых таблиц без поддержки кавычек и escaping.
+    /// </summary>
     public static class DelimitedTable
     {
         /// <summary>
