@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 
 namespace Scraps.Data.DataTables
 {
@@ -12,6 +13,14 @@ namespace Scraps.Data.DataTables
     {
         /// <summary>
         /// Навигатор по результатам поиска.
+        ///
+        /// Типичный сценарий:
+        /// 1) Создать через <see cref="CreateNavigator(DataTable, string, bool)"/>.
+        /// 2) Вызвать <see cref="MatchNavigator.First"/> или <see cref="MatchNavigator.Next(bool)"/>.
+        /// 3) Использовать <see cref="DataCellMatch.RowIndex"/> и <see cref="DataCellMatch.ColumnName"/>
+        ///    для подсветки в DataGridView.
+        ///
+        /// Для полной текстовой инструкции можно вызвать <see cref="GetMatchNavigatorHelp"/>.
         /// </summary>
         public class MatchNavigator
         {
@@ -38,6 +47,7 @@ namespace Scraps.Data.DataTables
             /// <summary>
             /// Перейти к следующему совпадению.
             /// </summary>
+            /// <param name="wrap">Если true, переход с последнего совпадения возвращается к первому.</param>
             public DataCellMatch Next(bool wrap = false)
             {
                 if (_matches.Count == 0) return null;
@@ -56,6 +66,7 @@ namespace Scraps.Data.DataTables
             /// <summary>
             /// Перейти к предыдущему совпадению.
             /// </summary>
+            /// <param name="wrap">Если true, переход с первого совпадения выполняется к последнему.</param>
             public DataCellMatch Prev(bool wrap = false)
             {
                 if (_matches.Count == 0) return null;
@@ -104,6 +115,25 @@ namespace Scraps.Data.DataTables
             public string ColumnName { get; set; }
             /// <summary>Значение ячейки.</summary>
             public object Value { get; set; }
+        }
+
+        /// <summary>
+        /// Получить подробную текстовую справку по использованию MatchNavigator
+        /// (подходит для вывода в MessageBox, лог или отдельную вкладку Help в приложении).
+        /// </summary>
+        public static string GetMatchNavigatorHelp()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("MatchNavigator quick help:");
+            sb.AppendLine("1. var nav = Search.CreateNavigator(dataTable, searchText);");
+            sb.AppendLine("2. var match = nav.First();");
+            sb.AppendLine("3. Пока match != null, подсвечивайте ячейку по match.RowIndex + match.ColumnName.");
+            sb.AppendLine("4. Для перехода дальше используйте nav.Next(wrap: true).");
+            sb.AppendLine();
+            sb.AppendLine("DataGridView mapping example:");
+            sb.AppendLine("- col = grid.Columns.Cast<DataGridViewColumn>().FirstOrDefault(c => c.DataPropertyName == match.ColumnName || c.Name == match.ColumnName);");
+            sb.AppendLine("- if (col != null) grid.CurrentCell = grid.Rows[match.RowIndex].Cells[col.Index];");
+            return sb.ToString();
         }
 
         /// <summary>
@@ -265,13 +295,4 @@ namespace Scraps.Data.DataTables
         }
     }
 }
-
-
-
-
-
-
-
-
-
 

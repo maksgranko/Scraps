@@ -74,6 +74,9 @@ MSSQL.GenerateIfNotExists(new DatabaseGenerationOptions
 - `Initialize(...)` / `GenerateIfNotExists(...)` — подготовка БД.
 - `GetTables(...)`, `GetTableColumns(...)`, `GetTableSchema(...)` — чтение схемы.
 - `GetTableData(...)`, `FindByColumn(...)`, `ApplyTableChanges(...)`, `BulkInsert(...)`.
+- `GetTableData(..., IEnumerable<MSSQL.ForeignKeyJoin>, params string[] baseColumns)` — выборка с `LEFT JOIN` по FK + выбор колонок.
+- `GetNx2Dictionary(...)` — прочитать таблицу формата `Nx2` (2 колонки) из БД сразу в `Dictionary`.
+- `GetNx1List(...)` — прочитать таблицу формата `Nx1` (1 колонка) из БД в `List<string>`.
 - `Roles.*` и `Users.*` — операции с пользователями и ролями.
 
 `VirtualTableRegistry`:
@@ -90,7 +93,67 @@ MSSQL.GenerateIfNotExists(new DatabaseGenerationOptions
 `Scraps.Data.DataTables`:
 
 - `Parser.ParseDelimited(...)` — парсинг строки в `DataTable`.
+- `Parser.ParseNx2ToDictionary(...)` — парсинг таблицы формата `Nx2` в `Dictionary`.
+- `Parser.ParseNx1ToList(...)` — парсинг моно-таблицы `Nx1` в `List<string>`.
 - `Search.FindMatches(...)`, `Search.FilterRows(...)`, `Search.CreateNavigator(...)`.
+- `Search.GetMatchNavigatorHelp()` — встроенная справка по использованию навигатора в UI (в т.ч. `DataGridView`).
+
+Пример FK-выборки:
+
+```csharp
+var data = MSSQL.GetTableData(
+    tableName: "Users",
+    foreignKeys: new[]
+    {
+        new MSSQL.ForeignKeyJoin("Role", "Roles", "RoleID", "RoleName")
+        {
+            AliasPrefix = "Role"
+        }
+    },
+    baseColumns: new[] { "UserID", "Login", "Role" });
+```
+
+Пример `Nx2` -> `Dictionary`:
+
+```csharp
+string text = "1 Отлично\n2 Хорошо\n3 Плохо\n4 Неизвестно";
+Dictionary<int, string> grades = Parser.ParseNx2ToDictionary(text);
+```
+
+Пример `Nx2` с кастомными разделителями:
+
+```csharp
+string text = "1=>Отлично|2=>Хорошо|3=>Плохо";
+Dictionary<int, string> grades = Parser.ParseNx2ToDictionary(
+    text,
+    columnSeparator: "=>",
+    rowSeparator: "|");
+```
+
+Пример `Nx2` из таблицы БД:
+
+```csharp
+Dictionary<int, string> grades = MSSQL.GetNx2Dictionary(
+    tableName: "GradeCatalog",
+    keyColumn: "GradeID",
+    valueColumn: "GradeName");
+```
+
+Пример `Nx1` (текст и таблица БД):
+
+```csharp
+List<string> names = Parser.ParseNx1ToList("Антон\nАндрей\nВасилий");
+
+List<string> dbNames = MSSQL.GetNx1List(
+    tableName: "NameCatalog",
+    valueColumn: "Name");
+```
+
+Справка по `MatchNavigator`:
+
+```csharp
+string help = Search.GetMatchNavigatorHelp();
+```
 
 ## Права доступа
 

@@ -12,6 +12,31 @@ namespace Scraps.Security
     public static class UserSession
     {
         /// <summary>
+        /// Параметры проверки регистрации пользователя.
+        /// </summary>
+        public sealed class RegistrationValidationOptions
+        {
+            /// <summary>Проверять, что логин не пустой.</summary>
+            public bool RequireLogin { get; set; } = true;
+            /// <summary>Проверять, что пароль не пустой.</summary>
+            public bool RequirePassword { get; set; } = true;
+            /// <summary>Проверять, что роль не пустая.</summary>
+            public bool RequireRole { get; set; } = true;
+            /// <summary>Проверять, что пользователь с логином еще не существует.</summary>
+            public bool CheckUserDoesNotExist { get; set; } = true;
+            /// <summary>Проверять сложность пароля.</summary>
+            public bool ValidatePasswordStrength { get; set; } = true;
+            /// <summary>Минимальная длина пароля.</summary>
+            public int MinLength { get; set; } = 8;
+            /// <summary>Требовать заглавную букву.</summary>
+            public bool RequireUpper { get; set; } = true;
+            /// <summary>Требовать спецсимвол.</summary>
+            public bool RequireSpecial { get; set; } = true;
+            /// <summary>Набор спецсимволов.</summary>
+            public string SpecialChars { get; set; } = "!@#$%^&*";
+        }
+
+        /// <summary>
         /// Вспомогательные утилиты для авторизации/паролей.
         /// </summary>
         public static class Utilities
@@ -172,14 +197,29 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Зарегистрировать пользователя и выполнить вход.
+        /// Зарегистрировать пользователя.
+        /// По умолчанию после регистрации выполняется вход.
         /// </summary>
+        /// <param name="login">Логин пользователя.</param>
+        /// <param name="password">Пароль пользователя.</param>
+        /// <param name="role">Роль пользователя.</param>
+        /// <param name="loginAfterRegistration">Если true, выполнить вход сразу после регистрации.</param>
         /// <exception cref="ArgumentException">Пустой логин, пароль или роль</exception>
-        /// <exception cref="InvalidOperationException">Пользователь уже существует или пароль не соответствует требованиям</exception>
-        public static void Register(string login, string password, string role)
+        /// <exception cref="InvalidOperationException">Пользователь уже существует</exception>
+        public static void Register(string login, string password, string role, bool loginAfterRegistration = true)
         {
-            RegisterUser(login, password, role);
-            LoginByName(login);
+            if (string.IsNullOrWhiteSpace(login))
+                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
+            if (string.IsNullOrWhiteSpace(role))
+                throw new ArgumentException("Роль не может быть пустой.", nameof(role));
+
+            string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(password) : password;
+            MSSQL.Users.Create(login, storedPassword, role);
+
+            if (loginAfterRegistration)
+                LoginByName(login);
         }
 
         /// <summary>
@@ -247,27 +287,42 @@ namespace Scraps.Security
         }
 
         /// <summary>
-        /// Зарегистрировать пользователя.
+        /// Проверить регистрацию по настраиваемым правилам (без записи в БД).
         /// </summary>
-        /// <exception cref="ArgumentException">Пустой логин, пароль или роль</exception>
-        /// <exception cref="InvalidOperationException">Пользователь уже существует или пароль не соответствует требованиям</exception>
-        public static void RegisterUser(string login, string password, string role)
+        public static bool ValidateRegistration(
+            string login,
+            string password,
+            string role,
+            out string[] errors,
+            RegistrationValidationOptions options = null)
         {
-            if (string.IsNullOrWhiteSpace(login))
-                throw new ArgumentException("Логин не может быть пустым.", nameof(login));
-            if (string.IsNullOrWhiteSpace(password))
-                throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
-            if (string.IsNullOrWhiteSpace(role))
-                throw new ArgumentException("Роль не может быть пустой.", nameof(role));
+            options = options ?? new RegistrationValidationOptions();
+            var list = new System.Collections.Generic.List<string>();
 
-            if (CheckIsUserExists(login))
-                throw new InvalidOperationException($"Пользователь '{login}' уже существует.");
+            if (options.RequireLogin && string.IsNullOrWhiteSpace(login))
+                list.Add("Логин не может быть пустым.");
+            if (options.RequirePassword && string.IsNullOrWhiteSpace(password))
+                list.Add("Пароль не может быть пустым.");
+            if (options.RequireRole && string.IsNullOrWhiteSpace(role))
+                list.Add("Роль не может быть пустой.");
 
-            if (!Utilities.IsPasswordValid(password))
-                throw new InvalidOperationException("Пароль не соответствует требованиям (минимум 8 символов, заглавная буква, спецсимвол).");
+            if (options.CheckUserDoesNotExist && !string.IsNullOrWhiteSpace(login) && CheckIsUserExists(login))
+                list.Add($"Пользователь '{login}' уже существует.");
 
-            string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(password) : password;
-            MSSQL.Users.Create(login, storedPassword, role);
+            if (options.ValidatePasswordStrength && !string.IsNullOrWhiteSpace(password))
+            {
+                bool valid = Utilities.IsPasswordValid(
+                    password,
+                    options.MinLength,
+                    options.RequireUpper,
+                    options.RequireSpecial,
+                    options.SpecialChars);
+                if (!valid)
+                    list.Add("Пароль не соответствует требованиям.");
+            }
+
+            errors = list.ToArray();
+            return errors.Length == 0;
         }
 
         /// <summary>

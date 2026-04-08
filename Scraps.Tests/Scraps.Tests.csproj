@@ -5,8 +5,8 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyVersion>1.2026.65.27</AssemblyVersion>
-    <FileVersion>1.2026.65.27</FileVersion>
+    <AssemblyVersion>1.2026.98.36</AssemblyVersion>
+    <FileVersion>1.2026.98.36</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

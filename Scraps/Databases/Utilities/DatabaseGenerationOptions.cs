@@ -46,6 +46,13 @@ namespace Scraps.Databases.Utilities
         /// <summary>Сопоставление логических ключей колонок с реальными именами.</summary>
         public Dictionary<string, string> UsersTableColumnsNames { get; set; } = ScrapsConfig.UsersTableColumnsNames;
 
+        /// <summary>
+        /// Если true (по умолчанию), после генерации значения UsersTableName/UsersTableColumnsNames
+        /// будут применены в ScrapsConfig для дальнейшей работы API Users/Session.
+        /// Установите false, если не хотите переназначать глобальную конфигурацию.
+        /// </summary>
+        public bool ApplyUsersMappingToScrapsConfig { get; set; } = true;
+
         /// <summary>Название роли по умолчанию (RoleID = 0 или строка).</summary>
         public string DefaultRoleName { get; set; } = ScrapsConfig.DefaultRoleName;
 

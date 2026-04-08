@@ -3,13 +3,26 @@ using Scraps.Databases;
 using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using Xunit;
 
 namespace Scraps.Tests
 {
+    [Collection("DbGeneration")]
     public class DatabaseGenerationTests
     {
+        internal static void CleanupCurrentRunDatabases()
+        {
+            TempDb.CleanupRegisteredDatabases();
+        }
+
+        internal static void CleanupOrphanedTestDatabases()
+        {
+            TempDb.CleanupDatabasesByPrefix("Scraps_Test_");
+        }
+
         [DbFact]
         public void GenerateIfNotExists_Simple_CreatesUsersOnly()
         {
@@ -24,6 +37,7 @@ namespace Scraps.Tests
                 Assert.Equal("nvarchar", schema["Role"]);
             }
         }
+
         [DbFact]
         public void GenerateIfNotExists_None_CreatesDatabaseOnly()
         {
@@ -35,6 +49,7 @@ namespace Scraps.Tests
                 Assert.DoesNotContain("RolePermissions", tables);
             }
         }
+
         [DbFact]
         public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()
         {
@@ -104,6 +119,52 @@ namespace Scraps.Tests
                 Assert.True(schema.ContainsKey("UserLogin"));
                 Assert.True(schema.ContainsKey("UserPassword"));
                 Assert.True(schema.ContainsKey("UserRole"));
+
+                // По умолчанию mapping должен применяться в ScrapsConfig.
+                Assert.Equal("AppUsers", ScrapsConfig.UsersTableName);
+                Assert.Equal("AppUserId", ScrapsConfig.UsersTableColumnsNames["UserID"]);
+                Assert.Equal("UserLogin", ScrapsConfig.UsersTableColumnsNames["Login"]);
+                Assert.Equal("UserPassword", ScrapsConfig.UsersTableColumnsNames["Password"]);
+                Assert.Equal("UserRole", ScrapsConfig.UsersTableColumnsNames["Role"]);
+            }
+        }
+
+        [DbFact]
+        public void GenerateIfNotExists_CanSkipUsersMappingReassign()
+        {
+            using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
+            {
+                // Базовые значения до custom-генерации.
+                var defaultTable = ScrapsConfig.UsersTableName;
+                var defaultColumns = new Dictionary<string, string>(ScrapsConfig.UsersTableColumnsNames);
+
+                var options = new DatabaseGenerationOptions
+                {
+                    DatabaseName = db.DatabaseName,
+                    Mode = DatabaseGenerationMode.Full,
+                    UsersTableName = "CustomUsers",
+                    UsersTableColumnsNames = new Dictionary<string, string>
+                    {
+                        ["UserID"] = "CustomUserId",
+                        ["Login"] = "CustomLogin",
+                        ["Password"] = "CustomPassword",
+                        ["Role"] = "CustomRole"
+                    },
+                    ApplyUsersMappingToScrapsConfig = false
+                };
+
+                MSSQL.GenerateIfNotExists(options);
+
+                var schema = MSSQL.GetTableSchema("CustomUsers");
+                Assert.True(schema.ContainsKey("CustomUserId"));
+                Assert.True(schema.ContainsKey("CustomLogin"));
+
+                // Глобальный конфиг не должен быть перезаписан.
+                Assert.Equal(defaultTable, ScrapsConfig.UsersTableName);
+                Assert.Equal(defaultColumns["UserID"], ScrapsConfig.UsersTableColumnsNames["UserID"]);
+                Assert.Equal(defaultColumns["Login"], ScrapsConfig.UsersTableColumnsNames["Login"]);
+                Assert.Equal(defaultColumns["Password"], ScrapsConfig.UsersTableColumnsNames["Password"]);
+                Assert.Equal(defaultColumns["Role"], ScrapsConfig.UsersTableColumnsNames["Role"]);
             }
         }
 
@@ -129,18 +190,15 @@ namespace Scraps.Tests
         [DbFact]
         public void Initialize_SetsUseRoleIdMapping_ByMode()
         {
-            using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: true))
+            using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
             {
+                MSSQL.Initialize(db.DatabaseName, DatabaseGenerationMode.Simple);
                 Assert.False(ScrapsConfig.UseRoleIdMapping);
-            }
 
-            using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: true))
-            {
+                MSSQL.Initialize(db.DatabaseName, DatabaseGenerationMode.Standard);
                 Assert.True(ScrapsConfig.UseRoleIdMapping);
-            }
 
-            using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: true))
-            {
+                MSSQL.Initialize(db.DatabaseName, DatabaseGenerationMode.Full);
                 Assert.True(ScrapsConfig.UseRoleIdMapping);
             }
         }
@@ -191,6 +249,11 @@ namespace Scraps.Tests
 
         private sealed class TempDb : IDisposable
         {
+            private static readonly object ConnectionCacheLock = new object();
+            private static string _cachedBaseConnectionString;
+            private static readonly object CleanupLock = new object();
+            private static readonly HashSet<string> DatabasesToCleanup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             private readonly string _prevDatabaseName;
             private readonly string _prevConnectionString;
             private readonly string _prevUsersTableName;
@@ -239,8 +302,10 @@ namespace Scraps.Tests
                 var temp = new TempDb();
                 try
                 {
+                    RegisterDatabaseForCleanup(temp.DatabaseName);
+
                     ScrapsConfig.DatabaseName = temp.DatabaseName;
-                    ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder(temp.DatabaseName);
+                    ScrapsConfig.ConnectionString = BuildConnectionStringForDatabase(temp.DatabaseName);
                     if (string.IsNullOrWhiteSpace(ScrapsConfig.ConnectionString))
                         throw new InvalidOperationException("Не удалось подобрать строку подключения к SQL Server для тестов.");
 
@@ -265,33 +330,119 @@ namespace Scraps.Tests
                 return temp;
             }
 
-            public void Dispose()
+            private static void RegisterDatabaseForCleanup(string databaseName)
             {
-                try
+                lock (CleanupLock)
                 {
-                    var builder = new SqlConnectionStringBuilder(ScrapsConfig.ConnectionString)
-                    {
-                        InitialCatalog = "master"
-                    };
+                    DatabasesToCleanup.Add(databaseName);
+                }
+            }
 
-                    using (var conn = new SqlConnection(builder.ToString()))
+            private static string BuildConnectionStringForDatabase(string databaseName)
+            {
+                if (string.IsNullOrWhiteSpace(databaseName))
+                    throw new ArgumentException("Database name cannot be empty.", nameof(databaseName));
+
+                lock (ConnectionCacheLock)
+                {
+                    if (string.IsNullOrWhiteSpace(_cachedBaseConnectionString))
                     {
-                        conn.Open();
-                        var cmd = new SqlCommand(
-                            $"IF DB_ID(@DbName) IS NOT NULL " +
-                            $"BEGIN " +
-                            $"ALTER DATABASE [" + DatabaseName + "] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; " +
-                            $"DROP DATABASE [" + DatabaseName + "]; " +
-                            $"END", conn);
-                        cmd.Parameters.AddWithValue("@DbName", DatabaseName);
-                        cmd.ExecuteNonQuery();
+                        var discovered = MSSQL.ConnectionStringBuilder("master");
+                        if (string.IsNullOrWhiteSpace(discovered))
+                            throw new InvalidOperationException("Не удалось получить базовую строку подключения к SQL Server.");
+
+                        var baseBuilder = new SqlConnectionStringBuilder(discovered)
+                        {
+                            InitialCatalog = "master"
+                        };
+                        _cachedBaseConnectionString = baseBuilder.ToString();
+                    }
+
+                    var builder = new SqlConnectionStringBuilder(_cachedBaseConnectionString)
+                    {
+                        InitialCatalog = databaseName
+                    };
+                    return builder.ToString();
+                }
+            }
+
+            internal static void CleanupRegisteredDatabases()
+            {
+                string[] dbs;
+                lock (CleanupLock)
+                {
+                    dbs = DatabasesToCleanup.ToArray();
+                    DatabasesToCleanup.Clear();
+                }
+
+                if (dbs.Length == 0)
+                    return;
+
+                CleanupDatabases(dbs);
+            }
+
+            internal static void CleanupDatabasesByPrefix(string prefix)
+            {
+                if (string.IsNullOrWhiteSpace(prefix))
+                    return;
+
+                var dbs = new List<string>();
+                var connStr = BuildConnectionStringForDatabase("master");
+                using (var conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (var cmd = new SqlCommand("SELECT [name] FROM [sys].[databases] WHERE [name] LIKE @prefix", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prefix", prefix + "%");
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                dbs.Add(reader.GetString(0));
+                            }
+                        }
                     }
                 }
-                catch
-                {
-                    // ignore cleanup errors
-                }
 
+                if (dbs.Count > 0)
+                    CleanupDatabases(dbs);
+            }
+
+            private static void CleanupDatabases(IEnumerable<string> databaseNames)
+            {
+                var names = databaseNames?.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                if (names == null || names.Length == 0)
+                    return;
+
+                var connStr = BuildConnectionStringForDatabase("master");
+                using (var conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    foreach (var db in names)
+                    {
+                        try
+                        {
+                            var escaped = db.Replace("]", "]]");
+                            var cmd = new SqlCommand(
+                                "IF DB_ID(@DbName) IS NOT NULL " +
+                                "BEGIN " +
+                                "ALTER DATABASE [" + escaped + "] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; " +
+                                "DROP DATABASE [" + escaped + "]; " +
+                                "END", conn);
+                            cmd.Parameters.AddWithValue("@DbName", db);
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch
+                        {
+                            // ignore cleanup errors
+                        }
+                    }
+                }
+            }
+
+            public void Dispose()
+            {
+                // DB cleanup выполняется fixture-ом в конце класса, чтобы не тормозить каждый тест.
                 ScrapsConfig.DatabaseName = _prevDatabaseName;
                 ScrapsConfig.ConnectionString = _prevConnectionString;
                 ScrapsConfig.UsersTableName = _prevUsersTableName;
@@ -309,15 +460,6 @@ namespace Scraps.Tests
                 ScrapsConfig.UseParallelServerDiscovery = _prevUseParallelServerDiscovery;
                 ScrapsConfig.MaxParallelConnections = _prevMaxParallelConnections;
             }
-
         }
     }
 }
-
-
-
-
-
-
-
-

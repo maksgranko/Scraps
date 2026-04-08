@@ -54,6 +54,23 @@ namespace Scraps.Databases
             if (string.IsNullOrEmpty(options.DatabaseName))
                 throw new InvalidOperationException("Не задано DatabaseName (укажите в ScrapsConfig.DatabaseName или через параметр).");
 
+            if (options.ApplyUsersMappingToScrapsConfig)
+            {
+                ScrapsConfig.DatabaseName = options.DatabaseName;
+                ScrapsConfig.UsersTableName = string.IsNullOrWhiteSpace(options.UsersTableName)
+                    ? ScrapsConfig.UsersTableName
+                    : options.UsersTableName;
+
+                if (options.UsersTableColumnsNames != null)
+                {
+                    ScrapsConfig.UsersTableColumnsNames = new Dictionary<string, string>(options.UsersTableColumnsNames);
+                }
+            }
+
+            // Синхронизируем UseRoleIdMapping даже при прямом вызове GenerateIfNotExists(...),
+            // чтобы поведение Users/RoleManager соответствовало выбранному режиму генерации.
+            ScrapsConfig.UseRoleIdMapping = options.Mode >= DatabaseGenerationMode.Standard;
+
             using (var conn = new SqlConnection(GetMasterConnectionString()))
             {
                 conn.Open();
