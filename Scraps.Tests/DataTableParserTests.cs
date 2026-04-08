@@ -127,6 +127,31 @@ namespace Scraps.Tests
             Assert.Equal("Антон", list[0]);
             Assert.Equal("Андрей", list[1]);
         }
+
+        [Fact]
+        public void ParseCsv_WithCustomRowSeparator_Works()
+        {
+            var input = "Key|Value||Users|Пользователи||Hello|Привет";
+            var dt = Parser.ParseCsv(input, delimiter: '|', rowSeparator: "||", hasHeader: true, trim: true);
+
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal(2, dt.Rows.Count);
+            Assert.Equal("Users", dt.Rows[0][0]);
+            Assert.Equal("Пользователи", dt.Rows[0][1]);
+            Assert.Equal("Hello", dt.Rows[1][0]);
+            Assert.Equal("Привет", dt.Rows[1][1]);
+        }
+
+        [Fact]
+        public void ParseCsv_RespectsQuotedDelimiter_Works()
+        {
+            var input = "Key;Value\nA;\"Привет;мир\"";
+            var dt = Parser.ParseCsv(input, delimiter: ';', hasHeader: true, trim: true);
+
+            Assert.Single(dt.Rows);
+            Assert.Equal("A", dt.Rows[0][0]);
+            Assert.Equal("Привет;мир", dt.Rows[0][1]);
+        }
     }
 }
 

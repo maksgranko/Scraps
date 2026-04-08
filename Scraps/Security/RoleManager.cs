@@ -35,7 +35,15 @@ namespace Scraps.Security
         /// <summary>
         /// Импорт.
         /// </summary>
-        Import = 16
+        Import = 16,
+        /// <summary>
+        /// Удобный набор: Read + Write.
+        /// </summary>
+        ReadWrite = Read | Write,
+        /// <summary>
+        /// Все базовые права.
+        /// </summary>
+        All = Read | Write | Delete | Export | Import
     }
 
     /// <summary>
@@ -43,6 +51,11 @@ namespace Scraps.Security
     /// </summary>
     public class TablePermission
     {
+        /// <summary>
+        /// Специальное имя таблицы для wildcard-правила на все таблицы.
+        /// </summary>
+        public const string AnyTable = "*";
+
         /// <summary>
         /// Имя таблицы (или "*" для глобального правила).
         /// </summary>
@@ -79,6 +92,22 @@ namespace Scraps.Security
             if (canExport) flags |= PermissionFlags.Export;
             if (canImport) flags |= PermissionFlags.Import;
             return new TablePermission(tableName, flags);
+        }
+
+        /// <summary>
+        /// Удобный конструктор wildcard-правила на все таблицы.
+        /// </summary>
+        public static TablePermission Any(PermissionFlags flags)
+        {
+            return new TablePermission(AnyTable, flags);
+        }
+
+        /// <summary>
+        /// Проверить, является ли имя таблицы wildcard-значением.
+        /// </summary>
+        public static bool IsWildcardTableName(string tableName)
+        {
+            return string.Equals(tableName, AnyTable, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -145,12 +174,22 @@ namespace Scraps.Security
         /// </summary>
         public bool HasPermission(string tableName, PermissionFlags required)
         {
-            var permission = TablePermissions.FirstOrDefault(p =>
-                p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(tableName))
+                return false;
 
-            if (permission == null) return false;
+            var explicitPermission = TablePermissions.FirstOrDefault(p =>
+                string.Equals(p.TableName, tableName, StringComparison.OrdinalIgnoreCase));
 
-            return (permission.Flags & required) == required;
+            if (explicitPermission != null)
+                return (explicitPermission.Flags & required) == required;
+
+            var wildcardPermission = TablePermissions.FirstOrDefault(p =>
+                TablePermission.IsWildcardTableName(p.TableName));
+
+            if (wildcardPermission != null)
+                return (wildcardPermission.Flags & required) == required;
+
+            return false;
         }
     }
 
@@ -169,9 +208,40 @@ namespace Scraps.Security
         {
             Roles.Clear();
             DefaultPermissions.Clear();
-            foreach (var role in roles)
+            foreach (var role in roles ?? Enumerable.Empty<Role>())
             {
                 Roles[role.Name] = role;
+            }
+        }
+
+        /// <summary>
+        /// Инициализация из списка ролей + role-defaults (wildcard) для каждой роли.
+        /// </summary>
+        public static void Initialize(IEnumerable<Role> roles, IDictionary<string, PermissionFlags> roleDefaults)
+        {
+            Initialize(roles);
+
+            if (roleDefaults == null)
+                return;
+
+            foreach (var kv in roleDefaults)
+            {
+                if (string.IsNullOrWhiteSpace(kv.Key))
+                    continue;
+
+                if (!Roles.TryGetValue(kv.Key, out var role))
+                {
+                    role = new Role(kv.Key);
+                    Roles[kv.Key] = role;
+                }
+
+                var wildcard = role.TablePermissions.FirstOrDefault(p =>
+                    TablePermission.IsWildcardTableName(p.TableName));
+
+                if (wildcard != null)
+                    wildcard.Flags = kv.Value;
+                else
+                    role.TablePermissions.Add(TablePermission.Any(kv.Value));
             }
         }
 
@@ -232,11 +302,8 @@ namespace Scraps.Security
         /// </summary>
         public static bool CheckAccess(string roleName, string tableName, PermissionFlags required)
         {
-            if (!Roles.TryGetValue(roleName, out var role))
-                return CheckDefaultAccess(tableName, required);
-
-            if (role.HasPermission(tableName, required))
-                return true;
+            if (TryGetRolePermission(roleName, tableName, out var roleFlags))
+                return (roleFlags & required) == required;
 
             return CheckDefaultAccess(tableName, required);
         }
@@ -422,19 +489,13 @@ namespace Scraps.Security
         /// </summary>
         public static PermissionFlags GetEffectivePermissions(string roleName, string tableName)
         {
-            if (!string.IsNullOrWhiteSpace(roleName) && Roles.TryGetValue(roleName, out var role))
-            {
-                var permission = role.TablePermissions.FirstOrDefault(p =>
-                    p.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
-
-                if (permission != null)
-                    return permission.Flags;
-            }
+            if (TryGetRolePermission(roleName, tableName, out var roleFlags))
+                return roleFlags;
 
             if (DefaultPermissions.TryGetValue(tableName, out var perm))
                 return perm;
 
-            if (DefaultPermissions.TryGetValue("*", out var permGlobal))
+            if (DefaultPermissions.TryGetValue(TablePermission.AnyTable, out var permGlobal))
                 return permGlobal;
 
             return PermissionFlags.None;
@@ -516,8 +577,36 @@ namespace Scraps.Security
             if (DefaultPermissions.TryGetValue(tableName, out var perm))
                 return (perm & required) == required;
 
-            if (DefaultPermissions.TryGetValue("*", out var permGlobal))
+            if (DefaultPermissions.TryGetValue(TablePermission.AnyTable, out var permGlobal))
                 return (permGlobal & required) == required;
+
+            return false;
+        }
+
+        private static bool TryGetRolePermission(string roleName, string tableName, out PermissionFlags flags)
+        {
+            flags = PermissionFlags.None;
+            if (string.IsNullOrWhiteSpace(roleName) || string.IsNullOrWhiteSpace(tableName))
+                return false;
+
+            if (!Roles.TryGetValue(roleName, out var role))
+                return false;
+
+            var explicitPermission = role.TablePermissions.FirstOrDefault(p =>
+                string.Equals(p.TableName, tableName, StringComparison.OrdinalIgnoreCase));
+            if (explicitPermission != null)
+            {
+                flags = explicitPermission.Flags;
+                return true;
+            }
+
+            var wildcardPermission = role.TablePermissions.FirstOrDefault(p =>
+                TablePermission.IsWildcardTableName(p.TableName));
+            if (wildcardPermission != null)
+            {
+                flags = wildcardPermission.Flags;
+                return true;
+            }
 
             return false;
         }

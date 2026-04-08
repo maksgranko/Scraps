@@ -78,21 +78,36 @@ namespace Scraps.Configs
         public static HashAlgorithm AuthHashAlgorithm = HashAlgorithm.SHA256;
 
         // Пример переводов (таблицы, которые гарантированно есть в БД).
-        // Рекомендуется задавать в месте инициализации приложения:
-        // TranslationManager.TableTranslations["Roles"] = "Роли";
-        // TranslationManager.ColumnTranslations["Roles"] = new Dictionary<string, string>
+        // Рекомендуется загружать одним вызовом через словарь:
+        // TranslationManager.Load(new Dictionary<string, string>
         // {
-        //     ["RoleID"] = "Идентификатор",
-        //     ["RoleName"] = "Название"
-        // };
-        // TranslationManager.TableTranslations["Users"] = "Пользователи";
-        // TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
-        // {
-        //     ["UserID"] = "Идентификатор",
-        //     ["Login"] = "Логин",
-        //     ["Password"] = "Пароль",
-        //     ["Role"] = "Роль"
-        // };
+        //     ["Roles"] = "Роли",
+        //     [TranslationManager.ColumnKey("Roles", "RoleID")] = "Идентификатор",
+        //     [TranslationManager.ColumnKey("Roles", "RoleName")] = "Название",
+        //     ["Users"] = "Пользователи",
+        //     [TranslationManager.ColumnKey("Users", "UserID")] = "Идентификатор",
+        //     [TranslationManager.ColumnKey("Users", "Login")] = "Логин",
+        //     [TranslationManager.ColumnKey("Users", "Password")] = "Пароль",
+        //     [TranslationManager.ColumnKey("Users", "Role")] = "Роль"
+        // }, clearBeforeLoad: false);
+        //
+        // Тот же вариант "в одну строку" через прямые присваивания:
+        // TranslationManager.Translations["Roles"] = "Роли"; TranslationManager.Translations[TranslationManager.ColumnKey("Roles", "RoleID")] = "Идентификатор"; TranslationManager.Translations[TranslationManager.ColumnKey("Roles", "RoleName")] = "Название"; TranslationManager.Translations["Users"] = "Пользователи"; TranslationManager.Translations[TranslationManager.ColumnKey("Users", "UserID")] = "Идентификатор"; TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Login")] = "Логин"; TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Password")] = "Пароль"; TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Role")] = "Роль";
+        //
+        // Также можно загрузить из CSV-файла:
+        // TranslationManager.Load("translations.csv", delimiter: ';', hasHeader: true, clearBeforeLoad: false);
+        //
+        // И из строки (CSV-текст):
+        // var csv = "key;value\nUsers;Пользователи\nUsers::Login;Логин";
+        // var table = Scraps.Data.DataTables.Parser.ParseCsv(csv, delimiter: ';', hasHeader: true, trim: true);
+        // var dict = Scraps.Data.DataTables.Parser.ParseNx2ToDictionary(
+        //     table,
+        //     key => key?.ToString(),
+        //     value => value?.ToString() ?? string.Empty,
+        //     keyColumnIndex: 0,
+        //     valueColumnIndex: 1,
+        //     skipInvalidRows: true);
+        // TranslationManager.Load(dict, clearBeforeLoad: false);
 
         /// <summary>
         /// Явно указанный SQL Server (пропускает автопоиск).
@@ -115,6 +130,9 @@ namespace Scraps.Configs
         public static int MaxParallelConnections = 10;
     }
 }
+
+
+
 
 
 

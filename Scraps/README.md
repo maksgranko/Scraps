@@ -179,12 +179,9 @@ var data = VirtualTableRegistry.GetData("Virtual_Sales", roleName: "Admin");
 ## Локализация
 
 ```csharp
-TranslationManager.TableTranslations["Users"] = "Пользователи";
-TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
-{
-    ["Login"] = "Логин",
-    ["Password"] = "Пароль"
-};
+TranslationManager.Translations["Users"] = "Пользователи";
+TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Login")] = "Логин";
+TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Password")] = "Пароль";
 ```
 
 ## Тесты
@@ -207,3 +204,4 @@ dotnet test Scraps.Tests/Scraps.Tests.csproj
 ## Примечания
 
 - Документация по параметрам и исключениям также доступна через XML-doc комментарии в публичном API.
+

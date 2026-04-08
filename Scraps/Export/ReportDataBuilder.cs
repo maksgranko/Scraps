@@ -10,15 +10,6 @@ namespace Scraps.Export
     public static class ReportDataBuilder
     {
         /// <summary>
-        /// Получить таблицу из БД и перевести названия колонок.
-        /// </summary>
-        public static DataTable GetTableTranslated(string tableName)
-        {
-            var dt = MSSQL.GetTableData(tableName);
-            return TranslationManager.TranslateDataTable(dt, tableName);
-        }
-
-        /// <summary>
         /// Получить DataTable по SQL и (опционально) перевести колонки.
         /// </summary>
         public static DataTable GetBySql(string sql, string tableNameForTranslations = null)
@@ -26,12 +17,13 @@ namespace Scraps.Export
             var dt = MSSQL.GetDataTableFromSQL(sql);
             if (!string.IsNullOrWhiteSpace(tableNameForTranslations))
             {
-                TranslationManager.TranslateDataTable(dt, tableNameForTranslations);
+                TranslationManager.Translate(dt, tableNameForTranslations);
             }
             return dt;
         }
     }
 }
+
 
 
 

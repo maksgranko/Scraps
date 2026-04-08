@@ -127,10 +127,9 @@ namespace Scraps.Import
             {
                 bool found = importColumns.Contains(dbColumn);
 
-                if (!found && allowTranslatedColumns &&
-                    TranslationManager.ColumnTranslations.TryGetValue(tableName, out var translations) &&
-                    translations.TryGetValue(dbColumn, out var translatedName))
+                if (!found && allowTranslatedColumns)
                 {
+                    var translatedName = TranslationManager.TranslateColumnName(tableName, dbColumn);
                     found = importColumns.Contains(translatedName);
                 }
 
@@ -163,14 +162,9 @@ namespace Scraps.Import
                 string columnName = column.ColumnName;
                 string originalName = columnName;
 
-                if (allowTranslatedColumns &&
-                    TranslationManager.ColumnTranslations.TryGetValue(tableName, out var translations))
+                if (allowTranslatedColumns)
                 {
-                    var reverse = translations.ToDictionary(x => x.Value, x => x.Key, StringComparer.OrdinalIgnoreCase);
-                    if (reverse.TryGetValue(columnName, out var origName))
-                    {
-                        originalName = origName;
-                    }
+                    originalName = TranslationManager.UntranslateColumnName(tableName, columnName);
                 }
 
                 if (dbSchema.TryGetValue(originalName, out var dbType))

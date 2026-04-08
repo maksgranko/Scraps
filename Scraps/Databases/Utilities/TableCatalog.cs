@@ -44,18 +44,6 @@ namespace Scraps.Databases.Utilities
             return tablesTemp.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
 
-        /// <summary>
-        /// Инициализировать список таблиц с учётом VirtualTableRegistry.
-        /// </summary>
-        public static string[] InitializeTablesWithRegistry(
-            bool autodetect,
-            string[] manualTables,
-            string[] removeOnStart = null,
-            string[] removeOnAutodetect = null)
-        {
-            var virtualTables = VirtualTableRegistry.GetNames();
-            return InitializeTables(autodetect, manualTables, removeOnStart, removeOnAutodetect, virtualTables);
-        }
     }
 }
 

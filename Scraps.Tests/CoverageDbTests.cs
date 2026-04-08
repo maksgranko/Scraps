@@ -111,13 +111,8 @@ namespace Scraps.Tests
                 baseColumns: new[] { "Login", "Role" });
             Assert.NotNull(withFk);
             Assert.True(withFk.Columns.Count >= 2);
-
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
-            {
-                ["Login"] = "Логин"
-            };
-            var translated = MSSQL.GetTableDataTranslated("Users");
+            TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Login")] = "Логин";
+            var translated = TranslationManager.Translate(MSSQL.GetTableData("Users"), "Users");
             Assert.True(translated.Columns.Contains("Логин"));
 
             var generic = MSSQL.GetNx2Dictionary("Таблица 1", "Id", "Name", o => Convert.ToInt32(o), o => o?.ToString() ?? "");
@@ -229,3 +224,5 @@ namespace Scraps.Tests
         }
     }
 }
+
+

@@ -13,13 +13,9 @@ namespace Scraps.Tests
         [DbFact]
         public void ValidateColumns_WithTranslations()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
-            TranslationManager.ColumnTranslations["ImportTest"] = new Dictionary<string, string>
-            {
-                ["Name"] = "Имя"
-            };
+            TranslationManager.Translations[TranslationManager.ColumnKey("ImportTest", "Name")] = "Имя";
 
             var dt = new DataTable();
             dt.Columns.Add("Имя");
@@ -33,8 +29,7 @@ namespace Scraps.Tests
         [DbFact]
         public void ValidateColumnCount_Works()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
             var dt = new DataTable();
             dt.Columns.Add("Name");
@@ -47,8 +42,7 @@ namespace Scraps.Tests
         [DbFact]
         public void ValidateTypes_DetectsMismatch()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
             var dt = new DataTable();
             dt.Columns.Add("Id");
@@ -63,8 +57,7 @@ namespace Scraps.Tests
         [DbFact]
         public void ValidateTypes_ChecksAllRows()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
             var dt = new DataTable();
             dt.Columns.Add("Id");
@@ -80,8 +73,7 @@ namespace Scraps.Tests
         [DbFact]
         public void ImportToTable_Works()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
             var dt = new DataTable();
             dt.Columns.Add("Name");
@@ -106,8 +98,7 @@ namespace Scraps.Tests
         [DbFact]
         public void ValidateColumns_MissingColumns_ReturnsErrors()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
             var dt = new DataTable();
             dt.Columns.Add("Other");
@@ -122,13 +113,9 @@ namespace Scraps.Tests
         [DbFact]
         public void BulkInsert_UsesTranslatedColumns()
         {
-            TranslationManager.ColumnTranslations.Clear();
-            TranslationManager.TableTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
-            TranslationManager.ColumnTranslations["ImportTest"] = new Dictionary<string, string>
-            {
-                ["Name"] = "Имя"
-            };
+            TranslationManager.Translations[TranslationManager.ColumnKey("ImportTest", "Name")] = "Имя";
 
             var dt = new DataTable();
             dt.Columns.Add("Имя");
@@ -151,3 +138,5 @@ namespace Scraps.Tests
         }
     }
 }
+
+

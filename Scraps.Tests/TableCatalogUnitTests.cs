@@ -20,11 +20,11 @@ namespace Scraps.Tests
         }
 
         [Fact]
-        public void InitializeTablesWithRegistry_Works()
+        public void InitializeTables_WithRegistryNames_Works()
         {
             VirtualTableRegistry.Clear();
             VirtualTableRegistry.RegisterSelect("Virtual_Reg", "Таблица 1");
-            var tables = TableCatalog.InitializeTablesWithRegistry(autodetect: false, manualTables: new string[0]);
+            var tables = TableCatalog.InitializeTables(autodetect: false, manualTables: new string[0], virtualTables: VirtualTableRegistry.GetNames());
             Assert.Contains("Virtual_Reg", tables);
         }
 
@@ -41,3 +41,4 @@ namespace Scraps.Tests
         }
     }
 }
+

@@ -201,13 +201,6 @@ namespace Scraps.Databases
             return GetTableData(tableName);
         }
 
-        /// <summary>Получить все записи из таблицы с переводом названий колонок.</summary>
-        public static DataTable GetTableDataTranslated(string tableName)
-        {
-            var dt = GetTableData(tableName);
-            return TranslationManager.TranslateDataTable(dt, tableName);
-        }
-
         /// <summary>Найти записи по значению колонки (из ScrapsConfig.ConnectionString).</summary>
         /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
         public static DataTable FindByColumn(string tableName, string columnName, object value, bool useLike = true)
@@ -294,7 +287,7 @@ namespace Scraps.Databases
                 throw new ArgumentException("Данные не могут быть null.", nameof(data));
 
             DataTable importData = data.Copy();
-            TranslationManager.UntranslateDataTable(importData, tableName);
+            TranslationManager.Untranslate(importData, tableName);
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -403,5 +396,6 @@ namespace Scraps.Databases
         }
     }
 }
+
 
 

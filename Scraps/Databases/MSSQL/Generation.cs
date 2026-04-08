@@ -34,17 +34,9 @@ namespace Scraps.Databases
         }
 
         /// <summary>
-        /// Создать базовую структуру БД, если её нет (опции из ScrapsConfig).
-        /// </summary>
-        public static void GenerateIfNotExists()
-        {
-            GenerateIfNotExists(null);
-        }
-
-        /// <summary>
         /// Создать базовую структуру БД, если её нет.
         /// </summary>
-        public static void GenerateIfNotExists(DatabaseGenerationOptions options)
+        public static void GenerateIfNotExists(DatabaseGenerationOptions options = null)
         {
             options = options ?? DatabaseGenerationOptions.Default();
 

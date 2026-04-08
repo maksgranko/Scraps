@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Scraps.Tests
@@ -415,29 +416,49 @@ namespace Scraps.Tests
                     return;
 
                 var connStr = BuildConnectionStringForDatabase("master");
-                using (var conn = new SqlConnection(connStr))
+                var options = new ParallelOptions
                 {
-                    conn.Open();
-                    foreach (var db in names)
+                    MaxDegreeOfParallelism = ResolveCleanupParallelism()
+                };
+
+                Parallel.ForEach(names, options, db =>
+                {
+                    try
                     {
-                        try
+                        using (var conn = new SqlConnection(connStr))
                         {
+                            conn.Open();
+
                             var escaped = db.Replace("]", "]]");
-                            var cmd = new SqlCommand(
+                            using (var cmd = new SqlCommand(
                                 "IF DB_ID(@DbName) IS NOT NULL " +
                                 "BEGIN " +
                                 "ALTER DATABASE [" + escaped + "] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; " +
                                 "DROP DATABASE [" + escaped + "]; " +
-                                "END", conn);
-                            cmd.Parameters.AddWithValue("@DbName", db);
-                            cmd.ExecuteNonQuery();
-                        }
-                        catch
-                        {
-                            // ignore cleanup errors
+                                "END", conn))
+                            {
+                                cmd.CommandTimeout = 30;
+                                cmd.Parameters.AddWithValue("@DbName", db);
+                                cmd.ExecuteNonQuery();
+                            }
                         }
                     }
-                }
+                    catch
+                    {
+                        // ignore cleanup errors
+                    }
+                });
+            }
+
+            private static int ResolveCleanupParallelism()
+            {
+                var env = Environment.GetEnvironmentVariable("SCRAPS_TEST_DB_CLEANUP_PARALLELISM");
+                if (int.TryParse(env, out var configured) && configured > 0)
+                    return configured;
+
+                var cpu = Environment.ProcessorCount;
+                if (cpu <= 2) return 1;
+                return Math.Min(4, cpu);
             }
 
             public void Dispose()

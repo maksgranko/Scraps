@@ -35,19 +35,15 @@ namespace Scraps.Tests
         [Fact]
         public void TranslationManager_ColumnAndListApi_Works()
         {
-            TranslationManager.TableTranslations.Clear();
-            TranslationManager.ColumnTranslations.Clear();
+            TranslationManager.Translations.Clear();
 
-            TranslationManager.TableTranslations["Users"] = "Пользователи";
-            TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
-            {
-                ["Login"] = "Логин"
-            };
+            TranslationManager.Translations["Users"] = "Пользователи";
+            TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Login")] = "Логин";
 
             Assert.Equal("Логин", TranslationManager.TranslateColumnName("Users", "Login"));
             Assert.Equal("Login", TranslationManager.UntranslateColumnName("Users", "Логин"));
 
-            var untranslated = TranslationManager.UntranslateTableList(new[] { "Пользователи" });
+            var untranslated = TranslationManager.Untranslate(new[] { "Пользователи" });
             Assert.Single(untranslated);
             Assert.Equal("Users", untranslated[0]);
         }
@@ -97,10 +93,19 @@ namespace Scraps.Tests
         {
             var tp = TablePermission.FromBooleans("T", canRead: true, canWrite: false, canDelete: true, canExport: false, canImport: true);
             Assert.Equal(PermissionFlags.Read | PermissionFlags.Delete | PermissionFlags.Import, tp.Flags);
+            Assert.Equal(TablePermission.AnyTable, TablePermission.Any(PermissionFlags.Read).TableName);
+            Assert.True(TablePermission.IsWildcardTableName("*"));
+            Assert.Equal(PermissionFlags.Read | PermissionFlags.Write, PermissionFlags.ReadWrite);
+            Assert.Equal(
+                PermissionFlags.Read | PermissionFlags.Write | PermissionFlags.Delete | PermissionFlags.Export | PermissionFlags.Import,
+                PermissionFlags.All);
 
             var role = new Role("R", ("T1", PermissionFlags.Read));
+            role.WithPermission(TablePermission.AnyTable, PermissionFlags.ReadWrite);
             role.WithPermission("T2", PermissionFlags.Export);
             Assert.True(role.HasPermission("T1", PermissionFlags.Read));
+            Assert.False(role.HasPermission("T1", PermissionFlags.Write));
+            Assert.True(role.HasPermission("AnyTable", PermissionFlags.Read));
             Assert.True(role.HasPermission("T2", PermissionFlags.Export));
 
             var print = RoleManager.PrintPermissions(PermissionFlags.Read | PermissionFlags.Write);
@@ -115,6 +120,18 @@ namespace Scraps.Tests
 
             RoleManager.AddRole(new Role("Y", "B", PermissionFlags.Export));
             Assert.NotNull(RoleManager.GetRole("Y"));
+
+            RoleManager.Initialize(
+                new[] { new Role("Manager", "Orders", PermissionFlags.Read) },
+                new Dictionary<string, PermissionFlags>
+                {
+                    ["Manager"] = PermissionFlags.ReadWrite,
+                    ["Viewer"] = PermissionFlags.Read
+                });
+            Assert.Equal(PermissionFlags.Read, RoleManager.GetEffectivePermissions("Manager", "Orders"));
+            Assert.Equal(PermissionFlags.ReadWrite, RoleManager.GetEffectivePermissions("Manager", "Products"));
+            Assert.True(RoleManager.CheckAccess("Viewer", "Anything", PermissionFlags.Read));
+            Assert.False(RoleManager.CheckAccess("Viewer", "Anything", PermissionFlags.Write));
         }
 
         [Fact]
@@ -147,11 +164,9 @@ namespace Scraps.Tests
             Assert.NotNull(testSequential);
             Assert.NotNull(getSources);
 
-            // 127.0.0.1,1 usually fails immediately (connection refused), avoiding slow DNS lookups.
             var resultSingle = testServer.Invoke(null, new object[] { "127.0.0.1,1", "master" });
             Assert.Null(resultSingle);
 
-            // Empty input covers fast-return branch without network calls.
             var resultSeq = testSequential.Invoke(null, new object[] { new string[0], "master" });
             Assert.Null(resultSeq);
 
@@ -160,3 +175,6 @@ namespace Scraps.Tests
         }
     }
 }
+
+
+
