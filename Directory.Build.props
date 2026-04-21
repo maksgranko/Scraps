@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Maks Granko</Authors>
+    <Company>Maks Granko</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)packages</PackageOutputPath>
+    <Version>0.18.0</Version>
+    <AssemblyVersion>1.2026.111.5</AssemblyVersion>
+    <FileVersion>1.2026.111.5</FileVersion>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

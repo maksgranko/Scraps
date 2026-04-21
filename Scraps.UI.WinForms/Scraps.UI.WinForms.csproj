@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Description>Scraps UI WinForms — хелперы для DataGridView и FK-редакторов.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
+    <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
+  </ItemGroup>
+</Project>

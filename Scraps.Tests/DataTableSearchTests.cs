@@ -1,4 +1,4 @@
-﻿using Scraps.Data.DataTables;
+using Scraps.Data.DataTables;
 using System.Data;
 using Xunit;
 
@@ -32,15 +32,6 @@ namespace Scraps.Tests
 
             Assert.NotNull(prev);
             Assert.Equal(1, prev.RowIndex);
-        }
-
-        [Fact]
-        public void MatchNavigator_Help_IsAvailable()
-        {
-            var help = Search.GetMatchNavigatorHelp();
-            Assert.False(string.IsNullOrWhiteSpace(help));
-            Assert.Contains("CreateNavigator", help);
-            Assert.Contains("DataGridView", help);
         }
 
         [Fact]

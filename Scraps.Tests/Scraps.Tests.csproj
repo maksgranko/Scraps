@@ -1,13 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>1.2026.111.48</AssemblyVersion>
-    <FileVersion>1.2026.111.48</FileVersion>
+    <Description>Scraps Tests — юнит- и интеграционные тесты.</Description>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Scraps\Scraps.csproj" />
+    <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
+    <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
+    <ProjectReference Include="..\Scraps.Security\Scraps.Security.csproj" />
+    <ProjectReference Include="..\Scraps.Import\Scraps.Import.csproj" />
+    <ProjectReference Include="..\Scraps.Export\Scraps.Export.csproj" />
+    <ProjectReference Include="..\Scraps.UI.WinForms\Scraps.UI.WinForms.csproj" />
   </ItemGroup>
-
 </Project>

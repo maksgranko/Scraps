@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Scraps Import — импорт данных из Excel и CSV.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
+    <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
+    <PackageReference Include="EPPlus" Version="7.1.0" />
+  </ItemGroup>
+</Project>

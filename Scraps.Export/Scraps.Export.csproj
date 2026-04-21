@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Description>Scraps — мета-пакет. Включает все модули: Core, Database.MSSQL, Security, Import, Export.</Description>
-    <IsPackable>true</IsPackable>
+    <Description>Scraps Export — экспорт отчётов в Excel и PDF.</Description>
     <AssemblyVersion>1.2026.111.6</AssemblyVersion>
     <FileVersion>1.2026.111.6</FileVersion>
   </PropertyGroup>
@@ -10,8 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
     <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
-    <ProjectReference Include="..\Scraps.Security\Scraps.Security.csproj" />
-    <ProjectReference Include="..\Scraps.Import\Scraps.Import.csproj" />
-    <ProjectReference Include="..\Scraps.Export\Scraps.Export.csproj" />
+    <PackageReference Include="EPPlus" Version="7.1.0" />
+    <PackageReference Include="iTextSharp" Version="5.5.13.5" />
   </ItemGroup>
 </Project>
