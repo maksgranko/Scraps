@@ -1,4 +1,4 @@
-﻿using OfficeOpenXml;
+using OfficeOpenXml;
 using Scraps.Configs;
 using Scraps.Databases;
 using Scraps.Import;
@@ -120,6 +120,133 @@ namespace Scraps.Tests
 
             var usersCount = Convert.ToInt32(MSSQL.ExecuteScalar("SELECT COUNT(1) FROM [Users]"));
             Assert.True(usersCount >= 0);
+        }
+
+        [DbFact]
+        public void GetTableData_ExpandForeignKeys_Works()
+        {
+            // Простой expand без опций
+            var expanded = MSSQL.GetTableData("Users", expandForeignKeys: true);
+            Assert.NotNull(expanded);
+            Assert.True(expanded.Columns.Count >= 2);
+
+            // Expand с baseColumns
+            var expandedCols = MSSQL.GetTableData("Users", expandForeignKeys: true, expandOptions: null, "Login");
+            Assert.NotNull(expandedCols);
+            Assert.True(expandedCols.Columns.Count >= 1);
+
+            // Expand с отключенным AutoResolveDisplayColumn — JOIN есть, но alias-колонки не добавляются
+            var noDisplay = MSSQL.GetTableData("Users", expandForeignKeys: true,
+                new MSSQL.ExpandForeignKeysOptions { AutoResolveDisplayColumn = false, IncludeReferenceAllColumns = false },
+                "Login", "Role");
+            Assert.NotNull(noDisplay);
+        }
+
+        [Fact]
+        public void ResolveDisplayColumn_CaseInsensitive_And_ExcludesPk()
+        {
+            // Для таблицы Roles ожидаем RoleName (case-insensitive match на "name" из preferred)
+            var display = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID");
+            Assert.Equal("RoleName", display);
+
+            // Явный override должен работать даже если это PK
+            ScrapsConfig.ForeignKeyDisplayColumnOverrides["Roles"] = "RoleID";
+            var overridden = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID");
+            Assert.Equal("RoleID", overridden);
+            ScrapsConfig.ForeignKeyDisplayColumnOverrides.Remove("Roles");
+
+            // Case-insensitive preferred: "NAME" должен найти "RoleName"
+            var caseInsensitive = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID", preferred: new[] { "NAME" });
+            Assert.Equal("RoleName", caseInsensitive);
+        }
+
+        [DbFact]
+        public void RowEditor_AddRow_WithAutoFk_CreatesLookup()
+        {
+            // Добавляем пользователя с ролью "ТестоваяРоль" (которой нет в БД)
+            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "ТестоваяРоль"),
+                strictFk: false);
+
+            Assert.True(result.Success, result.Error);
+            Assert.NotNull(result.RowId);
+        }
+
+        [DbFact]
+        public void RowEditor_AddRow_StrictFk_Missing_Throws()
+        {
+            // strict=true, роль "НесуществующаяРоль123" не найдена → ошибка
+            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser2_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "НесуществующаяРоль123"),
+                strictFk: true);
+
+            Assert.False(result.Success);
+            Assert.Contains("не найдено", result.Error);
+        }
+
+        [DbFact]
+        public void RowEditor_AddRow_TypeMismatch_Throws()
+        {
+            // Role — string-поле (если смотреть через DisplayColumn), но если передать int...
+            // На самом деле Users.Role — int (RoleID), так что этот тест проверяет вставку int
+            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser3_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", 99999),
+                strictFk: true);
+
+            // 99999 не существует → ошибка
+            Assert.False(result.Success);
+        }
+
+        [DbFact]
+        public void RowEditor_UpdateRow_ChangesFk()
+        {
+            // Сначала создаём пользователя
+            var login = "updateuser_" + Guid.NewGuid().ToString("N");
+            var addResult = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", login, "Password", "pass", "Role", "default"),
+                strictFk: false);
+            Assert.True(addResult.Success, addResult.Error);
+
+            // Обновляем роль на новую
+            var updateResult = Scraps.Databases.Utilities.TableRows.RowEditor.UpdateRow("Users", "Login", login,
+                Scraps.Databases.Utilities.TableRows.Values.Create("Role", "НоваяРольДляUpdate"),
+                strictFk: false);
+
+            Assert.True(updateResult.Success, updateResult.Error);
+        }
+
+        [Fact]
+        public void Values_Create_BuildsDictionary()
+        {
+            var dict = Scraps.Databases.Utilities.TableRows.Values.Create("A", 1, "B", "two", "C", null);
+            Assert.Equal(3, dict.Count);
+            Assert.Equal(1, dict["A"]);
+            Assert.Equal("two", dict["B"]);
+            Assert.Null(dict["C"]);
+        }
+
+        [DbFact]
+        public void RowEditor_AddRow_StrictFk_Existing_Succeeds()
+        {
+            // default роль существует после GenerateIfNotExists
+            MSSQL.GenerateIfNotExists();
+            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "strictok_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
+                strictFk: true);
+            Assert.True(result.Success, result.Error);
+            Assert.NotNull(result.RowId);
+        }
+
+        [DbFact]
+        public void RowEditor_AddRow_WithExistingRole_Strict_Succeeds()
+        {
+            MSSQL.GenerateIfNotExists();
+            // Роль default создаётся при генерации
+            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "existingrole_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
+                strictFk: true);
+            Assert.True(result.Success, result.Error);
+            Assert.NotNull(result.RowId);
         }
 
         [DbFact]

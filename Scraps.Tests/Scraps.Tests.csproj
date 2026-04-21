@@ -1,12 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyVersion>1.2026.98.40</AssemblyVersion>
-    <FileVersion>1.2026.98.40</FileVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AssemblyVersion>1.2026.111.48</AssemblyVersion>
+    <FileVersion>1.2026.111.48</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

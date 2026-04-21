@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 
 namespace Scraps.Configs
 {
@@ -128,6 +129,23 @@ namespace Scraps.Configs
         /// Максимальное количество параллельных подключений при поиске.
         /// </summary>
         public static int MaxParallelConnections = 10;
+
+        /// <summary>
+        /// Приоритетные названия колонок для отображения в справочниках FK.
+        /// Проверяются в порядке следования (без учета регистра).
+        /// </summary>
+        public static string[] ForeignKeyDisplayColumnPreferred = new[]
+        {
+            "Name", "Title", "DisplayName", "Display", "Value",
+            "Description", "Label", "Text", "FullName", "RoleName"
+        };
+
+        /// <summary>
+        /// Переопределения колонок отображения для конкретных таблиц-справочников.
+        /// Ключ — имя таблицы (без учета регистра), значение — имя колонки.
+        /// </summary>
+        public static Dictionary<string, string> ForeignKeyDisplayColumnOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 }
 

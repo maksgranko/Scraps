@@ -1,4 +1,4 @@
-﻿using Scraps.Configs;
+using Scraps.Configs;
 using Scraps.Data.DataTables;
 using Scraps.Localization;
 using Scraps.Security;
@@ -68,13 +68,66 @@ namespace Scraps.Databases
         /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
         public static DataTable GetTableData(string tableName, string connectionString)
         {
+            return GetTableData(tableName, connectionString, expandForeignKeys: false, expandOptions: null);
+        }
+
+        /// <summary>Получить записи из таблицы с выбором колонок (из ScrapsConfig.ConnectionString).</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы</exception>
+        /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
+        public static DataTable GetTableData(string tableName, params string[] baseColumns)
+        {
+            return GetTableData(tableName, ScrapsConfig.ConnectionString, expandForeignKeys: false, expandOptions: null, baseColumns);
+        }
+
+        /// <summary>Получить записи из таблицы с выбором колонок и строкой подключения.</summary>
+        /// <exception cref="ArgumentException">Пустое название таблицы</exception>
+        /// <exception cref="InvalidOperationException">Таблица не найдена</exception>
+        public static DataTable GetTableData(string tableName, string connectionString, params string[] baseColumns)
+        {
+            return GetTableData(tableName, connectionString, expandForeignKeys: false, expandOptions: null, baseColumns);
+        }
+
+        /// <summary>
+        /// Получить данные таблицы с автоматическим раскрытием внешних ключей.
+        /// </summary>
+        /// <param name="tableName">Название таблицы.</param>
+        /// <param name="expandForeignKeys">Если true — автоматически выполнять LEFT JOIN по всем FK.</param>
+        /// <param name="expandOptions">Параметры расширения FK (опционально).</param>
+        /// <param name="baseColumns">Колонки основной таблицы (null/пусто = все колонки).</param>
+        public static DataTable GetTableData(string tableName, bool expandForeignKeys, ExpandForeignKeysOptions expandOptions = null, params string[] baseColumns)
+        {
+            return GetTableData(tableName, ScrapsConfig.ConnectionString, expandForeignKeys, expandOptions, baseColumns);
+        }
+
+        /// <summary>
+        /// Получить данные таблицы с автоматическим раскрытием внешних ключей и явной строкой подключения.
+        /// </summary>
+        /// <param name="tableName">Название таблицы.</param>
+        /// <param name="connectionString">Строка подключения.</param>
+        /// <param name="expandForeignKeys">Если true — автоматически выполнять LEFT JOIN по всем FK.</param>
+        /// <param name="expandOptions">Параметры расширения FK (опционально).</param>
+        /// <param name="baseColumns">Колонки основной таблицы (null/пусто = все колонки).</param>
+        public static DataTable GetTableData(string tableName, string connectionString, bool expandForeignKeys, ExpandForeignKeysOptions expandOptions = null, params string[] baseColumns)
+        {
+            if (expandForeignKeys)
+            {
+                var options = expandOptions ?? new ExpandForeignKeysOptions();
+                options.ConnectionString = connectionString;
+                if (baseColumns != null && baseColumns.Length > 0)
+                    options.BaseColumns = baseColumns;
+                return GetTableDataExpanded(tableName, connectionString, options);
+            }
+
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
 
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                SqlDataAdapter da = new SqlDataAdapter($"SELECT * FROM {QuoteIdentifier(tableName)}", conn);
+                var selectCols = baseColumns == null || baseColumns.Length == 0
+                    ? "*"
+                    : string.Join(", ", baseColumns.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => QuoteIdentifier(c.Trim())));
+                SqlDataAdapter da = new SqlDataAdapter($"SELECT {selectCols} FROM {QuoteIdentifier(tableName)}", conn);
                 da.Fill(dt);
             }
 

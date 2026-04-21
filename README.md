@@ -1,4 +1,4 @@
-﻿# Scraps
+# Scraps
 
 Scraps — библиотека утилит для SQL Server, прав доступа, локализации, импорта/экспорта и операций с `DataTable`.
 
@@ -112,6 +112,105 @@ var data = MSSQL.GetTableData(
     },
     baseColumns: new[] { "UserID", "Login", "Role" });
 ```
+
+Пример FK-выборки с автоматическим раскрытием всех FK:
+
+```csharp
+var expanded = MSSQL.GetTableData("Users", expandForeignKeys: true);
+// Добавляются alias-колонки вида: t0_Role_RoleName
+
+var withOptions = MSSQL.GetTableData("Users", expandForeignKeys: true,
+    new MSSQL.ExpandForeignKeysOptions { AutoResolveDisplayColumn = false },
+    "Login", "Role");
+```
+
+## Add/Edit с автоматическим разрешением FK (TableRows)
+
+```csharp
+using Scraps.Databases.Utilities.TableRows;
+```
+
+### Упрощённое создание значений
+
+```csharp
+// Вариант 1 — через Values.Create (короткий)
+var values = Values.Create("Name", "Иван", "Client_ID", "Пётр");
+
+// Вариант 2 — стандартный Dictionary (если нужна сложная логика)
+var values = new Dictionary<string, object>
+{
+    ["Name"] = "Иван",
+    ["Client_ID"] = "Пётр"
+};
+```
+
+### Добавление записи (AddRow)
+
+**Строгий режим** (`strictFk = true`) — справочник должен существовать:
+
+```csharp
+var result = RowEditor.AddRow("Users",
+    Values.Create("Login", "ivan", "Password", "pass", "Role", "Admin"),
+    strictFk: true);
+
+// result.Success = true  — роль "Admin" найдена
+// result.Success = false — роль не найдена, result.Error содержит описание
+```
+
+**Мягкий режим** (`strictFk = false`) — авто-создание в справочнике:
+
+```csharp
+// Роль "Moderator" не существует → будет создана автоматически
+var result = RowEditor.AddRow("Users",
+    Values.Create("Login", "petr", "Password", "pass", "Role", "Moderator"),
+    strictFk: false);
+
+// result.Success = true
+// result.RowId = ID нового пользователя
+// В таблице Roles появилась запись "Moderator"
+```
+
+### Редактирование записи (UpdateRow)
+
+```csharp
+var result = RowEditor.UpdateRow("Users", "Login", "ivan",
+    Values.Create("Role", "SuperAdmin"),
+    strictFk: false);
+```
+
+### Связанные таблицы (ChildInsert)
+
+Добавление в родительскую таблицу + автоматическая вставка в дочерние:
+
+```csharp
+var result = RowEditor.AddRow("Groups",
+    Values.Create("Name", "Администраторы", "Client_ID", "Пётр"),
+    strictFk: false,
+    children: new[]
+    {
+        // GroupID подставится автоматически из только что созданной Groups
+        new ChildInsert("GroupClients", Values.Create("Note", "VIP-клиент"))
+    });
+
+// Результат:
+// Clients:    создан "Пётр" (если не существовал)
+// Groups:     создана группа "Администраторы"
+// GroupClients: создана связь с Note = "VIP-клиент"
+```
+
+### Поведение Foreign Key
+
+| Входное значение | `strictFk = true` | `strictFk = false` |
+|------------------|-------------------|--------------------|
+| `null` | `NULL` | `NULL` |
+| `int` (существует) | Использовать | Использовать |
+| `int` (не существует) | **Ошибка** | **Ошибка** |
+| `string` (найден) | Использовать ID | Использовать ID |
+| `string` (не найден) | **Ошибка** | **Авто-INSERT в справочник** |
+| Тип не совпадает с DisplayColumn | **Ошибка** | **Ошибка** |
+| `""` (пустая строка) | `NULL` | `NULL` |
+
+**Авто-создание справочника** работает только для таблиц Nx1 (1 колонка) или Nx2 (`ID + поле`). Если таблица имеет больше колонок — будет ошибка.
 
 Пример `Nx2` -> `Dictionary`:
 

@@ -3,21 +3,22 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.15.0</Version>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Version>0.17.0</Version>
     <Authors>Maks Granko</Authors>
     <Company></Company>
     <Description>Student helper, precreated methods, samples</Description>
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.2026.98.34</AssemblyVersion>
-    <FileVersion>1.2026.98.34</FileVersion>
-	  <PackageReadmeFile>README.md</PackageReadmeFile>
+    <AssemblyVersion>1.2026.111.47</AssemblyVersion>
+    <FileVersion>1.2026.111.47</FileVersion>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-    <PackageReference Include="EPPlus" Version="7.0.6" />
+    <PackageReference Include="EPPlus" Version="7.1.0" />
     <PackageReference Include="iTextSharp" Version="5.5.13.5" />
 
 	  <None Include="README.md" Pack="true" PackagePath="\" />

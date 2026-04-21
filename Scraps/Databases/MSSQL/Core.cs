@@ -1,4 +1,4 @@
-﻿using Scraps.Configs;
+using Scraps.Configs;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -361,6 +361,24 @@ namespace Scraps.Databases
             {
                 DataTable dt = new DataTable();
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
+                {
+                    new SqlDataAdapter(sqlRequest, conn).Fill(dt);
+                }
+                return dt;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>Получить DataTable из SQL-запроса с указанной строкой подключения.</summary>
+        public static DataTable GetDataTableFromSQL(string sqlRequest, string connectionString)
+        {
+            try
+            {
+                DataTable dt = new DataTable();
+                using (SqlConnection conn = new SqlConnection(connectionString))
                 {
                     new SqlDataAdapter(sqlRequest, conn).Fill(dt);
                 }
