@@ -1,4 +1,4 @@
-﻿using Scraps.Data.DataTables;
+using Scraps.Data.DataTables;
 using System;
 using System.Data;
 using Xunit;
@@ -152,6 +152,87 @@ namespace Scraps.Tests
             Assert.Equal("A", dt.Rows[0][0]);
             Assert.Equal("Привет;мир", dt.Rows[0][1]);
         }
+
+        #region --- From Nx1/Nx2 to DataTable ---
+
+        [Fact]
+        public void FromNx1_StringList_Works()
+        {
+            var list = new System.Collections.Generic.List<string> { "Антон", "Андрей", "Василий" };
+            var dt = Parser.FromNx1(list, columnName: "Name");
+
+            Assert.Single(dt.Columns);
+            Assert.Equal("Name", dt.Columns[0].ColumnName);
+            Assert.Equal(3, dt.Rows.Count);
+            Assert.Equal("Антон", dt.Rows[0][0]);
+            Assert.Equal("Андрей", dt.Rows[1][0]);
+            Assert.Equal("Василий", dt.Rows[2][0]);
+        }
+
+        [Fact]
+        public void FromNx1_IntList_Works()
+        {
+            var list = new System.Collections.Generic.List<int> { 10, 20, 30 };
+            var dt = Parser.FromNx1(list, columnName: "Score");
+
+            Assert.Single(dt.Columns);
+            Assert.Equal(typeof(int), dt.Columns[0].DataType);
+            Assert.Equal(3, dt.Rows.Count);
+            Assert.Equal(10, dt.Rows[0][0]);
+            Assert.Equal(30, dt.Rows[2][0]);
+        }
+
+        [Fact]
+        public void FromNx1_NullList_ReturnsEmptyTable()
+        {
+            var dt = Parser.FromNx1((System.Collections.Generic.List<string>)null);
+            Assert.NotNull(dt);
+            Assert.Equal(0, dt.Rows.Count);
+        }
+
+        [Fact]
+        public void FromNx2_IntStringDictionary_Works()
+        {
+            var dict = new System.Collections.Generic.Dictionary<int, string>
+            {
+                [1] = "Отлично",
+                [2] = "Хорошо",
+                [3] = "Плохо"
+            };
+            var dt = Parser.FromNx2(dict, keyColumnName: "GradeID", valueColumnName: "GradeName");
+
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("GradeID", dt.Columns[0].ColumnName);
+            Assert.Equal("GradeName", dt.Columns[1].ColumnName);
+            Assert.Equal(3, dt.Rows.Count);
+            Assert.Equal(1, dt.Rows[0][0]);
+            Assert.Equal("Отлично", dt.Rows[0][1]);
+        }
+
+        [Fact]
+        public void FromNx2_StringIntDictionary_Works()
+        {
+            var dict = new System.Collections.Generic.Dictionary<string, int>
+            {
+                ["Ivan"] = 25,
+                ["Petr"] = 30
+            };
+            var dt = Parser.FromNx2(dict);
+
+            Assert.Equal(2, dt.Rows.Count);
+            Assert.Equal("Ivan", dt.Rows[0][0]);
+            Assert.Equal(25, dt.Rows[0][1]);
+        }
+
+        [Fact]
+        public void FromNx2_NullDictionary_ReturnsEmptyTable()
+        {
+            var dt = Parser.FromNx2((System.Collections.Generic.Dictionary<int, string>)null);
+            Assert.NotNull(dt);
+            Assert.Equal(0, dt.Rows.Count);
+        }
+
+        #endregion
     }
 }
 

@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Version>0.17.0</Version>
+    <Version>0.17.1</Version>
     <Authors>Maks Granko</Authors>
     <Company></Company>
     <Description>Student helper, precreated methods, samples</Description>

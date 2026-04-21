@@ -248,6 +248,23 @@ List<string> dbNames = MSSQL.GetNx1List(
     valueColumn: "Name");
 ```
 
+### Обратное преобразование: Nx1/Nx2 → DataTable
+
+```csharp
+// Nx1: List → DataTable
+var list = new List<string> { "Антон", "Андрей", "Василий" };
+DataTable dt1 = Parser.FromNx1(list, columnName: "Name");
+
+// Nx2: Dictionary → DataTable
+var dict = new Dictionary<int, string>
+{
+    [1] = "Отлично",
+    [2] = "Хорошо",
+    [3] = "Плохо"
+};
+DataTable dt2 = Parser.FromNx2(dict, keyColumnName: "GradeID", valueColumnName: "GradeName");
+```
+
 Справка по `MatchNavigator`:
 
 ```csharp

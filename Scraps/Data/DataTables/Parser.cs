@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using Scraps.Data.Parsers;
@@ -126,6 +126,85 @@ namespace Scraps.Data.DataTables
         {
             return Nx.ParseNx1ToList(table, valueColumnIndex, trim, skipEmpty);
         }
+
+        #region --- From Nx1/Nx2 to DataTable ---
+
+        /// <summary>
+        /// Создать <see cref="DataTable"/> из Nx1-списка (одна колонка).
+        /// </summary>
+        /// <param name="list">Список значений.</param>
+        /// <param name="columnName">Название колонки в DataTable.</param>
+        public static DataTable FromNx1(List<string> list, string columnName = "Value")
+        {
+            var dt = new DataTable();
+            dt.Columns.Add(columnName, typeof(string));
+            if (list != null)
+            {
+                foreach (var item in list)
+                {
+                    dt.Rows.Add(item);
+                }
+            }
+            return dt;
+        }
+
+        /// <summary>
+        /// Создать <see cref="DataTable"/> из Nx1-списка с пользовательским типом колонки.
+        /// </summary>
+        public static DataTable FromNx1<T>(List<T> list, string columnName = "Value")
+        {
+            var dt = new DataTable();
+            dt.Columns.Add(columnName, typeof(T));
+            if (list != null)
+            {
+                foreach (var item in list)
+                {
+                    dt.Rows.Add(item);
+                }
+            }
+            return dt;
+        }
+
+        /// <summary>
+        /// Создать <see cref="DataTable"/> из Nx2-словаря (две колонки: ключ и значение).
+        /// </summary>
+        /// <param name="dictionary">Словарь ключ-значение.</param>
+        /// <param name="keyColumnName">Название колонки ключа.</param>
+        /// <param name="valueColumnName">Название колонки значения.</param>
+        public static DataTable FromNx2(Dictionary<int, string> dictionary, string keyColumnName = "Key", string valueColumnName = "Value")
+        {
+            var dt = new DataTable();
+            dt.Columns.Add(keyColumnName, typeof(int));
+            dt.Columns.Add(valueColumnName, typeof(string));
+            if (dictionary != null)
+            {
+                foreach (var kv in dictionary)
+                {
+                    dt.Rows.Add(kv.Key, kv.Value);
+                }
+            }
+            return dt;
+        }
+
+        /// <summary>
+        /// Создать <see cref="DataTable"/> из Nx2-словаря с пользовательскими типами.
+        /// </summary>
+        public static DataTable FromNx2<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string keyColumnName = "Key", string valueColumnName = "Value")
+        {
+            var dt = new DataTable();
+            dt.Columns.Add(keyColumnName, typeof(TKey));
+            dt.Columns.Add(valueColumnName, typeof(TValue));
+            if (dictionary != null)
+            {
+                foreach (var kv in dictionary)
+                {
+                    dt.Rows.Add(kv.Key, kv.Value);
+                }
+            }
+            return dt;
+        }
+
+        #endregion
     }
 }
 
