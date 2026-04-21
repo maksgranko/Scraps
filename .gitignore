@@ -33,3 +33,4 @@ troubles.txt
 /packages
 /NuGet
 publish-nuget.bat
+/Scraps.Core/bin
