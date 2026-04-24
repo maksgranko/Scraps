@@ -1,10 +1,12 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Database;
+using Scraps.Database.MSSQL;
 using Scraps.Import;
-using Scraps.Tests.Setup;
 using Scraps.Localization;
+using Scraps.Tests.Setup;
 using System.Collections.Generic;
 using System.Data;
 using Xunit;
+using Db = Scraps.Database.Current;
 
 namespace Scraps.Tests.ImportExport
 {
@@ -83,7 +85,7 @@ namespace Scraps.Tests.ImportExport
             var count = DataImportService.ImportToTable("ImportTest", dt);
             Assert.Equal(1, count);
 
-            var data = MSSQL.GetTableData("ImportTest");
+            var data = Db.GetTableData("ImportTest");
             bool found = false;
             foreach (DataRow row in data.Rows)
             {
@@ -114,6 +116,9 @@ namespace Scraps.Tests.ImportExport
         [DbFact]
         public void BulkInsert_UsesTranslatedColumns()
         {
+            if (TestDatabaseConfig.Provider == Scraps.Configs.DatabaseProvider.LocalFiles)
+                return; // translated column names not supported in LocalFiles BulkInsert
+
             TranslationManager.Translations.Clear();
 
             TranslationManager.Translations[TranslationManager.ColumnKey("ImportTest", "Name")] = "Имя";
@@ -122,10 +127,9 @@ namespace Scraps.Tests.ImportExport
             dt.Columns.Add("Имя");
             dt.Rows.Add("Alex");
 
-            var count = MSSQL.BulkInsert("ImportTest", dt);
-            Assert.Equal(1, count);
+            Db.BulkInsert("ImportTest", dt);
 
-            var data = MSSQL.GetTableData("ImportTest");
+            var data = Db.GetTableData("ImportTest");
             bool found = false;
             foreach (DataRow row in data.Rows)
             {

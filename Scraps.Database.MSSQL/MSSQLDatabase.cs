@@ -1,13 +1,12 @@
 using Scraps.Configs;
 using Scraps.Database;
-using Scraps.Databases;
 using Scraps.Security;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     /// <summary>
     /// Реализация IDatabase для Microsoft SQL Server.
@@ -17,11 +16,6 @@ namespace Scraps.Databases
     {
         /// <summary>Провайдер базы данных.</summary>
         public override DatabaseProvider Provider => DatabaseProvider.MSSQL;
-
-        static MSSQLDatabase()
-        {
-            DatabaseProviderFactory.Register(DatabaseProvider.MSSQL, () => new MSSQLDatabase());
-        }
 
         /// <summary>Создать экземпляр MSSQLDatabase.</summary>
         public MSSQLDatabase()
@@ -91,8 +85,8 @@ namespace Scraps.Databases
 
     internal class MSSQLSchemaAdapter : IDatabaseSchema
     {
-        public List<string> GetTables(bool includeViews = false, bool includeSystem = false)
-            => MSSQL.GetTables(includeSystem, false).ToList();
+        public List<string> GetTables(bool includeSystem = false)
+            => MSSQL.GetTables(includeSystemTables: includeSystem, includeSchemaInName: false).ToList();
 
         public List<string> GetTableColumns(string tableName)
             => MSSQL.GetTableColumns(tableName).ToList();
@@ -141,8 +135,8 @@ namespace Scraps.Databases
             return MSSQL.GetTableData(tableName, legacyJoins, baseColumns);
         }
 
-        public DataTable FindByColumn(string tableName, string columnName, object value, bool exactMatch = true)
-            => MSSQL.FindByColumn(tableName, columnName, value, exactMatch);
+        public DataTable FindByColumn(string tableName, string columnName, object value, SqlFilterOperator op = SqlFilterOperator.Eq)
+            => MSSQL.FindByColumn(tableName, columnName, value, op);
 
         public void ApplyTableChanges(string tableName, DataTable changes)
             => MSSQL.ApplyTableChanges(tableName, changes);
@@ -165,8 +159,8 @@ namespace Scraps.Databases
         public DataRow GetByLogin(string login)
             => MSSQL.Users.GetByLogin(login);
 
-        public string GetUserStatus(string login)
-            => MSSQL.Users.GetUserStatus(login);
+        public string GetUserRole(string login)
+            => MSSQL.Users.GetUserRole(login);
 
         public void Create(string login, string password, string role)
             => MSSQL.Users.Create(login, password, role);
@@ -201,6 +195,42 @@ namespace Scraps.Databases
         public List<RoleInfo> GetAll()
         {
             return MSSQL.Roles.GetAll();
+        }
+
+        public bool CheckAccess(string roleName, string tableName, PermissionFlags required)
+        {
+            var flags = GetEffectivePermissions(roleName, tableName);
+            return (flags & required) == required;
+        }
+
+        public PermissionFlags GetEffectivePermissions(string roleName, string tableName)
+        {
+            var roleId = MSSQL.Roles.GetRoleIdByName(roleName);
+            if (roleId.HasValue)
+            {
+                var rolePermissions = MSSQL.RolePermissions.GetByRoleId(roleId.Value);
+                var roleFlags = ResolveFlags(rolePermissions, tableName);
+                if (roleFlags != PermissionFlags.None)
+                    return roleFlags;
+            }
+
+            var defaults = MSSQL.RolePermissions.GetByRoleId(0);
+            return ResolveFlags(defaults, tableName);
+        }
+
+        private static PermissionFlags ResolveFlags(List<RolePermissionInfo> permissions, string tableName)
+        {
+            var explicitPermission = permissions.FirstOrDefault(p =>
+                string.Equals(p.TableName, tableName, StringComparison.OrdinalIgnoreCase));
+            if (explicitPermission != null)
+                return explicitPermission.Flags;
+
+            var wildcardPermission = permissions.FirstOrDefault(p =>
+                string.Equals(p.TableName, TablePermission.AnyTable, StringComparison.OrdinalIgnoreCase));
+            if (wildcardPermission != null)
+                return wildcardPermission.Flags;
+
+            return PermissionFlags.None;
         }
     }
 
@@ -237,10 +267,10 @@ namespace Scraps.Databases
     internal class MSSQLRowEditorAdapter : IRowEditor
     {
         public AddEditResult AddRow(string tableName, Dictionary<string, object> values, bool strictFk = true, params ChildInsert[] children)
-            => Scraps.Databases.Utilities.TableRows.RowEditor.AddRow(tableName, values, strictFk, children);
+            => Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow(tableName, values, strictFk, children);
 
         public AddEditResult UpdateRow(string tableName, string idColumn, object idValue, Dictionary<string, object> values, bool strictFk = true)
-            => Scraps.Databases.Utilities.TableRows.RowEditor.UpdateRow(tableName, idColumn, idValue, values, strictFk);
+            => Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.UpdateRow(tableName, idColumn, idValue, values, strictFk);
     }
 
     internal class MSSQLVirtualTableRegistryAdapter : IVirtualTableRegistry

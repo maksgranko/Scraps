@@ -8,7 +8,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     public static partial class MSSQL
     {
@@ -240,14 +240,14 @@ namespace Scraps.Databases
 
         /// <summary>Найти записи по значению колонки (из ScrapsConfig.ConnectionString).</summary>
         /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
-        public static DataTable FindByColumn(string tableName, string columnName, object value, bool useLike = true)
+        public static DataTable FindByColumn(string tableName, string columnName, object value, SqlFilterOperator op = SqlFilterOperator.Eq)
         {
-            return FindByColumn(tableName, columnName, value, ScrapsConfig.ConnectionString, useLike);
+            return FindByColumn(tableName, columnName, value, ScrapsConfig.ConnectionString, op);
         }
 
         /// <summary>Найти записи по значению колонки с указанной строкой подключения.</summary>
         /// <exception cref="ArgumentException">Пустое название таблицы или колонки</exception>
-        public static DataTable FindByColumn(string tableName, string columnName, object value, string connectionString, bool useLike = true)
+        public static DataTable FindByColumn(string tableName, string columnName, object value, string connectionString, SqlFilterOperator op = SqlFilterOperator.Eq)
         {
             if (string.IsNullOrWhiteSpace(tableName))
                 throw new ArgumentException("Название таблицы не может быть пустым.", nameof(tableName));
@@ -257,7 +257,7 @@ namespace Scraps.Databases
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                if (value == null)
+                if (op == SqlFilterOperator.IsNull)
                 {
                     string queryNull = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} IS NULL";
                     SqlDataAdapter daNull = new SqlDataAdapter(queryNull, conn);
@@ -265,12 +265,36 @@ namespace Scraps.Databases
                     return dt;
                 }
 
-                bool isString = value is string;
-                string op = (useLike && isString) ? "LIKE" : "=";
+                if (op == SqlFilterOperator.IsNotNull)
+                {
+                    string queryNotNull = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} IS NOT NULL";
+                    SqlDataAdapter daNotNull = new SqlDataAdapter(queryNotNull, conn);
+                    daNotNull.Fill(dt);
+                    return dt;
+                }
 
-                string query = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} {op} @Value";
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value), "Для операций сравнения значение не может быть null.");
+
+                bool isString = value is string;
+                string sqlOperator;
+                switch (op)
+                {
+                    case SqlFilterOperator.Eq:
+                        sqlOperator = "=";
+                        break;
+                    case SqlFilterOperator.Like:
+                        if (!isString)
+                            throw new ArgumentException("Оператор LIKE поддерживается только для строковых значений.", nameof(value));
+                        sqlOperator = "LIKE";
+                        break;
+                    default:
+                        throw new NotSupportedException($"Оператор '{op}' не поддерживается в FindByColumn.");
+                }
+
+                string query = $"SELECT * FROM {QuoteIdentifier(tableName)} WHERE {QuoteIdentifier(columnName)} {sqlOperator} @Value";
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                object paramValue = (useLike && isString) ? $"%{value}%" : value;
+                object paramValue = (op == SqlFilterOperator.Like && isString) ? $"%{value}%" : value;
                 da.SelectCommand.Parameters.AddWithValue("@Value", paramValue);
 
                 da.Fill(dt);
@@ -433,6 +457,5 @@ namespace Scraps.Databases
         }
     }
 }
-
 
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Scraps.Security;
 
 namespace Scraps.Database
 {
@@ -24,5 +25,11 @@ namespace Scraps.Database
 
         /// <summary>Получить все роли.</summary>
         List<RoleInfo> GetAll();
+
+        /// <summary>Проверить доступ роли к таблице.</summary>
+        bool CheckAccess(string roleName, string tableName, PermissionFlags required);
+
+        /// <summary>Получить эффективные права роли на таблицу.</summary>
+        PermissionFlags GetEffectivePermissions(string roleName, string tableName);
     }
 }

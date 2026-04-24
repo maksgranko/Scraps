@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Database MSSQL — работа с Microsoft SQL Server.</Description>
-    <AssemblyVersion>1.2026.114.22</AssemblyVersion>
-    <FileVersion>1.2026.114.22</FileVersion>
+    <AssemblyVersion>1.2026.115.31</AssemblyVersion>
+    <FileVersion>1.2026.115.31</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

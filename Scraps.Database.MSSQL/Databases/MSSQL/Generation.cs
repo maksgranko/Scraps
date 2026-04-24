@@ -7,7 +7,7 @@ using System.Text;
 using DatabaseGenerationMode = Scraps.Database.DatabaseGenerationMode;
 using DatabaseGenerationOptions = Scraps.Database.DatabaseGenerationOptions;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     public static partial class MSSQL
     {
@@ -62,7 +62,7 @@ namespace Scraps.Databases
             }
 
             // Синхронизируем UseRoleIdMapping даже при прямом вызове GenerateIfNotExists(...),
-            // чтобы поведение Users/RoleManager соответствовало выбранному режиму генерации.
+            // чтобы поведение Users/Roles соответствовало выбранному режиму генерации.
             ScrapsConfig.UseRoleIdMapping = options.Mode >= DatabaseGenerationMode.Standard;
 
             using (var conn = new SqlConnection(GetMasterConnectionString()))
@@ -199,7 +199,6 @@ namespace Scraps.Databases
         }
     }
 }
-
 
 
 

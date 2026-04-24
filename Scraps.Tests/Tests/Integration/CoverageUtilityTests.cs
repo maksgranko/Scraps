@@ -1,5 +1,5 @@
-﻿using Scraps.Databases;
-using Scraps.Databases.Utilities;
+﻿using Scraps.Database.MSSQL;
+using Scraps.Database.MSSQL.Utilities;
 using Scraps.Tests.Setup;
 using Scraps.Diagnostics;
 using Scraps.Import;
@@ -12,9 +12,11 @@ using System.IO;
 using System.Reflection;
 using Xunit;
 using Scraps.Database;
+using Db = Scraps.Database.Current;
 
 namespace Scraps.Tests.Integration
 {
+    [Collection("Db")]
     public class CoverageUtilityTests
     {
         [Fact]
@@ -90,7 +92,7 @@ namespace Scraps.Tests.Integration
             Assert.False(VirtualTableRegistry.TryGetQuery("V1", out _));
         }
 
-        [Fact]
+        [DbFact]
         public void RoleAndPermissions_UtilityApi_Works()
         {
             var tp = TablePermission.FromBooleans("T", canRead: true, canWrite: false, canDelete: true, canExport: false, canImport: true);
@@ -110,30 +112,27 @@ namespace Scraps.Tests.Integration
             Assert.True(role.HasPermission("AnyTable", PermissionFlags.Read));
             Assert.True(role.HasPermission("T2", PermissionFlags.Export));
 
-            var print = RoleManager.PrintPermissions(PermissionFlags.Read | PermissionFlags.Write);
-            Assert.Contains("Read", print);
-            Assert.Contains("Write", print);
+            var roleName = "util_" + Guid.NewGuid().ToString("N");
+            try
+            {
+                var roleId = Db.Roles.Create(roleName);
+                Db.RolePermissions.Set(roleId, "Orders", PermissionFlags.Read);
+                Db.RolePermissions.Set(roleId, "*", PermissionFlags.ReadWrite);
 
-            var missing = RoleManager.PrintRolePermissions("missing");
-            Assert.Contains("not found", missing, StringComparison.OrdinalIgnoreCase);
-
-            RoleManager.Initialize(new[] { new Role("X", "A", PermissionFlags.Read) });
-            Assert.Contains("Role: X", RoleManager.PrintAllRoles());
-
-            RoleManager.AddRole(new Role("Y", "B", PermissionFlags.Export));
-            Assert.NotNull(RoleManager.GetRole("Y"));
-
-            RoleManager.Initialize(
-                new[] { new Role("Manager", "Orders", PermissionFlags.Read) },
-                new Dictionary<string, PermissionFlags>
+                Assert.Equal(PermissionFlags.Read, Db.Roles.GetEffectivePermissions(roleName, "Orders"));
+                Assert.Equal(PermissionFlags.ReadWrite, Db.Roles.GetEffectivePermissions(roleName, "Products"));
+                Assert.True(Db.Roles.CheckAccess(roleName, "Anything", PermissionFlags.Read));
+                Assert.False(Db.Roles.CheckAccess(roleName, "Orders", PermissionFlags.Delete));
+            }
+            finally
+            {
+                var existingRoleId = Db.Roles.GetRoleIdByName(roleName);
+                if (existingRoleId.HasValue)
                 {
-                    ["Manager"] = PermissionFlags.ReadWrite,
-                    ["Viewer"] = PermissionFlags.Read
-                });
-            Assert.Equal(PermissionFlags.Read, RoleManager.GetEffectivePermissions("Manager", "Orders"));
-            Assert.Equal(PermissionFlags.ReadWrite, RoleManager.GetEffectivePermissions("Manager", "Products"));
-            Assert.True(RoleManager.CheckAccess("Viewer", "Anything", PermissionFlags.Read));
-            Assert.False(RoleManager.CheckAccess("Viewer", "Anything", PermissionFlags.Write));
+                    Db.RolePermissions.DeleteAllForRole(existingRoleId.Value);
+                    Db.Roles.Delete(roleName);
+                }
+            }
         }
 
         [Fact]
@@ -177,6 +176,3 @@ namespace Scraps.Tests.Integration
         }
     }
 }
-
-
-

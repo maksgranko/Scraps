@@ -1,6 +1,6 @@
 ﻿using Scraps.Configs;
 using Scraps.Database;
-using Scraps.Databases.Utilities;
+using Scraps.Database.MSSQL.Utilities;
 using Scraps.Tests.Setup;
 using System;
 
@@ -17,6 +17,7 @@ namespace Scraps.Tests.Setup
 
         private readonly string _prevDatabaseName;
         private readonly string _prevConnectionString;
+        private readonly string _prevLocalDataPath;
         private readonly string _prevUsersTableName;
         private readonly System.Collections.Generic.Dictionary<string, string> _prevUsersTableColumnsNames;
         private readonly string[] _prevUsersRequiredColumnKeys;
@@ -24,7 +25,7 @@ namespace Scraps.Tests.Setup
         private readonly string _prevDefaultRoleName;
         private readonly string[] _prevSeedRoles;
         private readonly bool _prevAuthHashPasswords;
-        private readonly HashAlgorithm _prevAuthHashAlgorithm;
+        private readonly PasswordHashAlgorithm _prevAuthHashAlgorithm;
         private readonly string _prevExplicitServerName;
         private readonly int _prevServerDiscoveryTimeout;
         private readonly bool _prevUseParallelServerDiscovery;
@@ -35,6 +36,7 @@ namespace Scraps.Tests.Setup
         {
             _prevDatabaseName = ScrapsConfig.DatabaseName;
             _prevConnectionString = ScrapsConfig.ConnectionString;
+            _prevLocalDataPath = ScrapsConfig.LocalDataPath;
             _prevUsersTableName = ScrapsConfig.UsersTableName;
             _prevUsersTableColumnsNames = ScrapsConfig.UsersTableColumnsNames != null
                 ? new System.Collections.Generic.Dictionary<string, string>(ScrapsConfig.UsersTableColumnsNames)
@@ -87,6 +89,7 @@ namespace Scraps.Tests.Setup
 
             ScrapsConfig.DatabaseName = _prevDatabaseName;
             ScrapsConfig.ConnectionString = _prevConnectionString;
+            ScrapsConfig.LocalDataPath = _prevLocalDataPath;
             ScrapsConfig.UsersTableName = _prevUsersTableName;
             ScrapsConfig.UsersTableColumnsNames = _prevUsersTableColumnsNames != null
                 ? new System.Collections.Generic.Dictionary<string, string>(_prevUsersTableColumnsNames)

@@ -15,7 +15,7 @@ using SqlSortCondition = Scraps.Database.SqlSortCondition;
 using ForeignKeyQueryOptions = Scraps.Database.ForeignKeyQueryOptions;
 using ExpandForeignKeysOptions = Scraps.Database.ExpandForeignKeysOptions;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
 public static partial class MSSQL
     {

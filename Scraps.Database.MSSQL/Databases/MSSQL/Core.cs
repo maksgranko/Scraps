@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     /// <summary>
     /// Утилиты работы с Microsoft SQL Server.
@@ -357,41 +357,26 @@ namespace Scraps.Databases
         /// <summary>Получить DataTable из SQL-запроса.</summary>
         public static DataTable GetDataTableFromSQL(string sqlRequest)
         {
-            try
+            DataTable dt = new DataTable();
+            using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
             {
-                DataTable dt = new DataTable();
-                using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
-                {
-                    new SqlDataAdapter(sqlRequest, conn).Fill(dt);
-                }
-                return dt;
+                new SqlDataAdapter(sqlRequest, conn).Fill(dt);
             }
-            catch
-            {
-                return null;
-            }
+            return dt;
         }
 
         /// <summary>Получить DataTable из SQL-запроса с указанной строкой подключения.</summary>
         public static DataTable GetDataTableFromSQL(string sqlRequest, string connectionString)
         {
-            try
+            DataTable dt = new DataTable();
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                DataTable dt = new DataTable();
-                using (SqlConnection conn = new SqlConnection(connectionString))
-                {
-                    new SqlDataAdapter(sqlRequest, conn).Fill(dt);
-                }
-                return dt;
+                new SqlDataAdapter(sqlRequest, conn).Fill(dt);
             }
-            catch
-            {
-                return null;
-            }
+            return dt;
         }
     }
 }
-
 
 
 

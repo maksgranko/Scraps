@@ -1,7 +1,7 @@
 using Scraps.Configs;
 using Scraps.Database;
-using Scraps.Databases;
-using Scraps.Databases.Utilities;
+using Scraps.Database.MSSQL;
+using Scraps.Database.MSSQL.Utilities;
 using System;
 using System.Data.SqlClient;
 

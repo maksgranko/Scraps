@@ -18,7 +18,7 @@ namespace Scraps.Database
         DataTable GetTableDataExpanded(string tableName, IEnumerable<ForeignKeyJoin> foreignKeys, params string[] baseColumns);
 
         /// <summary>Найти записи по значению колонки.</summary>
-        DataTable FindByColumn(string tableName, string columnName, object value, bool exactMatch = true);
+        DataTable FindByColumn(string tableName, string columnName, object value, SqlFilterOperator op = SqlFilterOperator.Eq);
 
         /// <summary>Применить изменения к таблице.</summary>
         void ApplyTableChanges(string tableName, DataTable changes);

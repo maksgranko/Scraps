@@ -5,7 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     public static partial class MSSQL
     {

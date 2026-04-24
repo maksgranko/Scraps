@@ -1,4 +1,4 @@
-﻿using Scraps.Databases.Utilities;
+﻿using Scraps.Database.MSSQL.Utilities;
 using Xunit;
 using Scraps.Tests.Setup;
 

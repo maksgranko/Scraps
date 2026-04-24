@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     public static partial class MSSQL
     {
@@ -42,7 +42,7 @@ namespace Scraps.Databases
             /// <summary>Получить название роли пользователя.</summary>
             /// <exception cref="ArgumentException">Пустой логин</exception>
             /// <exception cref="InvalidOperationException">Пользователь не найден</exception>
-            public static string GetUserStatus(string login)
+            public static string GetUserRole(string login)
             {
                 var user = GetByLogin(login);
                 var roleObj = user[UsersTableColumnsNames["Role"]];

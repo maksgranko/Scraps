@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     /// <summary>
     /// Реестр виртуальных таблиц (имя -> SQL запрос).

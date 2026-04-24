@@ -1,5 +1,5 @@
 using Scraps.Configs;
-using Scraps.Databases;
+using Scraps.Database.MSSQL;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,7 +11,7 @@ using ChildInsert = Scraps.Database.ChildInsert;
 using ForeignKeyInfo = Scraps.Database.ForeignKeyInfo;
 using TableEditMetadata = Scraps.Database.TableEditMetadata;
 
-namespace Scraps.Databases.Utilities.TableRows
+namespace Scraps.Database.MSSQL.Utilities.TableRows
 {
     /// <summary>
     /// Универсальные операции Add/Edit с автоматическим разрешением Foreign Key.

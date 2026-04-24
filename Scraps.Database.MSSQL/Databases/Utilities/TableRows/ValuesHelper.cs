@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Scraps.Databases.Utilities.TableRows
+namespace Scraps.Database.MSSQL.Utilities.TableRows
 {
     /// <summary>
     /// Упрощённое создание словаря значений для операций Add/Edit.

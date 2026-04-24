@@ -1,4 +1,4 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Database.MSSQL;
 using Scraps.Security;
 using Scraps.Tests.Setup;
 using Xunit;

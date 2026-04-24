@@ -13,14 +13,16 @@ Scraps разделён на подбиблиотеки (каждая — отд
 | Пакет | Содержимое |
 |-------|-----------|
 | **Scraps.Core** | `Configs`, `Data.DataTables`, `Diagnostics`, `Localization` |
+| **Scraps.Database.LocalFiles** | `LocalFiles` JSON-провайдер + локальный SQL-эмулятор |
 | **Scraps.Database.MSSQL** | `Databases.MSSQL`, `Databases.Utilities`, `VirtualTableRegistry` |
-| **Scraps.Security** | `RoleManager`, `UserSession`, `PermissionFlags` |
 | **Scraps.Import** | `DataImportService` (Excel/CSV) |
 | **Scraps.Export** | `ReportExporter`, `ReportDataBuilder` (Excel/PDF) |
 | **Scraps.UI.WinForms** | `DataGridViewHelpers`, `FKEditors` |
 | **Scraps** (мета) | Зависит от всех пакетов выше для обратной совместимости |
 
-В будущем планируются: `Scraps.Database.LiteDB`, `Scraps.Database.PostgreSQL` и др.
+`Scraps.Security` используется как namespace (например, `UserSession`, `PermissionFlags`), но отдельного пакета `Scraps.Security` больше нет.
+
+В будущем планируются: `Scraps.Database.PostgreSQL` и др.
 
 ### Legacy-структура (до разделения)
 
@@ -28,7 +30,7 @@ Scraps разделён на подбиблиотеки (каждая — отд
 - `Scraps/Databases/MSSQL/*` — подключение, генерация схемы, CRUD.
 - `Scraps/Databases/Utilities/*` — `TableCatalog`, `DatabaseGenerationOptions`, `TableRows`.
 - `Scraps/Databases/VirtualTableRegistry.cs` — виртуальные таблицы.
-- `Scraps/Security/*` — `RoleManager`, `UserSession`.
+- `Scraps.Database/Security/*` — `UserSession`.
 - `Scraps/Localization/TranslationManager.cs` — переводы.
 - `Scraps/Import/DataImportService.cs` — импорт.
 - `Scraps/Export/*` — экспорт.
@@ -38,8 +40,8 @@ Scraps разделён на подбиблиотеки (каждая — отд
 
 ```csharp
 using Scraps.Configs;
-using Scraps.Databases;
-using Scraps.Databases.Utilities;
+using Scraps.Database.MSSQL;
+using Scraps.Database.MSSQL.Utilities;
 using Scraps.Security;
 
 ScrapsConfig.DatabaseName = "MyDb";
@@ -48,7 +50,6 @@ ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder("MyDb");
 // None / Simple / Standard / Full
 MSSQL.Initialize("MyDb", DatabaseGenerationMode.Full);
 
-RoleManager.InitializeFromDb();
 UserSession.Login("admin", "Password123!");
 ```
 
@@ -134,7 +135,7 @@ var withOptions = MSSQL.GetTableData("Users", expandForeignKeys: true,
 ## Add/Edit с автоматическим разрешением FK (TableRows)
 
 ```csharp
-using Scraps.Databases.Utilities.TableRows;
+using Scraps.Database.MSSQL.Utilities.TableRows;
 ```
 
 ### Упрощённое создание значений

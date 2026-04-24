@@ -1,9 +1,8 @@
-﻿using Scraps.Databases;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Scraps.Databases.Utilities
+namespace Scraps.Database.MSSQL.Utilities
 {
     /// <summary>
     /// Каталог таблиц и утилиты инициализации списка.
@@ -27,7 +26,7 @@ namespace Scraps.Databases.Utilities
 
             if (autodetect)
             {
-                tablesTemp = MSSQL.GetTables().ToList();
+                tablesTemp = global::Scraps.Database.Current.GetTables().ToList();
                 if (removeOnAutodetect != null) tempDelete.AddRange(removeOnAutodetect);
             }
             else

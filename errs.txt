@@ -1,20 +1,19 @@
-Серьезность	Код	Описание	Проект	Файл	Строка	Состояние подавления	Подробности
-Ошибка (активно)	CS0117	"DataImportService" не содержит определение для "ValidateImportAccess".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\ImportExport\ImportUnitTests.cs	36		
-Ошибка (активно)	CS1503	Аргумент 3: не удается преобразовать из "Scraps.Security.PermissionFlags" в "string".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageDbTests.cs	82		
-Ошибка (активно)	CS1503	Аргумент 3: не удается преобразовать из "Scraps.Security.PermissionFlags" в "string".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageDbTests.cs	98		
-Ошибка (активно)	CS1503	Аргумент 4: не удается преобразовать из "Scraps.Databases.MSSQL.ForeignKeyJoin[]" в "string".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageDbTests.cs	98		
-Ошибка (активно)	CS0426	Имя типа "ExpandForeignKeysOptions" не существует в типе "MSSQL".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageDbTests.cs	141		
-Ошибка (активно)	CS0117	"DataImportService" не содержит определение для "ImportToTableSafe".	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageDbTests.cs	299		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	22		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	26		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	26		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	28		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	30		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	30		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	31		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	31		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	32		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	32		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	33		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationOptions" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Integration\CoverageUtilityTests.cs	33		
-Ошибка (активно)	CS0103	Имя "DatabaseGenerationMode" не существует в текущем контексте.	Scraps.Tests	D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Tests\Tests\Setup\DatabaseFixture.cs	63		
+ Scraps.Tests.Integration.CoverageUtilityTests.RoleAndPermissions_UtilityApi_Works
+   Источник: CoverageUtilityTests.cs строка 96
+   Длительность: 91 мс
+
+  Сообщение: 
+System.Data.SqlClient.SqlException : Конфликт инструкции DELETE с ограничением REFERENCE "FK_RolePermissions_Roles". Конфликт произошел в базе данных "Scraps_Test_f5492481dbdd440db7f3834de60597a1", таблица "dbo.RolePermissions", column 'RoleID'.
+Выполнение данной инструкции было прервано.
+
+  Трассировка стека: 
+SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)
+SqlCommand.RunExecuteReaderTds(CommandBehavior cmdBehavior, RunBehavior runBehavior, Boolean returnStream, Boolean async, Int32 timeout, Task& task, Boolean asyncWrite, Boolean inRetry, SqlDataReader ds, Boolean describeParameterEncryptionRequest)
+SqlCommand.RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, Boolean returnStream, String method, TaskCompletionSource`1 completion, Int32 timeout, Task& task, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry)
+SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, String methodName, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry)
+SqlCommand.ExecuteNonQuery()
+Roles.Delete(String roleName) строка 109
+CoverageUtilityTests.RoleAndPermissions_UtilityApi_Works() строка 131

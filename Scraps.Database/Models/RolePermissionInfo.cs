@@ -12,6 +12,10 @@ namespace Scraps.Database
         /// <summary>Права (флаги).</summary>
         public TablePermission Permission { get; set; }
         /// <summary>Права (флаги).</summary>
-        public PermissionFlags Flags => Permission?.Flags ?? PermissionFlags.None;
+        public PermissionFlags Flags
+        {
+            get => Permission?.Flags ?? PermissionFlags.None;
+            set => Permission = new TablePermission { Flags = value };
+        }
     }
 }

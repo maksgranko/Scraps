@@ -1,10 +1,11 @@
 using OfficeOpenXml;
-using Scraps.Tests.Setup;
 using Scraps.Configs;
-using Scraps.Databases;
+using Db = Scraps.Database.Current;
+using Scraps.Database.MSSQL;
 using Scraps.Import;
 using Scraps.Localization;
 using Scraps.Security;
+using Scraps.Tests.Setup;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,67 +21,67 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RolePermissions_FullCrud_Works()
         {
-            RoleManager.InitializeFromDb();
             var roleName = "rp_" + Guid.NewGuid().ToString("N");
             var table = "Таблица 1";
 
-            var roleId = MSSQL.Roles.Create(roleName);
+            var roleId = Db.Roles.Create(roleName);
             try
             {
-                MSSQL.RolePermissions.Set(roleName, table, PermissionFlags.Read | PermissionFlags.Export);
+                Db.RolePermissions.Set(roleName, table, PermissionFlags.Read | PermissionFlags.Export);
 
-                var byName = MSSQL.RolePermissions.GetByRoleName(roleName);
+                var byName = Db.RolePermissions.GetByRoleName(roleName);
                 Assert.NotEmpty(byName);
                 Assert.Contains(byName, p => p.TableName == table && (p.Flags & PermissionFlags.Read) == PermissionFlags.Read);
 
-                var byId = MSSQL.RolePermissions.GetByRoleId(roleId);
+                var byId = Db.RolePermissions.GetByRoleId(roleId);
                 Assert.NotEmpty(byId);
 
-                MSSQL.RolePermissions.Delete(roleName, table);
-                var afterDeleteByName = MSSQL.RolePermissions.GetByRoleId(roleId);
+                Db.RolePermissions.Delete(roleName, table);
+                var afterDeleteByName = Db.RolePermissions.GetByRoleId(roleId);
                 Assert.DoesNotContain(afterDeleteByName, p => p.TableName == table);
 
-                MSSQL.RolePermissions.Set(roleId, table, PermissionFlags.Read);
-                MSSQL.RolePermissions.Delete(roleId, table);
-                var afterDeleteById = MSSQL.RolePermissions.GetByRoleId(roleId);
+                Db.RolePermissions.Set(roleId, table, PermissionFlags.Read);
+                Db.RolePermissions.Delete(roleId, table);
+                var afterDeleteById = Db.RolePermissions.GetByRoleId(roleId);
                 Assert.DoesNotContain(afterDeleteById, p => p.TableName == table);
 
-                MSSQL.RolePermissions.Set(roleName, table, PermissionFlags.Read | PermissionFlags.Write);
-                MSSQL.RolePermissions.DeleteAllForRole(roleName);
-                Assert.Empty(MSSQL.RolePermissions.GetByRoleId(roleId));
+                Db.RolePermissions.Set(roleName, table, PermissionFlags.Read | PermissionFlags.Write);
+                Db.RolePermissions.DeleteAllForRole(roleName);
+                Assert.Empty(Db.RolePermissions.GetByRoleId(roleId));
             }
             finally
             {
-                MSSQL.Roles.Delete(roleName);
+                Db.Roles.Delete(roleName);
             }
         }
 
         [DbFact]
-        public void RoleManager_PermissionsApi_Works()
+        public void Roles_PermissionsApi_Works()
         {
-            RoleManager.InitializeFromDb();
             var roleName = "rm_" + Guid.NewGuid().ToString("N");
             try
             {
-                RoleManager.CreateRole(roleName, ("Таблица 1", PermissionFlags.Read | PermissionFlags.Write));
-                Assert.True(RoleManager.CheckAccess(roleName, "Таблица 1", PermissionFlags.Read));
+                var roleId = Db.Roles.Create(roleName);
+                Db.RolePermissions.Set(roleId, "Таблица 1", PermissionFlags.Read | PermissionFlags.Write);
+                Assert.True(Db.Roles.CheckAccess(roleName, "Таблица 1", PermissionFlags.Read));
 
-                RoleManager.RemovePermission(roleName, "Таблица 1");
-                Assert.False(RoleManager.CheckAccess(roleName, "Таблица 1", PermissionFlags.Read));
+                Db.RolePermissions.Delete(roleId, "Таблица 1");
+                Assert.False(Db.Roles.CheckAccess(roleName, "Таблица 1", PermissionFlags.Read));
             }
             finally
             {
-                if (RoleManager.RoleExists(roleName))
-                    RoleManager.DeleteRole(roleName);
+                if (Db.Roles.GetRoleIdByName(roleName) != null)
+                    Db.Roles.Delete(roleName);
             }
         }
 
         [DbFact]
         public void DataApi_Overloads_And_FkJoin_Works()
         {
-            RoleManager.Initialize(new[] { new Role("R1", "Users", PermissionFlags.Read) });
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // FK JOIN and ExecuteScalar are MSSQL-specific
 
-            var dtByRole = MSSQL.GetTableData("Users");
+            var dtByRole = Db.GetTableData("Users");
             Assert.NotNull(dtByRole);
 
             var fkFromDefaultCtor = new MSSQL.ForeignKeyJoin
@@ -114,7 +115,7 @@ namespace Scraps.Tests.Integration
             Assert.NotNull(withFk);
             Assert.True(withFk.Columns.Count >= 2);
             TranslationManager.Translations[TranslationManager.ColumnKey("Users", "Login")] = "Логин";
-            var translated = TranslationManager.Translate(MSSQL.GetTableData("Users"), "Users");
+            var translated = TranslationManager.Translate(Db.GetTableData("Users"), "Users");
             Assert.True(translated.Columns.Contains("Логин"));
 
             var generic = MSSQL.GetNx2Dictionary("Таблица 1", "Id", "Name", o => Convert.ToInt32(o), o => o?.ToString() ?? "");
@@ -127,37 +128,37 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void GetTableData_ExpandForeignKeys_Works()
         {
-            // Простой expand без опций
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // expandForeignKeys is MSSQL-specific
+
             var expanded = MSSQL.GetTableData("Users", expandForeignKeys: true);
             Assert.NotNull(expanded);
             Assert.True(expanded.Columns.Count >= 2);
 
-            // Expand с baseColumns
             var expandedCols = MSSQL.GetTableData("Users", expandForeignKeys: true, expandOptions: null, "Login");
             Assert.NotNull(expandedCols);
             Assert.True(expandedCols.Columns.Count >= 1);
 
-            // Expand с отключенным AutoResolveDisplayColumn — JOIN есть, но alias-колонки не добавляются
             var noDisplay = MSSQL.GetTableData("Users", expandForeignKeys: true,
                 new ExpandForeignKeysOptions { AutoResolveDisplayColumn = false, IncludeReferenceAllColumns = false },
                 "Login", "Role");
             Assert.NotNull(noDisplay);
         }
 
-        [Fact]
+        [DbFact]
         public void ResolveDisplayColumn_CaseInsensitive_And_ExcludesPk()
         {
-            // Для таблицы Roles ожидаем RoleName (case-insensitive match на "name" из preferred)
-            var display = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID");
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalForeignKeyProvider does not support excludeColumn/preferred
+
+            var display = Db.ResolveDisplayColumn("Roles");
             Assert.Equal("RoleName", display);
 
-            // Явный override должен работать даже если это PK
             ScrapsConfig.ForeignKeyDisplayColumnOverrides["Roles"] = "RoleID";
-            var overridden = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID");
+            var overridden = Db.ResolveDisplayColumn("Roles");
             Assert.Equal("RoleID", overridden);
             ScrapsConfig.ForeignKeyDisplayColumnOverrides.Remove("Roles");
 
-            // Case-insensitive preferred: "NAME" должен найти "RoleName"
             var caseInsensitive = MSSQL.ResolveDisplayColumn("Roles", excludeColumn: "RoleID", preferred: new[] { "NAME" });
             Assert.Equal("RoleName", caseInsensitive);
         }
@@ -165,9 +166,11 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RowEditor_AddRow_WithAutoFk_CreatesLookup()
         {
-            // Добавляем пользователя с ролью "ТестоваяРоль" (которой нет в БД)
-            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "ТестоваяРоль"),
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalRowEditor does not support FK auto-creation
+
+            var result = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", "testuser_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "ТестоваяРоль"),
                 strictFk: false);
 
             Assert.True(result.Success, result.Error);
@@ -177,9 +180,11 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RowEditor_AddRow_StrictFk_Missing_Throws()
         {
-            // strict=true, роль "НесуществующаяРоль123" не найдена → ошибка
-            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser2_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "НесуществующаяРоль123"),
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalRowEditor does not enforce FK checks
+
+            var result = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", "testuser2_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "НесуществующаяРоль123"),
                 strictFk: true);
 
             Assert.False(result.Success);
@@ -189,29 +194,30 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RowEditor_AddRow_TypeMismatch_Throws()
         {
-            // Role — string-поле (если смотреть через DisplayColumn), но если передать int...
-            // На самом деле Users.Role — int (RoleID), так что этот тест проверяет вставку int
-            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "testuser3_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", 99999),
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalRowEditor does not enforce FK checks
+
+            var result = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", "testuser3_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", 99999),
                 strictFk: true);
 
-            // 99999 не существует → ошибка
             Assert.False(result.Success);
         }
 
         [DbFact]
         public void RowEditor_UpdateRow_ChangesFk()
         {
-            // Сначала создаём пользователя
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalRowEditor does not support FK update logic
+
             var login = "updateuser_" + Guid.NewGuid().ToString("N");
-            var addResult = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", login, "Password", "pass", "Role", "default"),
+            var addResult = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", login, "Password", "pass", "Role", "default"),
                 strictFk: false);
             Assert.True(addResult.Success, addResult.Error);
 
-            // Обновляем роль на новую
-            var updateResult = Scraps.Databases.Utilities.TableRows.RowEditor.UpdateRow("Users", "Login", login,
-                Scraps.Databases.Utilities.TableRows.Values.Create("Role", "НоваяРольДляUpdate"),
+            var updateResult = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.UpdateRow("Users", "Login", login,
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Role", "НоваяРольДляUpdate"),
                 strictFk: false);
 
             Assert.True(updateResult.Success, updateResult.Error);
@@ -220,7 +226,7 @@ namespace Scraps.Tests.Integration
         [Fact]
         public void Values_Create_BuildsDictionary()
         {
-            var dict = Scraps.Databases.Utilities.TableRows.Values.Create("A", 1, "B", "two", "C", null);
+            var dict = Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("A", 1, "B", "two", "C", null);
             Assert.Equal(3, dict.Count);
             Assert.Equal(1, dict["A"]);
             Assert.Equal("two", dict["B"]);
@@ -230,10 +236,12 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RowEditor_AddRow_StrictFk_Existing_Succeeds()
         {
-            // default роль существует после GenerateIfNotExists
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // GenerateIfNotExists is MSSQL-specific
+
             MSSQL.GenerateIfNotExists();
-            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "strictok_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
+            var result = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", "strictok_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
                 strictFk: true);
             Assert.True(result.Success, result.Error);
             Assert.NotNull(result.RowId);
@@ -242,10 +250,12 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void RowEditor_AddRow_WithExistingRole_Strict_Succeeds()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // GenerateIfNotExists is MSSQL-specific
+
             MSSQL.GenerateIfNotExists();
-            // Роль default создаётся при генерации
-            var result = Scraps.Databases.Utilities.TableRows.RowEditor.AddRow("Users",
-                Scraps.Databases.Utilities.TableRows.Values.Create("Login", "existingrole_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
+            var result = Scraps.Database.MSSQL.Utilities.TableRows.RowEditor.AddRow("Users",
+                Scraps.Database.MSSQL.Utilities.TableRows.Values.Create("Login", "existingrole_" + Guid.NewGuid().ToString("N"), "Password", "pass", "Role", "default"),
                 strictFk: true);
             Assert.True(result.Success, result.Error);
             Assert.NotNull(result.RowId);
@@ -254,15 +264,17 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void GenerateIfNotExists_Parameterless_Works()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // GenerateIfNotExists is MSSQL-specific
+
             MSSQL.GenerateIfNotExists();
-            var users = MSSQL.GetTableData("Users");
+            var users = Db.GetTableData("Users");
             Assert.NotNull(users);
         }
 
         [DbFact]
         public void ImportService_LoadExcel_ValidateImport_ImportSafe_Works()
         {
-            // LoadExcelToDataTable
             var file = Path.Combine(Path.GetTempPath(), "scraps_excel_" + Guid.NewGuid().ToString("N") + ".xlsx");
             try
             {
@@ -284,7 +296,6 @@ namespace Scraps.Tests.Integration
                 if (File.Exists(file)) File.Delete(file);
             }
 
-            // ValidateImport + ImportToTable
             var importDt = new DataTable();
             importDt.Columns.Add("Name");
             importDt.Rows.Add("SafeImportUser");
@@ -300,13 +311,12 @@ namespace Scraps.Tests.Integration
         [DbFact]
         public void UserSession_And_DbDiscovery_ExtraPaths_Work()
         {
-            // UserSession APIs with direct forwarding methods
             var login = "reload_" + Guid.NewGuid().ToString("N");
             UserSession.Register(login, "Pass1!Ab", "default", loginAfterRegistration: false);
             try
             {
                 UserSession.Login(login, "Pass1!Ab");
-                var status = UserSession.GetUserStatus(login);
+                var status = UserSession.GetUserRole(login);
                 Assert.False(string.IsNullOrWhiteSpace(status));
 
                 UserSession.Reload();
@@ -314,11 +324,13 @@ namespace Scraps.Tests.Integration
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
                 UserSession.Logout();
             }
 
-            // ParseFirstSQLServer early-return path + overload ConnectionStringBuilder(server,db)
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // ParseFirstSQLServer and ConnectionStringBuilder are MSSQL-specific
+
             var prevConn = ScrapsConfig.ConnectionString;
             try
             {
@@ -344,10 +356,8 @@ namespace Scraps.Tests.Integration
             finally
             {
                 UserSession.Logout();
-                MSSQL.Users.Delete(registerLogin);
+                Db.Users.Delete(registerLogin);
             }
         }
     }
 }
-
-

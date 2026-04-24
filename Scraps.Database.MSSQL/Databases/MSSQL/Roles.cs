@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 
 using RoleInfo = Scraps.Database.RoleInfo;
 
-namespace Scraps.Databases
+namespace Scraps.Database.MSSQL
 {
     public static partial class MSSQL
     {

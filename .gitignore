@@ -33,3 +33,5 @@ publish-nuget.bat
 /Scraps.UI.WinForms/obj
 /Scraps.Tests/.vs
 /Scraps.Database/obj
+/Scraps.Database.LocalFiles/bin
+/Scraps.Database.LocalFiles/obj

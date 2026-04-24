@@ -1,7 +1,7 @@
 ﻿using Scraps.Configs;
 using Scraps.Database;
-using Scraps.Databases;
-using Scraps.Databases.Utilities;
+using Scraps.Database.MSSQL;
+using Scraps.Database.MSSQL.Utilities;
 using Scraps.Tests.Setup;
 using System;
 using System.Collections.Generic;
@@ -27,6 +27,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Simple_CreatesUsersOnly()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -42,6 +43,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_None_CreatesDatabaseOnly()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -54,6 +56,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -69,6 +72,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Full_CreatesAllTables()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -84,6 +88,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_CanRunTwice()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 MSSQL.GenerateIfNotExists(new DatabaseGenerationOptions { DatabaseName = db.DatabaseName, Mode = DatabaseGenerationMode.Full });
@@ -97,6 +102,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_UsesCustomUsersTableAndColumns()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 var options = new DatabaseGenerationOptions
@@ -133,6 +139,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_CanSkipUsersMappingReassign()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 // Базовые значения до custom-генерации.
@@ -172,6 +179,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_SeedsRoles()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 var options = new DatabaseGenerationOptions
@@ -191,6 +199,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void Initialize_SetsUseRoleIdMapping_ByMode()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
             {
                 MSSQL.Initialize(db.DatabaseName, DatabaseGenerationMode.Simple);
@@ -207,13 +216,14 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void SimpleMode_UsersStoreRoleAsString()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
             {
                 ScrapsConfig.UseRoleIdMapping = false;
                 var login = "user_" + Guid.NewGuid().ToString("N");
 
                 MSSQL.Users.Create(login, "Pass1!", "Student");
-                var role = MSSQL.Users.GetUserStatus(login);
+                var role = MSSQL.Users.GetUserRole(login);
 
                 Assert.Equal("Student", role);
 
@@ -224,13 +234,14 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void StandardMode_UsersStoreRoleAsId()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 ScrapsConfig.UseRoleIdMapping = true;
                 var login = "user_" + Guid.NewGuid().ToString("N");
 
                 MSSQL.Users.Create(login, "Pass1!", "default");
-                var role = MSSQL.Users.GetUserStatus(login);
+                var role = MSSQL.Users.GetUserRole(login);
 
                 Assert.Equal("default", role);
 
@@ -241,6 +252,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_ThrowsWhenDatabaseNameMissing()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 Assert.Throws<InvalidOperationException>(() =>
@@ -262,7 +274,7 @@ namespace Scraps.Tests.Database
             private readonly string _prevDefaultRoleName;
             private readonly string[] _prevSeedRoles;
             private readonly bool _prevAuthHashPasswords;
-            private readonly HashAlgorithm _prevAuthHashAlgorithm;
+            private readonly PasswordHashAlgorithm _prevAuthHashAlgorithm;
             private readonly string _prevExplicitServerName;
             private readonly int _prevServerDiscoveryTimeout;
             private readonly bool _prevUseParallelServerDiscovery;

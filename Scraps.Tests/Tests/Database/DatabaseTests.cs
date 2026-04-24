@@ -78,7 +78,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var provider = (DatabaseProvider)996;
             var ex = Assert.Throws<InvalidOperationException>(() => DatabaseProviderFactory.Create(provider));
-            Assert.Contains("не зарегистрирован", ex.Message);
+            Assert.Contains("не поддерживается", ex.Message);
         }
 
         #endregion
@@ -287,7 +287,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.Connection = new FakeConnection();
-            Assert.True(global::Scraps.Database.Database.TestConnection());
+            Assert.True(global::Scraps.Database.Current.TestConnection());
         }
 
         [Fact]
@@ -296,7 +296,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var conn = new FakeConnection();
             fake.Connection = conn;
-            global::Scraps.Database.Database.ExecuteNonQuery("SELECT 1");
+            global::Scraps.Database.Current.ExecuteNonQuery("SELECT 1");
             Assert.Equal("SELECT 1", conn.LastSql);
         }
 
@@ -307,7 +307,7 @@ namespace Scraps.Tests.DatabaseLayer
             var conn = new FakeConnection();
             fake.Connection = conn;
             conn.ScalarResult = 42;
-            Assert.Equal(42, global::Scraps.Database.Database.ExecuteScalar("SELECT 1"));
+            Assert.Equal(42, global::Scraps.Database.Current.ExecuteScalar("SELECT 1"));
         }
 
         [Fact]
@@ -316,7 +316,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var conn = new FakeConnection();
             fake.Connection = conn;
-            var dt = global::Scraps.Database.Database.GetDataTable("SELECT 1");
+            var dt = global::Scraps.Database.Current.GetDataTable("SELECT 1");
             Assert.NotNull(dt);
         }
 
@@ -330,7 +330,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var schema = new FakeSchema();
             fake.Schema = schema;
-            global::Scraps.Database.Database.GetTables();
+            global::Scraps.Database.Current.GetTables();
             Assert.True(schema.GetTablesCalled);
         }
 
@@ -340,7 +340,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var schema = new FakeSchema();
             fake.Schema = schema;
-            global::Scraps.Database.Database.GetTableColumns("T");
+            global::Scraps.Database.Current.GetTableColumns("T");
             Assert.Equal("T", schema.LastTable);
         }
 
@@ -350,7 +350,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var schema = new FakeSchema();
             fake.Schema = schema;
-            global::Scraps.Database.Database.GetTableSchema("T");
+            global::Scraps.Database.Current.GetTableSchema("T");
             Assert.Equal("T", schema.LastTable);
         }
 
@@ -364,7 +364,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var data = new FakeData();
             fake.Data = data;
-            global::Scraps.Database.Database.GetTableData("T");
+            global::Scraps.Database.Current.GetTableData("T");
             Assert.Equal("T", data.LastTable);
         }
 
@@ -374,7 +374,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var data = new FakeData();
             fake.Data = data;
-            global::Scraps.Database.Database.GetTableDataExpanded("T", new List<ForeignKeyJoin>());
+            global::Scraps.Database.Current.GetTableDataExpanded("T", new List<ForeignKeyJoin>());
             Assert.Equal("T", data.LastTable);
         }
 
@@ -384,7 +384,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var data = new FakeData();
             fake.Data = data;
-            global::Scraps.Database.Database.FindByColumn("T", "C", "V");
+            global::Scraps.Database.Current.FindByColumn("T", "C", "V");
             Assert.Equal("T", data.LastTable);
             Assert.Equal("C", data.LastColumn);
             Assert.Equal("V", data.LastValue);
@@ -397,7 +397,7 @@ namespace Scraps.Tests.DatabaseLayer
             var data = new FakeData();
             fake.Data = data;
             var dt = new DataTable();
-            global::Scraps.Database.Database.ApplyTableChanges("T", dt);
+            global::Scraps.Database.Current.ApplyTableChanges("T", dt);
             Assert.Equal("T", data.LastTable);
             Assert.Same(dt, data.LastDataTable);
         }
@@ -409,7 +409,7 @@ namespace Scraps.Tests.DatabaseLayer
             var data = new FakeData();
             fake.Data = data;
             var dt = new DataTable();
-            global::Scraps.Database.Database.BulkInsert("T", dt);
+            global::Scraps.Database.Current.BulkInsert("T", dt);
             Assert.Equal("T", data.LastTable);
             Assert.Same(dt, data.LastDataTable);
         }
@@ -424,7 +424,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var users = new FakeUsers();
             fake.Users = users;
-            global::Scraps.Database.Database.GetUserByLogin("admin");
+            global::Scraps.Database.Current.GetUserByLogin("admin");
             Assert.Equal("admin", users.LastLogin);
         }
 
@@ -434,7 +434,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var users = new FakeUsers();
             fake.Users = users;
-            global::Scraps.Database.Database.CreateUser("admin", "pass", "role");
+            global::Scraps.Database.Current.CreateUser("admin", "pass", "role");
             Assert.Equal("admin", users.LastLogin);
             Assert.Equal("pass", users.LastPassword);
             Assert.Equal("role", users.LastRole);
@@ -446,7 +446,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var users = new FakeUsers();
             fake.Users = users;
-            global::Scraps.Database.Database.DeleteUser("admin");
+            global::Scraps.Database.Current.DeleteUser("admin");
             Assert.Equal("admin", users.LastLogin);
         }
 
@@ -456,7 +456,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var users = new FakeUsers();
             fake.Users = users;
-            global::Scraps.Database.Database.ChangeUserPassword("admin", "newpass");
+            global::Scraps.Database.Current.ChangeUserPassword("admin", "newpass");
             Assert.Equal("admin", users.LastLogin);
             Assert.Equal("newpass", users.LastPassword);
         }
@@ -471,7 +471,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var roles = new FakeRoles();
             fake.Roles = roles;
-            global::Scraps.Database.Database.GetRoleIdByName("admin");
+            global::Scraps.Database.Current.GetRoleIdByName("admin");
             Assert.Equal("admin", roles.LastName);
         }
 
@@ -481,7 +481,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var roles = new FakeRoles();
             fake.Roles = roles;
-            global::Scraps.Database.Database.CreateRole("admin");
+            global::Scraps.Database.Current.CreateRole("admin");
             Assert.Equal("admin", roles.LastName);
         }
 
@@ -491,7 +491,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var roles = new FakeRoles();
             fake.Roles = roles;
-            global::Scraps.Database.Database.DeleteRole("admin");
+            global::Scraps.Database.Current.DeleteRole("admin");
             Assert.Equal("admin", roles.LastName);
         }
 
@@ -506,7 +506,7 @@ namespace Scraps.Tests.DatabaseLayer
             var editor = new FakeRowEditor();
             fake.RowEditor = editor;
             var values = new Dictionary<string, object>();
-            global::Scraps.Database.Database.AddRow("T", values);
+            global::Scraps.Database.Current.AddRow("T", values);
             Assert.Equal("T", editor.LastTable);
             Assert.Same(values, editor.LastValues);
         }
@@ -518,7 +518,7 @@ namespace Scraps.Tests.DatabaseLayer
             var editor = new FakeRowEditor();
             fake.RowEditor = editor;
             var values = new Dictionary<string, object>();
-            global::Scraps.Database.Database.UpdateRow("T", "Id", 1, values);
+            global::Scraps.Database.Current.UpdateRow("T", "Id", 1, values);
             Assert.Equal("T", editor.LastTable);
             Assert.Same(values, editor.LastValues);
         }
@@ -533,7 +533,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var fk = new FakeForeignKeys();
             fake.ForeignKeys = fk;
-            global::Scraps.Database.Database.GetForeignKeys("T");
+            global::Scraps.Database.Current.GetForeignKeys("T");
             Assert.Equal("T", fk.LastTable);
         }
 
@@ -543,7 +543,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var fk = new FakeForeignKeys();
             fake.ForeignKeys = fk;
-            global::Scraps.Database.Database.GetForeignKeyLookup("T", "C");
+            global::Scraps.Database.Current.GetForeignKeyLookup("T", "C");
             Assert.Equal("T", fk.LastTable);
             Assert.Equal("C", fk.LastColumn);
         }
@@ -554,7 +554,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var fk = new FakeForeignKeys();
             fake.ForeignKeys = fk;
-            global::Scraps.Database.Database.ResolveDisplayColumn("T");
+            global::Scraps.Database.Current.ResolveDisplayColumn("T");
             Assert.Equal("T", fk.LastTable);
         }
 
@@ -568,7 +568,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var vt = new FakeVirtualTables();
             fake.VirtualTables = vt;
-            global::Scraps.Database.Database.RegisterVirtualTable("V", "SELECT 1");
+            global::Scraps.Database.Current.RegisterVirtualTable("V", "SELECT 1");
             Assert.Equal("V", vt.LastName);
             Assert.Equal("SELECT 1", vt.LastQuery);
         }
@@ -579,7 +579,7 @@ namespace Scraps.Tests.DatabaseLayer
             var fake = SetupFake();
             var vt = new FakeVirtualTables();
             fake.VirtualTables = vt;
-            global::Scraps.Database.Database.GetVirtualTableData("V");
+            global::Scraps.Database.Current.GetVirtualTableData("V");
             Assert.Equal("V", vt.LastName);
         }
 
@@ -591,7 +591,7 @@ namespace Scraps.Tests.DatabaseLayer
         public void Initialize_ForwardsToBase()
         {
             var fake = SetupFake();
-            global::Scraps.Database.Database.Initialize(new DatabaseGenerationOptions { Mode = DatabaseGenerationMode.Full });
+            global::Scraps.Database.Current.Initialize(new DatabaseGenerationOptions { Mode = DatabaseGenerationMode.Full });
             Assert.True(fake.InitializeCalled);
         }
 
@@ -603,67 +603,7 @@ namespace Scraps.Tests.DatabaseLayer
         public void TestConnection_WhenConnectionNull_ReturnsFalse()
         {
             var fake = SetupFake();
-            Assert.False(global::Scraps.Database.Database.TestConnection());
-        }
-
-        [Fact]
-        public void GetTables_WhenSchemaNull_ReturnsEmpty()
-        {
-            var fake = SetupFake();
-            var result = global::Scraps.Database.Database.GetTables();
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void GetTableData_WhenDataNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetTableData("T"));
-        }
-
-        [Fact]
-        public void GetUserByLogin_WhenUsersNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetUserByLogin("admin"));
-        }
-
-        [Fact]
-        public void GetRoleIdByName_WhenRolesNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetRoleIdByName("admin"));
-        }
-
-        [Fact]
-        public void AddRow_WhenRowEditorNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.AddRow("T", new Dictionary<string, object>()));
-        }
-
-        [Fact]
-        public void GetForeignKeys_WhenFKNull_ReturnsEmpty()
-        {
-            var fake = SetupFake();
-            var result = global::Scraps.Database.Database.GetForeignKeys("T");
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void RegisterVirtualTable_WhenVTNull_DoesNotThrow()
-        {
-            var fake = SetupFake();
-            global::Scraps.Database.Database.RegisterVirtualTable("V", "SELECT 1");
-        }
-
-        [Fact]
-        public void GetVirtualTableData_WhenVTNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetVirtualTableData("V"));
+            Assert.False(global::Scraps.Database.Current.TestConnection());
         }
 
         #endregion
@@ -675,7 +615,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.Schema = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.GetTables());
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.GetTables());
             Assert.Contains("IDatabaseSchema", ex.Message);
         }
 
@@ -684,7 +624,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.Data = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.GetTableData("T"));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.GetTableData("T"));
             Assert.Contains("IDatabaseData", ex.Message);
         }
 
@@ -693,7 +633,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.Users = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.GetUserByLogin("u"));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.GetUserByLogin("u"));
             Assert.Contains("IDatabaseUsers", ex.Message);
         }
 
@@ -702,7 +642,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.Roles = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.GetRoleIdByName("r"));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.GetRoleIdByName("r"));
             Assert.Contains("IDatabaseRoles", ex.Message);
         }
 
@@ -711,7 +651,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.RowEditor = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.AddRow("T", new Dictionary<string, object>()));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.AddRow("T", new Dictionary<string, object>()));
             Assert.Contains("IRowEditor", ex.Message);
         }
 
@@ -720,7 +660,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.ForeignKeys = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.GetForeignKeys("T"));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.GetForeignKeys("T"));
             Assert.Contains("IForeignKeyProvider", ex.Message);
         }
 
@@ -729,7 +669,7 @@ namespace Scraps.Tests.DatabaseLayer
         {
             var fake = SetupFake();
             fake.VirtualTables = null;
-            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Database.RegisterVirtualTable("V", "SELECT 1"));
+            var ex = Assert.Throws<InvalidOperationException>(() => global::Scraps.Database.Current.RegisterVirtualTable("V", "SELECT 1"));
             Assert.Contains("IVirtualTableRegistry", ex.Message);
         }
 
@@ -754,7 +694,7 @@ namespace Scraps.Tests.DatabaseLayer
             public bool GetTablesCalled { get; private set; }
             public string LastTable { get; private set; }
 
-            public List<string> GetTables(bool includeViews = false, bool includeSystem = false)
+            public List<string> GetTables(bool includeSystem = false)
             {
                 GetTablesCalled = true;
                 return new List<string>();
@@ -786,7 +726,7 @@ namespace Scraps.Tests.DatabaseLayer
             public DataTable GetTableData(string tableName, params string[] columns) { LastTable = tableName; return new DataTable(); }
             public DataTable GetTableData(string tableName, string connectionString, params string[] columns) { LastTable = tableName; return new DataTable(); }
             public DataTable GetTableDataExpanded(string tableName, IEnumerable<ForeignKeyJoin> foreignKeys, params string[] baseColumns) { LastTable = tableName; return new DataTable(); }
-            public DataTable FindByColumn(string tableName, string columnName, object value, bool exactMatch = true) { LastTable = tableName; LastColumn = columnName; LastValue = value; return new DataTable(); }
+            public DataTable FindByColumn(string tableName, string columnName, object value, SqlFilterOperator op = SqlFilterOperator.Eq) { LastTable = tableName; LastColumn = columnName; LastValue = value; return new DataTable(); }
             public void ApplyTableChanges(string tableName, DataTable changes) { LastTable = tableName; LastDataTable = changes; }
             public void BulkInsert(string tableName, DataTable data) { LastTable = tableName; LastDataTable = data; }
             public Dictionary<string, string> GetNx2Dictionary(string tableName, string keyColumn, string valueColumn) => new Dictionary<string, string>();
@@ -800,7 +740,7 @@ namespace Scraps.Tests.DatabaseLayer
             public string LastRole { get; private set; }
 
             public DataRow GetByLogin(string login) { LastLogin = login; return null; }
-            public string GetUserStatus(string login) { LastLogin = login; return null; }
+            public string GetUserRole(string login) { LastLogin = login; return null; }
             public void Create(string login, string password, string role) { LastLogin = login; LastPassword = password; LastRole = role; }
             public void Delete(string login) { LastLogin = login; }
             public void ChangePassword(string login, string newPassword) { LastLogin = login; LastPassword = newPassword; }
@@ -817,6 +757,8 @@ namespace Scraps.Tests.DatabaseLayer
             public void Delete(string roleName) { LastName = roleName; }
             public void Rename(string oldName, string newName) { LastName = oldName; }
             public List<RoleInfo> GetAll() => new List<RoleInfo>();
+            public bool CheckAccess(string roleName, string tableName, PermissionFlags required) => false;
+            public PermissionFlags GetEffectivePermissions(string roleName, string tableName) => PermissionFlags.None;
         }
 
         private class FakeRowEditor : IRowEditor
@@ -872,32 +814,5 @@ namespace Scraps.Tests.DatabaseLayer
         }
 
         #endregion
-    }
-
-    public class LocalDatabaseTests
-    {
-        [Fact]
-        public void Constructor_DoesNotThrow()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            Assert.NotNull(db);
-            Assert.Equal(DatabaseProvider.LocalFiles, db.Provider);
-        }
-
-        [Fact]
-        public void TestConnection_ThrowsNotImplemented()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            var ex = Assert.Throws<NotImplementedException>(() => db.TestConnection());
-            Assert.Contains("LocalDatabase", ex.Message);
-        }
-
-        [Fact]
-        public void Initialize_ThrowsNotImplemented()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            var ex = Assert.Throws<NotImplementedException>(() => db.Initialize(DatabaseGenerationMode.Full));
-            Assert.Contains("LocalDatabase", ex.Message);
-        }
     }
 }

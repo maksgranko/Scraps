@@ -1,5 +1,5 @@
-﻿using Scraps.Databases;
-using Scraps.Databases.Utilities;
+﻿using Scraps.Database.MSSQL;
+using Scraps.Database.MSSQL.Utilities;
 using Xunit;
 
 namespace Scraps.Tests.Database

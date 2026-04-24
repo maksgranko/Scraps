@@ -14,18 +14,18 @@ namespace Scraps.Configs
         LocalFiles,
         /// <summary>Microsoft SQL Server.</summary>
         MSSQL,
-        /// <summary>MySQL.</summary>
-        MySQL,
-        /// <summary>PostgreSQL.</summary>
-        PostgreSQL,
-        /// <summary>SQLite.</summary>
-        SQLite
+        ///// <summary>MySQL.</summary>
+        //MySQL,
+        ///// <summary>PostgreSQL.</summary>
+        //PostgreSQL,
+        ///// <summary>SQLite.</summary>
+        //SQLite
     }
 
     /// <summary>
     /// Алгоритмы хэширования паролей.
     /// </summary>
-    public enum HashAlgorithm
+    public enum PasswordHashAlgorithm
     {
         /// <summary>SHA-256 (по умолчанию).</summary>
         SHA256,
@@ -105,7 +105,7 @@ namespace Scraps.Configs
         /// <summary>
         /// Алгоритм хэширования паролей (по умолчанию SHA-256).
         /// </summary>
-        public static HashAlgorithm AuthHashAlgorithm = HashAlgorithm.SHA256;
+        public static PasswordHashAlgorithm AuthHashAlgorithm = PasswordHashAlgorithm.SHA256;
 
         /// <summary>
         /// Salt для хэширования паролей.

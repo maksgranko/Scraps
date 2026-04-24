@@ -9,7 +9,7 @@ namespace Scraps.Database
     public interface IDatabaseSchema
     {
         /// <summary>Получить список таблиц.</summary>
-        List<string> GetTables(bool includeViews = false, bool includeSystem = false);
+        List<string> GetTables(bool includeSystem = false);
 
         /// <summary>Получить колонки таблицы.</summary>
         List<string> GetTableColumns(string tableName);

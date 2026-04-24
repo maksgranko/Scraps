@@ -3,8 +3,8 @@
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Description>Scraps UI WinForms — хелперы для DataGridView и FK-редакторов.</Description>
-    <AssemblyVersion>1.2026.114.16</AssemblyVersion>
-    <FileVersion>1.2026.114.16</FileVersion>
+    <AssemblyVersion>1.2026.115.24</AssemblyVersion>
+    <FileVersion>1.2026.115.24</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

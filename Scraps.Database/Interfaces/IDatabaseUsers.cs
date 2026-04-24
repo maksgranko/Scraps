@@ -11,7 +11,7 @@ namespace Scraps.Database
         DataRow GetByLogin(string login);
 
         /// <summary>Получить статус/роль пользователя.</summary>
-        string GetUserStatus(string login);
+        string GetUserRole(string login);
 
         /// <summary>Создать пользователя.</summary>
         void Create(string login, string password, string role);

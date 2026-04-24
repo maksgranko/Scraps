@@ -1,5 +1,5 @@
 using Scraps.Database;
-using static Scraps.Database.Database;
+using static Scraps.Database.Current;
 using Scraps.Localization;
 using System;
 using System.Collections.Generic;

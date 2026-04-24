@@ -8,53 +8,72 @@ namespace Scraps.Database
     /// Статический фасад для работы с базой данных.
     /// Автоматически выбирает провайдер из ScrapsConfig.DatabaseProvider.
     /// </summary>
-    public static class Database
+    public static class Current
     {
-        private static IDatabase Current => DatabaseProviderFactory.Current;
+        private static IDatabase Active => DatabaseProviderFactory.Current;
+
+        /// <summary>Подключение к базе данных.</summary>
+        public static IDatabaseConnection Connection => Active.Connection ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseConnection.");
+        /// <summary>Схема базы данных (таблицы, колонки).</summary>
+        public static IDatabaseSchema Schema => Active.Schema ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseSchema.");
+        /// <summary>Данные таблиц (CRUD-операции).</summary>
+        public static IDatabaseData Data => Active.Data ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+        /// <summary>Управление пользователями.</summary>
+        public static IDatabaseUsers Users => Active.Users ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseUsers.");
+        /// <summary>Управление ролями.</summary>
+        public static IDatabaseRoles Roles => Active.Roles ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseRoles.");
+        /// <summary>Управление правами ролей.</summary>
+        public static IDatabaseRolePermissions RolePermissions => Active.RolePermissions ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseRolePermissions.");
+        /// <summary>Редактор строк (добавление/обновление).</summary>
+        public static IRowEditor RowEditor => Active.RowEditor ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IRowEditor.");
+        /// <summary>Провайдер внешних ключей.</summary>
+        public static IForeignKeyProvider ForeignKeys => Active.ForeignKeys ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IForeignKeyProvider.");
+        /// <summary>Реестр виртуальных таблиц.</summary>
+        public static IVirtualTableRegistry VirtualTables => Active.VirtualTables ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IVirtualTableRegistry.");
 
         #region Connection
 
         /// <summary>Проверить подключение.</summary>
-        public static bool TestConnection() => Current.TestConnection();
+        public static bool TestConnection() => Active.TestConnection();
 
         /// <summary>Выполнить SQL без возврата данных.</summary>
         public static void ExecuteNonQuery(string sql, params object[] parameters)
-            => Current.Connection.ExecuteNonQuery(sql, parameters);
+            => Active.Connection.ExecuteNonQuery(sql, parameters);
 
         /// <summary>Выполнить SQL и вернуть скаляр.</summary>
         public static object ExecuteScalar(string sql, params object[] parameters)
-            => Current.Connection.ExecuteScalar(sql, parameters);
+            => Active.Connection.ExecuteScalar(sql, parameters);
 
         /// <summary>Выполнить SQL и вернуть DataTable.</summary>
         public static DataTable GetDataTable(string sql, params object[] parameters)
-            => Current.Connection.GetDataTable(sql, parameters);
+            => Active.Connection.GetDataTable(sql, parameters);
 
         #endregion
 
         #region Schema
 
         /// <summary>Получить список таблиц.</summary>
-        public static List<string> GetTables(bool includeViews = false, bool includeSystem = false)
+        public static List<string> GetTables(bool includeSystem = false)
         {
-            if (Current.Schema == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseSchema.");
-            return Current.Schema.GetTables(includeViews, includeSystem);
+            if (Active.Schema == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseSchema.");
+            return Active.Schema.GetTables(includeSystem);
         }
 
         /// <summary>Получить колонки таблицы.</summary>
         public static List<string> GetTableColumns(string tableName)
         {
-            if (Current.Schema == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseSchema.");
-            return Current.Schema.GetTableColumns(tableName);
+            if (Active.Schema == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseSchema.");
+            return Active.Schema.GetTableColumns(tableName);
         }
 
         /// <summary>Получить схему таблицы.</summary>
         public static DataTable GetTableSchema(string tableName)
         {
-            if (Current.Schema == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseSchema.");
-            return Current.Schema.GetTableSchema(tableName);
+            if (Active.Schema == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseSchema.");
+            return Active.Schema.GetTableSchema(tableName);
         }
 
         #endregion
@@ -64,41 +83,41 @@ namespace Scraps.Database
         /// <summary>Получить данные таблицы.</summary>
         public static DataTable GetTableData(string tableName, params string[] columns)
         {
-            if (Current.Data == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-            return Current.Data.GetTableData(tableName, columns);
+            if (Active.Data == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+            return Active.Data.GetTableData(tableName, columns);
         }
 
         /// <summary>Получить данные с разворачиванием FK.</summary>
         public static DataTable GetTableDataExpanded(string tableName, IEnumerable<ForeignKeyJoin> foreignKeys, params string[] baseColumns)
         {
-            if (Current.Data == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-            return Current.Data.GetTableDataExpanded(tableName, foreignKeys, baseColumns);
+            if (Active.Data == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+            return Active.Data.GetTableDataExpanded(tableName, foreignKeys, baseColumns);
         }
 
         /// <summary>Найти записи по колонке.</summary>
-        public static DataTable FindByColumn(string tableName, string columnName, object value, bool exactMatch = true)
+        public static DataTable FindByColumn(string tableName, string columnName, object value, SqlFilterOperator op = SqlFilterOperator.Eq)
         {
-            if (Current.Data == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-            return Current.Data.FindByColumn(tableName, columnName, value, exactMatch);
+            if (Active.Data == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+            return Active.Data.FindByColumn(tableName, columnName, value, op);
         }
 
         /// <summary>Применить изменения.</summary>
         public static void ApplyTableChanges(string tableName, DataTable changes)
         {
-            if (Current.Data == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-            Current.Data.ApplyTableChanges(tableName, changes);
+            if (Active.Data == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+            Active.Data.ApplyTableChanges(tableName, changes);
         }
 
         /// <summary>Массовая вставка.</summary>
         public static void BulkInsert(string tableName, DataTable data)
         {
-            if (Current.Data == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-            Current.Data.BulkInsert(tableName, data);
+            if (Active.Data == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseData.");
+            Active.Data.BulkInsert(tableName, data);
         }
 
         #endregion
@@ -108,33 +127,33 @@ namespace Scraps.Database
         /// <summary>Получить пользователя по логину.</summary>
         public static DataRow GetUserByLogin(string login)
         {
-            if (Current.Users == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseUsers.");
-            return Current.Users.GetByLogin(login);
+            if (Active.Users == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseUsers.");
+            return Active.Users.GetByLogin(login);
         }
 
         /// <summary>Создать пользователя.</summary>
         public static void CreateUser(string login, string password, string role)
         {
-            if (Current.Users == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseUsers.");
-            Current.Users.Create(login, password, role);
+            if (Active.Users == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseUsers.");
+            Active.Users.Create(login, password, role);
         }
 
         /// <summary>Удалить пользователя.</summary>
         public static void DeleteUser(string login)
         {
-            if (Current.Users == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseUsers.");
-            Current.Users.Delete(login);
+            if (Active.Users == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseUsers.");
+            Active.Users.Delete(login);
         }
 
         /// <summary>Изменить пароль.</summary>
         public static void ChangeUserPassword(string login, string newPassword)
         {
-            if (Current.Users == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseUsers.");
-            Current.Users.ChangePassword(login, newPassword);
+            if (Active.Users == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseUsers.");
+            Active.Users.ChangePassword(login, newPassword);
         }
 
         #endregion
@@ -144,25 +163,25 @@ namespace Scraps.Database
         /// <summary>Получить ID роли по имени.</summary>
         public static int? GetRoleIdByName(string roleName)
         {
-            if (Current.Roles == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseRoles.");
-            return Current.Roles.GetRoleIdByName(roleName);
+            if (Active.Roles == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseRoles.");
+            return Active.Roles.GetRoleIdByName(roleName);
         }
 
         /// <summary>Создать роль.</summary>
         public static int CreateRole(string roleName)
         {
-            if (Current.Roles == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseRoles.");
-            return Current.Roles.Create(roleName);
+            if (Active.Roles == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseRoles.");
+            return Active.Roles.Create(roleName);
         }
 
         /// <summary>Удалить роль.</summary>
         public static void DeleteRole(string roleName)
         {
-            if (Current.Roles == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseRoles.");
-            Current.Roles.Delete(roleName);
+            if (Active.Roles == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IDatabaseRoles.");
+            Active.Roles.Delete(roleName);
         }
 
         #endregion
@@ -172,17 +191,17 @@ namespace Scraps.Database
         /// <summary>Добавить строку.</summary>
         public static AddEditResult AddRow(string tableName, Dictionary<string, object> values, bool strictFk = true, params ChildInsert[] children)
         {
-            if (Current.RowEditor == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IRowEditor.");
-            return Current.RowEditor.AddRow(tableName, values, strictFk, children);
+            if (Active.RowEditor == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IRowEditor.");
+            return Active.RowEditor.AddRow(tableName, values, strictFk, children);
         }
 
         /// <summary>Обновить строку.</summary>
         public static AddEditResult UpdateRow(string tableName, string idColumn, object idValue, Dictionary<string, object> values, bool strictFk = true)
         {
-            if (Current.RowEditor == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IRowEditor.");
-            return Current.RowEditor.UpdateRow(tableName, idColumn, idValue, values, strictFk);
+            if (Active.RowEditor == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IRowEditor.");
+            return Active.RowEditor.UpdateRow(tableName, idColumn, idValue, values, strictFk);
         }
 
         #endregion
@@ -192,25 +211,25 @@ namespace Scraps.Database
         /// <summary>Получить внешние ключи таблицы.</summary>
         public static List<ForeignKeyInfo> GetForeignKeys(string tableName)
         {
-            if (Current.ForeignKeys == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IForeignKeyProvider.");
-            return Current.ForeignKeys.GetForeignKeys(tableName);
+            if (Active.ForeignKeys == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IForeignKeyProvider.");
+            return Active.ForeignKeys.GetForeignKeys(tableName);
         }
 
         /// <summary>Получить справочник для FK.</summary>
         public static DataTable GetForeignKeyLookup(string tableName, string fkColumn)
         {
-            if (Current.ForeignKeys == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IForeignKeyProvider.");
-            return Current.ForeignKeys.GetForeignKeyLookup(tableName, fkColumn);
+            if (Active.ForeignKeys == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IForeignKeyProvider.");
+            return Active.ForeignKeys.GetForeignKeyLookup(tableName, fkColumn);
         }
 
         /// <summary>Определить колонку отображения.</summary>
         public static string ResolveDisplayColumn(string tableName, string idColumn = "ID")
         {
-            if (Current.ForeignKeys == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IForeignKeyProvider.");
-            return Current.ForeignKeys.ResolveDisplayColumn(tableName, idColumn);
+            if (Active.ForeignKeys == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IForeignKeyProvider.");
+            return Active.ForeignKeys.ResolveDisplayColumn(tableName, idColumn);
         }
 
         #endregion
@@ -220,17 +239,17 @@ namespace Scraps.Database
         /// <summary>Зарегистрировать виртуальную таблицу.</summary>
         public static void RegisterVirtualTable(string name, string sql, Scraps.Security.PermissionFlags required = Scraps.Security.PermissionFlags.Read)
         {
-            if (Current.VirtualTables == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IVirtualTableRegistry.");
-            Current.VirtualTables.Register(name, sql, required);
+            if (Active.VirtualTables == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IVirtualTableRegistry.");
+            Active.VirtualTables.Register(name, sql, required);
         }
 
         /// <summary>Получить данные виртуальной таблицы.</summary>
         public static DataTable GetVirtualTableData(string name, string roleName = null, Scraps.Security.PermissionFlags required = Scraps.Security.PermissionFlags.Read)
         {
-            if (Current.VirtualTables == null)
-                throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IVirtualTableRegistry.");
-            return Current.VirtualTables.GetData(name, roleName, required);
+            if (Active.VirtualTables == null)
+                throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IVirtualTableRegistry.");
+            return Active.VirtualTables.GetData(name, roleName, required);
         }
 
         #endregion
@@ -239,7 +258,7 @@ namespace Scraps.Database
 
         /// <summary>Инициализировать базу данных.</summary>
         public static void Initialize(DatabaseGenerationOptions options)
-            => Current.Initialize(options);
+            => Active.Initialize(options);
 
         #endregion
     }

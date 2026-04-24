@@ -18,7 +18,13 @@ namespace Scraps.Database
         /// </summary>
         public static void Register(DatabaseProvider provider, Func<IDatabase> factory)
         {
-            _providers[provider] = factory;
+            if (factory == null)
+                throw new ArgumentNullException(nameof(factory));
+
+            lock (_lock)
+            {
+                _providers[provider] = factory;
+            }
         }
 
         /// <summary>
@@ -26,10 +32,65 @@ namespace Scraps.Database
         /// </summary>
         public static IDatabase Create(DatabaseProvider provider)
         {
-            if (_providers.TryGetValue(provider, out var factory))
-                return factory();
+            lock (_lock)
+            {
+                if (_providers.TryGetValue(provider, out var factory))
+                    return factory();
+            }
 
-            throw new InvalidOperationException($"Провайдер {provider} не зарегистрирован. Установите соответствующий NuGet пакет (например, Scraps.Database.MSSQL).");
+            if (TryAutoRegister(provider))
+            {
+                lock (_lock)
+                {
+                    if (_providers.TryGetValue(provider, out var factory))
+                        return factory();
+                }
+            }
+
+            throw new InvalidOperationException(GetMissingProviderMessage(provider));
+        }
+
+        private static bool TryAutoRegister(DatabaseProvider provider)
+        {
+            var providerTypeName = GetProviderTypeName(provider);
+            if (string.IsNullOrWhiteSpace(providerTypeName))
+                return false;
+
+            var providerType = Type.GetType(providerTypeName, throwOnError: false);
+            if (providerType == null)
+                return false;
+
+            if (!typeof(IDatabase).IsAssignableFrom(providerType))
+                throw new InvalidOperationException($"Тип '{providerType.FullName}' не реализует IDatabase.");
+
+            Register(provider, () => (IDatabase)Activator.CreateInstance(providerType));
+            return true;
+        }
+
+        private static string GetProviderTypeName(DatabaseProvider provider)
+        {
+            switch (provider)
+            {
+                case DatabaseProvider.MSSQL:
+                    return "Scraps.Database.MSSQL.MSSQLDatabase, Scraps.Database.MSSQL";
+                case DatabaseProvider.LocalFiles:
+                    return "Scraps.Database.LocalFiles.LocalDatabase, Scraps.Database.LocalFiles";
+                default:
+                    return null;
+            }
+        }
+
+        private static string GetMissingProviderMessage(DatabaseProvider provider)
+        {
+            switch (provider)
+            {
+                case DatabaseProvider.MSSQL:
+                    return "Провайдер MSSQL не найден. Подключите пакет Scraps.Database.MSSQL.";
+                case DatabaseProvider.LocalFiles:
+                    return "Провайдер LocalFiles не найден. Подключите пакет Scraps.Database.LocalFiles.";
+                default:
+                    return $"Провайдер {provider} не поддерживается.";
+            }
         }
 
         /// <summary>

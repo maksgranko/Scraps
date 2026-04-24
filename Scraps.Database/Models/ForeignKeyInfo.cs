@@ -3,6 +3,15 @@ namespace Scraps.Database
     /// <summary>Информация о внешнем ключе таблицы.</summary>
     public sealed class ForeignKeyInfo
     {
+        /// <summary>Колонка в основной таблице (алиас для Column).</summary>
+        public string ColumnName { get => Column; set => Column = value; }
+        /// <summary>Таблица-справочник (алиас для RefTable).</summary>
+        public string ReferenceTable { get => RefTable; set => RefTable = value; }
+        /// <summary>Колонка в таблице-справочнике (алиас для RefColumn).</summary>
+        public string ReferenceColumn { get => RefColumn; set => RefColumn = value; }
+        /// <summary>ID-колонка в таблице-справочнике (алиас для RefTableName).</summary>
+        public string ReferenceIdColumn { get => RefTableName; set => RefTableName = value; }
+
         /// <summary>Колонка в основной таблице.</summary>
         public string Column { get; set; }
         /// <summary>Таблица-справочник (полное имя со схемой).</summary>

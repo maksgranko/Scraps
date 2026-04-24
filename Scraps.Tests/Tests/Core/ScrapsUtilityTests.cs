@@ -1,4 +1,4 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Database.MSSQL;
 using Xunit;
 
 namespace Scraps.Tests.Core

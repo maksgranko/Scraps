@@ -1,4 +1,4 @@
-﻿using Scraps.Configs;
+using Scraps.Configs;
 using Scraps.Database;
 using System;
 using System.Data;
@@ -93,7 +93,7 @@ namespace Scraps.Security
             /// <summary>
             /// Хэшировать строку с указанным алгоритмом и солью.
             /// </summary>
-            public static string HashPassword(string input, HashAlgorithm algorithm)
+            public static string HashPassword(string input, PasswordHashAlgorithm algorithm)
             {
                 var salt = GetSalt();
                 using (var algo = CreateAlgorithm(algorithm))
@@ -120,15 +120,15 @@ namespace Scraps.Security
                 }
             }
 
-            private static System.Security.Cryptography.HashAlgorithm CreateAlgorithm(HashAlgorithm algorithm)
+            private static System.Security.Cryptography.HashAlgorithm CreateAlgorithm(PasswordHashAlgorithm algorithm)
             {
                 switch (algorithm)
                 {
-                    case HashAlgorithm.MD5:
+                    case PasswordHashAlgorithm.MD5:
                         return System.Security.Cryptography.MD5.Create();
-                    case HashAlgorithm.SHA1:
+                    case PasswordHashAlgorithm.SHA1:
                         return System.Security.Cryptography.SHA1.Create();
-                    case HashAlgorithm.SHA256:
+                    case PasswordHashAlgorithm.SHA256:
                     default:
                         return System.Security.Cryptography.SHA256.Create();
                 }
@@ -169,7 +169,7 @@ namespace Scraps.Security
                 throw new ArgumentException("Логин не может быть пустым.", nameof(login));
 
             UserLogin = login;
-            UserRole = DatabaseProviderFactory.Current.Users.GetUserStatus(login);
+            UserRole = DatabaseProviderFactory.Current.Users.GetUserRole(login);
             UserData = DatabaseProviderFactory.Current.Users.GetByLogin(login);
             if (ScrapsConfig.UsersTableColumnsNames != null &&
                 ScrapsConfig.UsersTableColumnsNames.TryGetValue("UserID", out var idColumn))
@@ -256,9 +256,9 @@ namespace Scraps.Security
         /// </summary>
         /// <exception cref="ArgumentException">Пустой логин</exception>
         /// <exception cref="InvalidOperationException">Пользователь не найден</exception>
-        public static string GetUserStatus(string login)
+        public static string GetUserRole(string login)
         {
-            return DatabaseProviderFactory.Current.Users.GetUserStatus(login);
+            return DatabaseProviderFactory.Current.Users.GetUserRole(login);
         }
 
         /// <summary>
@@ -364,7 +364,3 @@ namespace Scraps.Security
         }
     }
 }
-
-
-
-

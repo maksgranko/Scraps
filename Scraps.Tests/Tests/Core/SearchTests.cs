@@ -1,7 +1,8 @@
 ﻿using Scraps.Data.DataTables;
-using Scraps.Databases;
+using Scraps.Database;
 using Scraps.Tests.Setup;
 using Xunit;
+using Db = Scraps.Database.Current;
 
 namespace Scraps.Tests.Core
 {
@@ -11,7 +12,7 @@ namespace Scraps.Tests.Core
         [DbFact]
         public void Navigator_Works()
         {
-            var dt = MSSQL.GetTableData("Таблица 1");
+            var dt = Db.GetTableData("Таблица 1");
             var nav = Search.CreateNavigator(dt, "Ivan");
             var first = nav.First();
             Assert.NotNull(first);
@@ -22,7 +23,7 @@ namespace Scraps.Tests.Core
         [DbFact]
         public void FilterRows_ByColumn()
         {
-            var dt = MSSQL.GetTableData("Таблица 1");
+            var dt = Db.GetTableData("Таблица 1");
             var filtered = Search.FilterRows(dt, "Name", "Ivan");
             Assert.True(filtered.Rows.Count >= 1);
         }
