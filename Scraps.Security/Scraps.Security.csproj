@@ -2,10 +2,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Security — роли, права доступа, сессии пользователей.</Description>
+    <AssemblyVersion>1.2026.114.16</AssemblyVersion>
+    <FileVersion>1.2026.114.16</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
-    <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
+    <ProjectReference Include="..\Scraps.Database\Scraps.Database.csproj" />
   </ItemGroup>
 </Project>

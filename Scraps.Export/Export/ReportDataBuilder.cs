@@ -1,4 +1,5 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Database;
+using static Scraps.Database.Database;
 using Scraps.Localization;
 using System.Data;
 
@@ -14,7 +15,7 @@ namespace Scraps.Export
         /// </summary>
         public static DataTable GetBySql(string sql, string tableNameForTranslations = null)
         {
-            var dt = MSSQL.GetDataTableFromSQL(sql);
+            var dt = GetDataTable(sql);
             if (!string.IsNullOrWhiteSpace(tableNameForTranslations))
             {
                 TranslationManager.Translate(dt, tableNameForTranslations);

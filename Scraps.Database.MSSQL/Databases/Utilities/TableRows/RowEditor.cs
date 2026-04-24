@@ -6,6 +6,11 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
+using AddEditResult = Scraps.Database.AddEditResult;
+using ChildInsert = Scraps.Database.ChildInsert;
+using ForeignKeyInfo = Scraps.Database.ForeignKeyInfo;
+using TableEditMetadata = Scraps.Database.TableEditMetadata;
+
 namespace Scraps.Databases.Utilities.TableRows
 {
     /// <summary>
@@ -218,7 +223,7 @@ namespace Scraps.Databases.Utilities.TableRows
 
         #region --- FK Resolution ---
 
-        private static Dictionary<string, object> ResolveValues(string tableName, Dictionary<string, object> values, MSSQL.TableEditMetadata meta, SqlConnection conn, SqlTransaction tx, bool strictFk, out string error)
+        private static Dictionary<string, object> ResolveValues(string tableName, Dictionary<string, object> values, TableEditMetadata meta, SqlConnection conn, SqlTransaction tx, bool strictFk, out string error)
         {
             error = null;
             var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -254,7 +259,7 @@ namespace Scraps.Databases.Utilities.TableRows
             return result;
         }
 
-        private static object ResolveFkValue(MSSQL.ForeignKeyInfo fk, object rawValue, SqlConnection conn, SqlTransaction tx, bool strictFk, out string error)
+        private static object ResolveFkValue(ForeignKeyInfo fk, object rawValue, SqlConnection conn, SqlTransaction tx, bool strictFk, out string error)
         {
             error = null;
             var refTable = fk.RefTable;
@@ -399,7 +404,7 @@ namespace Scraps.Databases.Utilities.TableRows
 
         #region --- Metadata & Child Helpers ---
 
-        private static MSSQL.TableEditMetadata GetTableMetadata(string tableName, SqlConnection conn, SqlTransaction tx)
+        private static TableEditMetadata GetTableMetadata(string tableName, SqlConnection conn, SqlTransaction tx)
         {
             try
             {

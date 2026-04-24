@@ -2,13 +2,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Export — экспорт отчётов в Excel и PDF.</Description>
-    <AssemblyVersion>1.2026.111.6</AssemblyVersion>
-    <FileVersion>1.2026.111.6</FileVersion>
+    <AssemblyVersion>1.2026.114.17</AssemblyVersion>
+    <FileVersion>1.2026.114.17</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
-    <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
+    <ProjectReference Include="..\Scraps.Database\Scraps.Database.csproj" />
     <PackageReference Include="EPPlus" Version="7.1.0" />
     <PackageReference Include="iTextSharp" Version="5.5.13.5" />
   </ItemGroup>

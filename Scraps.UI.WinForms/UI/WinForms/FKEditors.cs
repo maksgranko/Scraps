@@ -1,4 +1,5 @@
-using Scraps.Databases;
+using Scraps.Database;
+using static Scraps.Database.Database;
 using Scraps.Localization;
 using System;
 using System.Collections.Generic;
@@ -29,10 +30,10 @@ namespace Scraps.UI.WinForms
 
             try
             {
-                var dt = MSSQL.GetTableData(ReferenceTable);
+                var dt = GetTableData(ReferenceTable);
                 if (dt == null || dt.Rows.Count == 0) return;
 
-                var displayCol = ReferenceDisplayColumn ?? MSSQL.ResolveDisplayColumn(ReferenceTable, ReferenceIdColumn);
+                var displayCol = ReferenceDisplayColumn ?? ResolveDisplayColumn(ReferenceTable, ReferenceIdColumn);
                 
                 DataSource = dt;
                 ValueMember = ReferenceIdColumn;
@@ -56,6 +57,7 @@ namespace Scraps.UI.WinForms
         private int _rowIndex;
         private bool _valueChanged;
 
+        /// <inheritdoc/>
         public object EditingControlFormattedValue
         {
             get => SelectedValue?.ToString() ?? Text;
@@ -68,9 +70,11 @@ namespace Scraps.UI.WinForms
             }
         }
 
+        /// <inheritdoc/>
         public object GetEditingControlFormattedValue(DataGridViewDataErrorContexts context)
             => EditingControlFormattedValue;
 
+        /// <inheritdoc/>
         public void ApplyCellStyleToEditingControl(DataGridViewCellStyle dataGridViewCellStyle)
         {
             Font = dataGridViewCellStyle.Font;
@@ -78,37 +82,46 @@ namespace Scraps.UI.WinForms
             BackColor = dataGridViewCellStyle.BackColor;
         }
 
+        /// <inheritdoc/>
         public DataGridView EditingControlDataGridView
         {
             get => _dataGridView;
             set => _dataGridView = value;
         }
 
+        /// <inheritdoc/>
         public int EditingControlRowIndex
         {
             get => _rowIndex;
             set => _rowIndex = value;
         }
 
+        /// <inheritdoc/>
         public bool EditingControlWantsInputKey(Keys key, bool dataGridViewWantsInputKey)
         {
             return key == Keys.Down || key == Keys.Up;
         }
 
+        /// <inheritdoc/>
         public void PrepareEditingControlForEdit(bool selectAll)
         {
             if (selectAll) SelectAll();
         }
 
+        /// <inheritdoc/>
         public bool RepositionEditingControlOnValueChange => false;
+
+        /// <inheritdoc/>
         public Cursor EditingPanelCursor => Cursors.Default;
 
+        /// <inheritdoc/>
         public bool EditingControlValueChanged
         {
             get => _valueChanged;
             set => _valueChanged = value;
         }
 
+        /// <inheritdoc/>
         protected override void OnSelectedIndexChanged(EventArgs e)
         {
             base.OnSelectedIndexChanged(e);

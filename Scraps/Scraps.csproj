@@ -3,12 +3,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps — мета-пакет. Включает все модули: Core, Database.MSSQL, Security, Import, Export.</Description>
     <IsPackable>true</IsPackable>
-    <AssemblyVersion>1.2026.111.6</AssemblyVersion>
-    <FileVersion>1.2026.111.6</FileVersion>
+    <AssemblyVersion>1.2026.114.23</AssemblyVersion>
+    <FileVersion>1.2026.114.23</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
+    <ProjectReference Include="..\Scraps.Database\Scraps.Database.csproj" />
     <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
     <ProjectReference Include="..\Scraps.Security\Scraps.Security.csproj" />
     <ProjectReference Include="..\Scraps.Import\Scraps.Import.csproj" />

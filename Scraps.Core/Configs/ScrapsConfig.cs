@@ -4,6 +4,25 @@ using System.Collections.Generic;
 namespace Scraps.Configs
 {
     /// <summary>
+    /// Провайдер базы данных.
+    /// </summary>
+    public enum DatabaseProvider
+    {
+        /// <summary>Не выбран.</summary>
+        None,
+        /// <summary>Локальные файлы (JSON/XML).</summary>
+        LocalFiles,
+        /// <summary>Microsoft SQL Server.</summary>
+        MSSQL,
+        /// <summary>MySQL.</summary>
+        MySQL,
+        /// <summary>PostgreSQL.</summary>
+        PostgreSQL,
+        /// <summary>SQLite.</summary>
+        SQLite
+    }
+
+    /// <summary>
     /// Алгоритмы хэширования паролей.
     /// </summary>
     public enum HashAlgorithm
@@ -30,6 +49,16 @@ namespace Scraps.Configs
         /// Строка подключения к БД.
         /// </summary>
         public static string ConnectionString = "";
+
+        /// <summary>
+        /// Текущий провайдер базы данных.
+        /// </summary>
+        public static DatabaseProvider DatabaseProvider = DatabaseProvider.None;
+
+        /// <summary>
+        /// Путь к папке с локальными данными (для DatabaseProvider.LocalFiles).
+        /// </summary>
+        public static string LocalDataPath = "Data";
 
         /// <summary>
         /// Название таблицы пользователей.
@@ -77,6 +106,12 @@ namespace Scraps.Configs
         /// Алгоритм хэширования паролей (по умолчанию SHA-256).
         /// </summary>
         public static HashAlgorithm AuthHashAlgorithm = HashAlgorithm.SHA256;
+
+        /// <summary>
+        /// Salt для хэширования паролей.
+        /// Если пусто, используется производное от DatabaseName.
+        /// </summary>
+        public static string PasswordSalt = "";
 
         // Пример переводов (таблицы, которые гарантированно есть в БД).
         // Рекомендуется загружать одним вызовом через словарь:

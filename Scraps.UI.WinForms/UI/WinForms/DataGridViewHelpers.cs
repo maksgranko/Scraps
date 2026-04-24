@@ -283,19 +283,20 @@ namespace Scraps.UI.WinForms
 
             dgv.ClearSelection();
 
-            // Восстанавливаем выделенные ячейки
-            foreach (var (row, col) in state.SelectedCells)
-            {
-                if (row >= 0 && row < dgv.Rows.Count && col >= 0 && col < dgv.Columns.Count)
-                    dgv.Rows[row].Cells[col].Selected = true;
-            }
-
-            // Восстанавливаем текущую ячейку
+            // Восстанавливаем текущую ячейку СНАЧАЛА
+            // (иначе установка CurrentCell сбросит выделение)
             if (state.CurrentCell.HasValue)
             {
                 var (curRow, curCol) = state.CurrentCell.Value;
                 if (curRow >= 0 && curRow < dgv.Rows.Count && curCol >= 0 && curCol < dgv.Columns.Count)
                     dgv.CurrentCell = dgv.Rows[curRow].Cells[curCol];
+            }
+
+            // Восстанавливаем выделенные ячейки
+            foreach (var (row, col) in state.SelectedCells)
+            {
+                if (row >= 0 && row < dgv.Rows.Count && col >= 0 && col < dgv.Columns.Count)
+                    dgv.Rows[row].Cells[col].Selected = true;
             }
         }
 
@@ -435,7 +436,7 @@ namespace Scraps.UI.WinForms
             }
             if (dt == null) return null;
 
-            var matches = Search.FindMatches(dt, searchText, caseSensitive);
+            var matches = Search.FindMatches(dt, searchText, !caseSensitive);
             return new Search.MatchNavigator(matches);
         }
 
@@ -455,7 +456,7 @@ namespace Scraps.UI.WinForms
         public static bool FindPrevious(this DataGridView dgv, Search.MatchNavigator navigator)
         {
             if (navigator == null || dgv == null) return false;
-            var pos = navigator.Prev();
+            var pos = navigator.Prev(wrap: true);
             if (pos == null) return false;
             var col = dgv.Columns[pos.ColumnName];
             if (col == null) return false;
@@ -473,15 +474,15 @@ namespace Scraps.UI.WinForms
             var nav = dgv.CreateMatchNavigator(searchText, caseSensitive);
             if (nav == null) return result;
 
-            var match = nav.First();
-            while (match != null)
+            for (int i = 0; i < nav.Count; i++)
             {
+                var match = i == 0 ? nav.First() : nav.Next();
+                if (match == null) continue;
                 var col = dgv.Columns[match.ColumnName];
-                if (col == null) { match = nav.Next(); continue; }
+                if (col == null) continue;
                 var cell = dgv.Rows[match.RowIndex].Cells[col.Index];
                 cell.Style.BackColor = color;
                 result.Add((match.RowIndex, col.Index));
-                match = nav.Next();
             }
             return result;
         }

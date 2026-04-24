@@ -1,6 +1,6 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Database;
+using static Scraps.Database.Database;
 using Scraps.Localization;
-using Scraps.Security;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -90,6 +90,20 @@ namespace Scraps.Import
         }
 
         /// <summary>
+        /// Получить схему таблицы как словарь [ColumnName] = DataType.
+        /// </summary>
+        private static Dictionary<string, string> GetTableSchemaDict(string tableName)
+        {
+            var schema = GetTableSchema(tableName);
+            var dict = new Dictionary<string, string>();
+            foreach (DataRow row in schema.Rows)
+            {
+                dict[row["ColumnName"].ToString()] = row["DataType"].ToString();
+            }
+            return dict;
+        }
+
+        /// <summary>
         /// Проверить количество колонок относительно схемы таблицы.
         /// </summary>
         public static bool ValidateColumnCount(
@@ -101,7 +115,7 @@ namespace Scraps.Import
             if (importData == null) throw new ArgumentNullException(nameof(importData));
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentNullException(nameof(tableName));
 
-            var dbSchema = MSSQL.GetTableSchema(tableName);
+            var dbSchema = GetTableSchemaDict(tableName);
             expectedCount = dbSchema.Keys.Count;
             actualCount = importData.Columns.Count;
             return expectedCount == actualCount;
@@ -119,7 +133,7 @@ namespace Scraps.Import
             if (importData == null) throw new ArgumentNullException(nameof(importData));
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentNullException(nameof(tableName));
 
-            var dbSchema = MSSQL.GetTableSchema(tableName);
+            var dbSchema = GetTableSchemaDict(tableName);
             var importColumns = importData.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToList();
             missingColumns = new List<string>();
 
@@ -154,7 +168,7 @@ namespace Scraps.Import
             if (importData == null) throw new ArgumentNullException(nameof(importData));
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentNullException(nameof(tableName));
 
-            var dbSchema = MSSQL.GetTableSchema(tableName);
+            var dbSchema = GetTableSchemaDict(tableName);
             typeErrors = new List<string>();
 
             foreach (DataColumn column in importData.Columns)
@@ -181,22 +195,6 @@ namespace Scraps.Import
             }
 
             return typeErrors.Count == 0;
-        }
-
-        /// <summary>
-        /// Проверить доступ на импорт данных по роли.
-        /// </summary>
-        public static bool ValidateImportAccess(string roleName, string tableName, PermissionFlags required, out string error)
-        {
-            error = null;
-            if (string.IsNullOrWhiteSpace(roleName)) return true;
-
-            if (!RoleManager.CheckAccess(roleName, tableName, required))
-            {
-                error = $"Нет прав на импорт ({required}) для роли '{roleName}' в таблицу '{tableName}'.";
-                return false;
-            }
-            return true;
         }
 
         /// <summary>
@@ -336,27 +334,10 @@ namespace Scraps.Import
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentNullException(nameof(tableName));
             if (importData == null) throw new ArgumentNullException(nameof(importData));
 
-            return MSSQL.BulkInsert(tableName, importData);
+            BulkInsert(tableName, importData);
+            return importData.Rows.Count;
         }
 
-        /// <summary>
-        /// Безопасный импорт с проверками и правами доступа.
-        /// </summary>
-        public static int ImportToTableSafe(
-            string tableName,
-            DataTable importData,
-            string roleName = null,
-            PermissionFlags required = PermissionFlags.Import | PermissionFlags.Write,
-            bool allowTranslatedColumns = true)
-        {
-            if (!ValidateImportAccess(roleName, tableName, required, out var accessError))
-                throw new UnauthorizedAccessException(accessError);
-
-            if (!ValidateImport(importData, tableName, out var errors, allowTranslatedColumns))
-                throw new Exception("Ошибка импорта: " + string.Join("; ", errors));
-
-            return ImportToTable(tableName, importData);
-        }
     }
 }
 

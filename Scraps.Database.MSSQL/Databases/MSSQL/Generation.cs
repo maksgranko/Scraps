@@ -1,9 +1,11 @@
 ﻿using Scraps.Configs;
-using Scraps.Databases.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
+
+using DatabaseGenerationMode = Scraps.Database.DatabaseGenerationMode;
+using DatabaseGenerationOptions = Scraps.Database.DatabaseGenerationOptions;
 
 namespace Scraps.Databases
 {

@@ -3,19 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
+using RoleInfo = Scraps.Database.RoleInfo;
+
 namespace Scraps.Databases
 {
     public static partial class MSSQL
     {
-        /// <summary>Модель роли (ID + название).</summary>
-        public class RoleInfo
-        {
-            /// <summary>Идентификатор роли.</summary>
-            public int Id { get; set; }
-            /// <summary>Название роли.</summary>
-            public string Name { get; set; }
-        }
-
         /// <summary>Операции с таблицей Roles.</summary>
         public static class Roles
         {

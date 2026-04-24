@@ -1,7 +1,7 @@
 using Scraps.Configs;
 using Scraps.Data.DataTables;
+using Scraps.Database;
 using Scraps.Localization;
-using Scraps.Security;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -236,28 +236,6 @@ namespace Scraps.Databases
                 throw new InvalidOperationException($"Таблица '{tableName}' не найдена или вернула пустую схему.");
 
             return dt;
-        }
-
-        /// <summary>
-        /// Получить данные таблицы с FK JOIN и проверкой прав.
-        /// </summary>
-        public static DataTable GetTableData(string tableName, string roleName, PermissionFlags required, IEnumerable<ForeignKeyJoin> foreignKeys, params string[] baseColumns)
-        {
-            if (!RoleManager.CheckAccess(roleName, tableName, required))
-                throw new UnauthorizedAccessException($"Нет доступа для роли '{roleName}' к таблице '{tableName}'.");
-
-            return GetTableData(tableName, ScrapsConfig.ConnectionString, foreignKeys, baseColumns);
-        }
-
-        /// <summary>Получить все записи из таблицы с проверкой прав.</summary>
-        /// <exception cref="ArgumentException">Пустое название таблицы</exception>
-        /// <exception cref="UnauthorizedAccessException">Нет прав доступа</exception>
-        public static DataTable GetTableData(string tableName, string roleName, PermissionFlags required)
-        {
-            if (!RoleManager.CheckAccess(roleName, tableName, required))
-                throw new UnauthorizedAccessException($"Нет доступа для роли '{roleName}' к таблице '{tableName}'.");
-
-            return GetTableData(tableName);
         }
 
         /// <summary>Найти записи по значению колонки (из ScrapsConfig.ConnectionString).</summary>

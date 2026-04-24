@@ -4,23 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
+using RolePermissionInfo = Scraps.Database.RolePermissionInfo;
+
 namespace Scraps.Databases
 {
     public static partial class MSSQL
     {
-        /// <summary>Модель прав роли по таблице.</summary>
-        public class RolePermissionInfo
-        {
-            /// <summary>Идентификатор роли.</summary>
-            public int RoleId { get; set; }
-            /// <summary>Имя таблицы.</summary>
-            public string TableName { get; set; }
-            /// <summary>Права (флаги).</summary>
-            public TablePermission Permission { get; set; }
-            /// <summary>Права (флаги).</summary>
-            public PermissionFlags Flags => Permission?.Flags ?? PermissionFlags.None;
-        }
-
         /// <summary>Операции с таблицей RolePermissions.</summary>
         public static class RolePermissions
         {

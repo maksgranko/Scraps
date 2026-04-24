@@ -150,6 +150,18 @@ namespace Scraps.Databases
         }
 
         /// <summary>
+        /// Получить права по ролям виртуальной таблицы по имени.
+        /// </summary>
+        public static bool TryGetPermissions(string name, out Dictionary<string, PermissionFlags> permissions)
+        {
+            permissions = null;
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            if (!Entries.TryGetValue(name, out var entry)) return false;
+            permissions = new Dictionary<string, PermissionFlags>(entry.RolePermissions, StringComparer.OrdinalIgnoreCase);
+            return true;
+        }
+
+        /// <summary>
         /// Проверить доступ по роли и требуемым правам.
         /// </summary>
         public static bool CheckAccess(string name, string roleName, PermissionFlags required, out string error)

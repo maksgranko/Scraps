@@ -5,177 +5,20 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
+using ForeignKeyInfo = Scraps.Database.ForeignKeyInfo;
+using LookupItem = Scraps.Database.LookupItem;
+using TableEditColumnMetadata = Scraps.Database.TableEditColumnMetadata;
+using TableEditMetadata = Scraps.Database.TableEditMetadata;
+using SqlFilterOperator = Scraps.Database.SqlFilterOperator;
+using SqlFilterCondition = Scraps.Database.SqlFilterCondition;
+using SqlSortCondition = Scraps.Database.SqlSortCondition;
+using ForeignKeyQueryOptions = Scraps.Database.ForeignKeyQueryOptions;
+using ExpandForeignKeysOptions = Scraps.Database.ExpandForeignKeysOptions;
+
 namespace Scraps.Databases
 {
 public static partial class MSSQL
     {
-        /// <summary>Информация о внешнем ключе таблицы.</summary>
-        public sealed class ForeignKeyInfo
-        {
-            /// <summary>Колонка в основной таблице.</summary>
-            public string Column { get; set; }
-            /// <summary>Таблица-справочник (полное имя со схемой).</summary>
-            public string RefTable { get; set; }
-            /// <summary>Колонка в таблице-справочнике.</summary>
-            public string RefColumn { get; set; }
-            /// <summary>Имя ограничения (constraint).</summary>
-            public string ConstraintName { get; set; }
-            /// <summary>Может ли колонка содержать NULL.</summary>
-            public bool IsNullable { get; set; }
-            /// <summary>Схема основной таблицы.</summary>
-            public string TableSchema { get; set; }
-            /// <summary>Имя основной таблицы.</summary>
-            public string TableName { get; set; }
-            /// <summary>Схема таблицы-справочника.</summary>
-            public string RefSchema { get; set; }
-            /// <summary>Имя таблицы-справочника.</summary>
-            public string RefTableName { get; set; }
-        }
-
-        /// <summary>Элемент справочника (значение и отображаемое имя).</summary>
-        public sealed class LookupItem
-        {
-            /// <summary>Значение (обычно ID).</summary>
-            public object Value { get; set; }
-            /// <summary>Отображаемое имя.</summary>
-            public string Display { get; set; }
-        }
-
-        /// <summary>Метаданные колонки для редактирования таблицы.</summary>
-        public sealed class TableEditColumnMetadata
-        {
-            /// <summary>Имя колонки.</summary>
-            public string Column { get; set; }
-            /// <summary>SQL-тип данных.</summary>
-            public string DataType { get; set; }
-            /// <summary>Может ли содержать NULL.</summary>
-            public bool IsNullable { get; set; }
-            /// <summary>Является ли Identity-колонкой.</summary>
-            public bool IsIdentity { get; set; }
-            /// <summary>Информация о внешнем ключе (null если не FK).</summary>
-            public ForeignKeyInfo ForeignKey { get; set; }
-            /// <summary>Колонка отображения для справочника.</summary>
-            public string LookupDisplayColumn { get; set; }
-        }
-
-        /// <summary>Метаданные таблицы для редактирования.</summary>
-        public sealed class TableEditMetadata
-        {
-            /// <summary>Имя таблицы.</summary>
-            public string TableName { get; set; }
-            /// <summary>Схема таблицы.</summary>
-            public string TableSchema { get; set; }
-            /// <summary>Список метаданных колонок.</summary>
-            public List<TableEditColumnMetadata> Columns { get; set; } = new List<TableEditColumnMetadata>();
-        }
-
-        /// <summary>Операторы фильтрации для SQL-запросов.</summary>
-        public enum SqlFilterOperator
-        {
-            /// <summary>Равно (=).</summary>
-            Eq,
-            /// <summary>Не равно (&lt;&gt;).</summary>
-            Ne,
-            /// <summary>Больше (&gt;).</summary>
-            Gt,
-            /// <summary>Больше или равно (&gt;=).</summary>
-            Ge,
-            /// <summary>Меньше (&lt;).</summary>
-            Lt,
-            /// <summary>Меньше или равно (&lt;=).</summary>
-            Le,
-            /// <summary>LIKE.</summary>
-            Like,
-            /// <summary>IS NULL.</summary>
-            IsNull,
-            /// <summary>IS NOT NULL.</summary>
-            IsNotNull,
-            /// <summary>IN (список значений).</summary>
-            In
-        }
-
-        /// <summary>Условие фильтрации SQL-запроса.</summary>
-        public sealed class SqlFilterCondition
-        {
-            /// <summary>Имя колонки.</summary>
-            public string Column { get; set; }
-            /// <summary>Оператор сравнения.</summary>
-            public SqlFilterOperator Operator { get; set; } = SqlFilterOperator.Eq;
-            /// <summary>Значение для сравнения.</summary>
-            public object Value { get; set; }
-            /// <summary>Список значений для оператора IN.</summary>
-            public IEnumerable<object> Values { get; set; }
-        }
-
-        /// <summary>Условие сортировки SQL-запроса.</summary>
-        public sealed class SqlSortCondition
-        {
-            /// <summary>Имя колонки.</summary>
-            public string Column { get; set; }
-            /// <summary>Сортировка по убыванию.</summary>
-            public bool Descending { get; set; }
-        }
-
-        /// <summary>Параметры запроса для справочника внешнего ключа.</summary>
-        public sealed class ForeignKeyQueryOptions
-        {
-            /// <summary>Колонки для выборки.</summary>
-            public string[] Columns { get; set; }
-            /// <summary>Колонка отображения.</summary>
-            public string DisplayColumn { get; set; }
-            /// <summary>Дополнительное условие WHERE (сырой SQL).</summary>
-            public string Where { get; set; }
-            /// <summary>Порядок сортировки (сырой SQL).</summary>
-            public string OrderBy { get; set; }
-            /// <summary>Безопасные условия фильтрации.</summary>
-            public List<SqlFilterCondition> Filters { get; set; } = new List<SqlFilterCondition>();
-            /// <summary>Безопасные условия сортировки.</summary>
-            public List<SqlSortCondition> Sorts { get; set; } = new List<SqlSortCondition>();
-        }
-
-        /// <summary>Параметры расширения данных таблицы внешними ключами.</summary>
-        public sealed class ExpandForeignKeysOptions
-        {
-            /// <summary>Строка подключения.</summary>
-            public string ConnectionString { get; set; }
-            /// <summary>Колонки основной таблицы.</summary>
-            public string[] BaseColumns { get; set; }
-            /// <summary>Раскрывать внешние ключи.</summary>
-            public bool ExpandForeignKeys { get; set; } = true;
-            /// <summary>Включать все колонки справочника.</summary>
-            public bool IncludeReferenceAllColumns { get; set; } = false;
-            /// <summary>Включать колонку отображения справочника.</summary>
-            public bool IncludeReferenceDisplayColumn { get; set; } = true;
-            /// <summary>Рекурсивный обход FK.</summary>
-            public bool Recursive { get; set; } = false;
-            /// <summary>Максимальная глубина рекурсии.</summary>
-            public int MaxDepth { get; set; } = 2;
-            /// <summary>Колонки для конкретных FK (ключ: constraint/table.column/column).</summary>
-            public Dictionary<string, string[]> ForeignKeyColumns { get; set; } =
-                new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
-            /// <summary>Переопределения колонок отображения (ключ: table или constraint).</summary>
-            public Dictionary<string, string> DisplayColumnOverrides { get; set; } =
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            /// <summary>Дополнительные условия WHERE для FK (ключ: constraint/table.column/column).</summary>
-            public Dictionary<string, string> ForeignKeyWhere { get; set; } =
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            /// <summary>Порядок сортировки для FK (ключ: constraint/table.column/column).</summary>
-            public Dictionary<string, string> ForeignKeyOrderBy { get; set; } =
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            /// <summary>Расширенная конфигурация для конкретных FK.</summary>
-            public Dictionary<string, ForeignKeyQueryOptions> ForeignKeyQuery { get; set; } =
-                new Dictionary<string, ForeignKeyQueryOptions>(StringComparer.OrdinalIgnoreCase);
-
-            /// <summary>
-            /// Автоматически определять и добавлять колонку отображения для FK (DisplayName).
-            /// Если false — JOIN выполняется, но alias-колонки с DisplayName не добавляются.
-            /// </summary>
-            public bool AutoResolveDisplayColumn { get; set; } = true;
-        }
-
         private static readonly object SchemaCacheSync = new object();
         private static readonly Dictionary<string, List<ForeignKeyInfo>> ForeignKeysCache =
             new Dictionary<string, List<ForeignKeyInfo>>(StringComparer.OrdinalIgnoreCase);

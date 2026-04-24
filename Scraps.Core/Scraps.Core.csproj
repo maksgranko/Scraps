@@ -2,5 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Core — базовые утилиты: DataTable, локализация, конфигурация.</Description>
+    <AssemblyVersion>1.2026.114.11</AssemblyVersion>
+    <FileVersion>1.2026.114.11</FileVersion>
   </PropertyGroup>
 </Project>

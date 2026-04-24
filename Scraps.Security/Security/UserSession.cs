@@ -1,5 +1,5 @@
 ﻿using Scraps.Configs;
-using Scraps.Databases;
+using Scraps.Database;
 using System;
 using System.Data;
 using System.Linq;
@@ -91,13 +91,31 @@ namespace Scraps.Security
             }
 
             /// <summary>
-            /// Хэшировать строку с указанным алгоритмом.
+            /// Хэшировать строку с указанным алгоритмом и солью.
             /// </summary>
             public static string HashPassword(string input, HashAlgorithm algorithm)
             {
+                var salt = GetSalt();
                 using (var algo = CreateAlgorithm(algorithm))
                 {
-                    var bytes = algo.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
+                    var inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
+                    var saltBytes = System.Text.Encoding.UTF8.GetBytes(salt);
+                    var combined = new byte[inputBytes.Length + saltBytes.Length];
+                    System.Buffer.BlockCopy(inputBytes, 0, combined, 0, inputBytes.Length);
+                    System.Buffer.BlockCopy(saltBytes, 0, combined, inputBytes.Length, saltBytes.Length);
+                    var bytes = algo.ComputeHash(combined);
+                    return Convert.ToBase64String(bytes);
+                }
+            }
+
+            private static string GetSalt()
+            {
+                if (!string.IsNullOrWhiteSpace(ScrapsConfig.PasswordSalt))
+                    return ScrapsConfig.PasswordSalt;
+
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(ScrapsConfig.DatabaseName + "Scraps"));
                     return Convert.ToBase64String(bytes);
                 }
             }
@@ -151,8 +169,8 @@ namespace Scraps.Security
                 throw new ArgumentException("Логин не может быть пустым.", nameof(login));
 
             UserLogin = login;
-            UserRole = MSSQL.Users.GetUserStatus(login);
-            UserData = MSSQL.Users.GetByLogin(login);
+            UserRole = DatabaseProviderFactory.Current.Users.GetUserStatus(login);
+            UserData = DatabaseProviderFactory.Current.Users.GetByLogin(login);
             if (ScrapsConfig.UsersTableColumnsNames != null &&
                 ScrapsConfig.UsersTableColumnsNames.TryGetValue("UserID", out var idColumn))
             {
@@ -176,7 +194,7 @@ namespace Scraps.Security
             if (string.IsNullOrWhiteSpace(password))
                 throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
 
-            var user = MSSQL.Users.GetByLogin(login);
+            var user = DatabaseProviderFactory.Current.Users.GetByLogin(login);
             string storedValue = user[ScrapsConfig.UsersTableColumnsNames["Password"]].ToString();
 
             bool valid;
@@ -216,7 +234,7 @@ namespace Scraps.Security
                 throw new ArgumentException("Роль не может быть пустой.", nameof(role));
 
             string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(password) : password;
-            MSSQL.Users.Create(login, storedPassword, role);
+            DatabaseProviderFactory.Current.Users.Create(login, storedPassword, role);
 
             if (loginAfterRegistration)
                 LoginByName(login);
@@ -240,7 +258,7 @@ namespace Scraps.Security
         /// <exception cref="InvalidOperationException">Пользователь не найден</exception>
         public static string GetUserStatus(string login)
         {
-            return MSSQL.Users.GetUserStatus(login);
+            return DatabaseProviderFactory.Current.Users.GetUserStatus(login);
         }
 
         /// <summary>
@@ -255,7 +273,7 @@ namespace Scraps.Security
             if (string.IsNullOrWhiteSpace(password))
                 throw new ArgumentException("Пароль не может быть пустым.", nameof(password));
 
-            var user = MSSQL.Users.GetByLogin(login);
+            var user = DatabaseProviderFactory.Current.Users.GetByLogin(login);
             string storedValue = user[ScrapsConfig.UsersTableColumnsNames["Password"]].ToString();
 
             if (ScrapsConfig.AuthHashPasswords)
@@ -277,7 +295,7 @@ namespace Scraps.Security
 
             try
             {
-                MSSQL.Users.GetByLogin(login);
+                DatabaseProviderFactory.Current.Users.GetByLogin(login);
                 return true;
             }
             catch (InvalidOperationException)
@@ -342,7 +360,7 @@ namespace Scraps.Security
                 throw new ArgumentException("Пароль не соответствует требованиям (минимум 8 символов, заглавная буква, спецсимвол).", nameof(newPassword));
 
             string storedPassword = ScrapsConfig.AuthHashPasswords ? Utilities.HashPassword(newPassword) : newPassword;
-            MSSQL.Users.ChangePassword(UserLogin, storedPassword);
+            DatabaseProviderFactory.Current.Users.ChangePassword(UserLogin, storedPassword);
         }
     }
 }

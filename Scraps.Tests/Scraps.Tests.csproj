@@ -6,6 +6,8 @@
     <IsPackable>false</IsPackable>
     <Description>Scraps Tests — юнит- и интеграционные тесты.</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AssemblyVersion>1.2026.114.37</AssemblyVersion>
+    <FileVersion>1.2026.114.37</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
+    <ProjectReference Include="..\Scraps.Database\Scraps.Database.csproj" />
     <ProjectReference Include="..\Scraps.Database.MSSQL\Scraps.Database.MSSQL.csproj" />
     <ProjectReference Include="..\Scraps.Security\Scraps.Security.csproj" />
     <ProjectReference Include="..\Scraps.Import\Scraps.Import.csproj" />
