@@ -606,66 +606,6 @@ namespace Scraps.Tests.DatabaseLayer
             Assert.False(global::Scraps.Database.Database.TestConnection());
         }
 
-        [Fact]
-        public void GetTables_WhenSchemaNull_ReturnsEmpty()
-        {
-            var fake = SetupFake();
-            var result = global::Scraps.Database.Database.GetTables();
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void GetTableData_WhenDataNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetTableData("T"));
-        }
-
-        [Fact]
-        public void GetUserByLogin_WhenUsersNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetUserByLogin("admin"));
-        }
-
-        [Fact]
-        public void GetRoleIdByName_WhenRolesNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetRoleIdByName("admin"));
-        }
-
-        [Fact]
-        public void AddRow_WhenRowEditorNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.AddRow("T", new Dictionary<string, object>()));
-        }
-
-        [Fact]
-        public void GetForeignKeys_WhenFKNull_ReturnsEmpty()
-        {
-            var fake = SetupFake();
-            var result = global::Scraps.Database.Database.GetForeignKeys("T");
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void RegisterVirtualTable_WhenVTNull_DoesNotThrow()
-        {
-            var fake = SetupFake();
-            global::Scraps.Database.Database.RegisterVirtualTable("V", "SELECT 1");
-        }
-
-        [Fact]
-        public void GetVirtualTableData_WhenVTNull_ReturnsNull()
-        {
-            var fake = SetupFake();
-            Assert.Null(global::Scraps.Database.Database.GetVirtualTableData("V"));
-        }
-
         #endregion
 
         #region --- Guard expressions (null provider capabilities) ---
