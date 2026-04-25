@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Scraps Database — универсальные интерфейсы и фасад для работы с базами данных.")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.2026.115.27")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.18.0+294081a7aac4f9f005926ba5eae61fb2d6f83ab8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.18.0+b84642d64b675dc63b11e4395c5feee432122485")]
 [assembly: System.Reflection.AssemblyProductAttribute("Scraps.Database")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Scraps.Database")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.2026.115.27")]
