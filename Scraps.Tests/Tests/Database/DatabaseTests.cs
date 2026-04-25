@@ -247,6 +247,7 @@ namespace Scraps.Tests.DatabaseLayer
         private class FakeConnection : IDatabaseConnection
         {
             public string ConnectionString => "fake";
+            public string ConnectionStringBuilder(string value = null) => string.IsNullOrWhiteSpace(value) ? "fake" : value;
             public bool TestConnection() => true;
             public void ExecuteNonQuery(string sql, params object[] parameters) { }
             public object ExecuteScalar(string sql, params object[] parameters) => null;
@@ -318,6 +319,15 @@ namespace Scraps.Tests.DatabaseLayer
             fake.Connection = conn;
             var dt = global::Scraps.Database.Current.GetDataTable("SELECT 1");
             Assert.NotNull(dt);
+        }
+
+        [Fact]
+        public void ConnectionStringBuilder_ForwardsToConnection()
+        {
+            var fake = SetupFake();
+            var conn = new FakeConnection();
+            fake.Connection = conn;
+            Assert.Equal("db-test", global::Scraps.Database.Current.ConnectionStringBuilder("db-test"));
         }
 
         #endregion
@@ -682,6 +692,7 @@ namespace Scraps.Tests.DatabaseLayer
             public string ConnectionString => "fake";
             public string LastSql { get; private set; }
             public object ScalarResult { get; set; }
+            public string ConnectionStringBuilder(string value = null) => string.IsNullOrWhiteSpace(value) ? "fake" : value;
 
             public bool TestConnection() => true;
             public void ExecuteNonQuery(string sql, params object[] parameters) => LastSql = sql;

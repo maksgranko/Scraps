@@ -7,7 +7,7 @@
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageOutputPath>$(MSBuildThisFileDirectory)packages</PackageOutputPath>
-    <Version>0.18.0</Version>
+    <Version>0.20.1</Version>
     <AssemblyVersion>1.2026.111.5</AssemblyVersion>
     <FileVersion>1.2026.111.5</FileVersion>
     <UseSharedCompilation>false</UseSharedCompilation>

@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Import — импорт данных из Excel и CSV.</Description>
-    <AssemblyVersion>1.2026.115.26</AssemblyVersion>
-    <FileVersion>1.2026.115.26</FileVersion>
+    <AssemblyVersion>1.2026.115.33</AssemblyVersion>
+    <FileVersion>1.2026.115.33</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

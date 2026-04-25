@@ -10,8 +10,17 @@ echo  Scraps: Build + Pack all projects
 echo ==========================================
 echo.
 
-echo [1/3] Building solution...
-dotnet build Scraps.sln -c Release
+echo [1/4] Cleaning previous build...
+dotnet clean Scraps.sln -c Release
+if errorlevel 1 (
+    echo CLEAN FAILED. Fix errors above and retry.
+    pause
+    exit /b 1
+)
+
+echo.
+echo [2/4] Building solution...
+dotnet build Scraps.sln -c Release --no-restore
 if errorlevel 1 (
     echo BUILD FAILED. Fix errors above and retry.
     pause
@@ -19,8 +28,8 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/3] Packing all projects into NuGet/...
-dotnet pack Scraps.sln -c Release --no-build -o "%NUGET_FOLDER%"
+echo [3/4] Packing all projects into NuGet/...
+dotnet pack Scraps.sln -c Release --no-build --no-restore -o "%NUGET_FOLDER%"
 if errorlevel 1 (
     echo PACK FAILED.
     pause
@@ -28,7 +37,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Created packages:
+echo [4/4] Created packages:
 dir /b "%NUGET_FOLDER%\*.nupkg" 2>nul
 
 echo.

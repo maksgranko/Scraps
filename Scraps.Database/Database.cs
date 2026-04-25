@@ -31,20 +31,18 @@ namespace Scraps.Database
         /// <summary>Реестр виртуальных таблиц.</summary>
         public static IVirtualTableRegistry VirtualTables => Active.VirtualTables ?? throw new InvalidOperationException($"Провайдер '{Active.Provider}' не реализует IVirtualTableRegistry.");
 
-        public static IDatabaseConnection Connection => Current.Connection ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseConnection.");
-        public static IDatabaseSchema Schema => Current.Schema ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseSchema.");
-        public static IDatabaseData Data => Current.Data ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseData.");
-        public static IDatabaseUsers Users => Current.Users ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseUsers.");
-        public static IDatabaseRoles Roles => Current.Roles ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseRoles.");
-        public static IDatabaseRolePermissions RolePermissions => Current.RolePermissions ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IDatabaseRolePermissions.");
-        public static IRowEditor RowEditor => Current.RowEditor ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IRowEditor.");
-        public static IForeignKeyProvider ForeignKeys => Current.ForeignKeys ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IForeignKeyProvider.");
-        public static IVirtualTableRegistry VirtualTables => Current.VirtualTables ?? throw new InvalidOperationException($"Провайдер '{Current.Provider}' не реализует IVirtualTableRegistry.");
-
         #region Connection
 
         /// <summary>Проверить подключение.</summary>
         public static bool TestConnection() => Active.TestConnection();
+
+        /// <summary>
+        /// Сформировать строку подключения/путь для текущего провайдера.
+        /// Для MSSQL: имя БД или готовая connection string.
+        /// Для LocalFiles: путь к папке данных.
+        /// </summary>
+        public static string ConnectionStringBuilder(string value = null)
+            => Active.Connection.ConnectionStringBuilder(value);
 
         /// <summary>Выполнить SQL без возврата данных.</summary>
         public static void ExecuteNonQuery(string sql, params object[] parameters)

@@ -1,477 +1,160 @@
 # Scraps
 
-Scraps — библиотека утилит для SQL Server, прав доступа, локализации, импорта/экспорта и операций с `DataTable`.
+Scraps - модульная .NET-библиотека для работы с данными: провайдеры БД (MSSQL и LocalFiles), роли/права, импорт/экспорт, локализация, утилиты `DataTable` и WinForms-хелперы.
 
-## Важно
+## Актуальная структура
 
-Библиотека учебная. Для production-проектов используйте её с аудитом безопасности и архитектуры.
+Каждый модуль - отдельный пакет/проект:
 
-## Структура (модульная)
+| Пакет | Назначение |
+|---|---|
+| `Scraps.Core` | конфигурация, локализация, `DataTable`-утилиты, модели безопасности (`Scraps.Security`) |
+| `Scraps.Database` | общие интерфейсы БД + фасад `Scraps.Database.Current` |
+| `Scraps.Database.MSSQL` | SQL Server провайдер + MSSQL-утилиты |
+| `Scraps.Database.LocalFiles` | локальный JSON/file-based провайдер |
+| `Scraps.Import` | импорт из Excel/CSV |
+| `Scraps.Export` | экспорт в Excel/PDF |
+| `Scraps.UI.WinForms` | расширения для `DataGridView` (net48) |
+| `Scraps` | мета-пакет, подтягивает все ключевые модули |
 
-Scraps разделён на подбиблиотеки (каждая — отдельный NuGet-пакет):
+Важно:
+- отдельного пакета `Scraps.Security` больше нет;
+- namespace `Scraps.Security` используется и доступен через `Scraps.Core`/`Scraps.Database`.
 
-| Пакет | Содержимое |
-|-------|-----------|
-| **Scraps.Core** | `Configs`, `Data.DataTables`, `Diagnostics`, `Localization` |
-| **Scraps.Database.LocalFiles** | `LocalFiles` JSON-провайдер + локальный SQL-эмулятор |
-| **Scraps.Database.MSSQL** | `Databases.MSSQL`, `Databases.Utilities`, `VirtualTableRegistry` |
-| **Scraps.Import** | `DataImportService` (Excel/CSV) |
-| **Scraps.Export** | `ReportExporter`, `ReportDataBuilder` (Excel/PDF) |
-| **Scraps.UI.WinForms** | `DataGridViewHelpers`, `FKEditors` |
-| **Scraps** (мета) | Зависит от всех пакетов выше для обратной совместимости |
-
-`Scraps.Security` используется как namespace (например, `UserSession`, `PermissionFlags`), но отдельного пакета `Scraps.Security` больше нет.
-
-В будущем планируются: `Scraps.Database.PostgreSQL` и др.
-
-### Legacy-структура (до разделения)
-
-- `Scraps/Configs/ScrapsConfig.cs` — глобальная конфигурация.
-- `Scraps/Databases/MSSQL/*` — подключение, генерация схемы, CRUD.
-- `Scraps/Databases/Utilities/*` — `TableCatalog`, `DatabaseGenerationOptions`, `TableRows`.
-- `Scraps/Databases/VirtualTableRegistry.cs` — виртуальные таблицы.
-- `Scraps.Database/Security/*` — `UserSession`.
-- `Scraps/Localization/TranslationManager.cs` — переводы.
-- `Scraps/Import/DataImportService.cs` — импорт.
-- `Scraps/Export/*` — экспорт.
-- `Scraps/Data/DataTables/*` — `Parser`, `Search`.
-
-## Быстрый старт
+## Быстрый старт (единый фасад `Current`)
 
 ```csharp
 using Scraps.Configs;
-using Scraps.Database.MSSQL;
-using Scraps.Database.MSSQL.Utilities;
+using Scraps.Database;
+
+// 1) Выбор провайдера
+ScrapsConfig.DatabaseProvider = DatabaseProvider.MSSQL;
+
+// 2) Настройки подключения
+ScrapsConfig.DatabaseName = "MyDb";
+ScrapsConfig.ConnectionString = Current.ConnectionStringBuilder("MyDb");
+// или вручную: "Server=.\\SQLEXPRESS;Database=MyDb;Trusted_Connection=True;"
+
+// 3) Работа через единый фасад
+bool ok = Current.TestConnection();
+var tables = Current.GetTables();
+var users = Current.GetTableData("Users");
+```
+
+`DatabaseProviderFactory` автоматически подхватывает нужный провайдер по `ScrapsConfig.DatabaseProvider`.
+
+Примечание: в `Current` есть `ConnectionStringBuilder(...)`.
+- для MSSQL параметр - имя БД или готовая connection string;
+- для LocalFiles параметр - путь к папке данных (или `ScrapsConfig.LocalDataPath`, если параметр не передан).
+
+## Основные API
+
+### `Current` (Scraps.Database)
+
+- `Current.Connection`, `Current.Schema`, `Current.Data`, `Current.Users`, `Current.Roles`, `Current.RolePermissions`
+- `Current.GetTables(includeSystem: false)`
+- `Current.GetTableData(...)`, `Current.GetTableDataExpanded(...)`
+- `Current.FindByColumn(table, column, value, SqlFilterOperator)`
+- `Current.ApplyTableChanges(...)`, `Current.BulkInsert(...)`
+- `Current.AddRow(...)`, `Current.UpdateRow(...)`
+- `Current.VirtualTables.*`, `Current.GetForeignKeys(...)`, `Current.GetForeignKeyLookup(...)`
+
+### Фильтрация (`SqlFilterOperator`)
+
+Вместо `exactMatch` используется оператор:
+
+```csharp
+using Scraps.Database;
+
+var exact = Current.FindByColumn("Users", "Login", "admin", SqlFilterOperator.Eq);
+var like = Current.FindByColumn("Users", "Login", "adm", SqlFilterOperator.Like);
+var nulls = Current.FindByColumn("Users", "MiddleName", null, SqlFilterOperator.IsNull);
+```
+
+### Роли и права
+
+`RoleManager` удален. Используйте API провайдера:
+
+```csharp
+using Scraps.Database;
 using Scraps.Security;
 
-ScrapsConfig.DatabaseName = "MyDb";
-ScrapsConfig.ConnectionString = MSSQL.ConnectionStringBuilder("MyDb");
+bool canRead = Current.Roles.CheckAccess("Admin", "Users", PermissionFlags.Read);
+var effective = Current.Roles.GetEffectivePermissions("Admin", "Users");
+```
 
-// None / Simple / Standard / Full
-MSSQL.Initialize("MyDb", DatabaseGenerationMode.Full);
+Сессия пользователя:
+
+```csharp
+using Scraps.Security;
 
 UserSession.Login("admin", "Password123!");
 ```
 
-## Генерация БД
+## MSSQL-утилиты
 
-`DatabaseGenerationMode`:
+Модуль `Scraps.Database.MSSQL` также содержит привычный статический API `MSSQL` (инициализация, генерация схемы, FK helpers, и т.д.) для сценариев, где нужен провайдер-специфичный функционал.
 
-- `None` — создаётся только БД, без таблиц.
-- `Simple` — таблица пользователей, роль хранится строкой.
-- `Standard` — `Users` + `Roles`, роль хранится как `RoleID`.
-- `Full` — `Users` + `Roles` + `RolePermissions`.
+## Import/Export
 
-Пример:
+### Import (`Scraps.Import`)
 
-```csharp
-MSSQL.GenerateIfNotExists(new DatabaseGenerationOptions
-{
-    DatabaseName = "MyDb",
-    Mode = DatabaseGenerationMode.Standard,
-    DefaultRoleName = "default",
-    SeedRoles = new[] { "Teacher", "Manager" }
-});
+- `DataImportService.LoadExcelToDataTable(...)`
+- `DataImportService.LoadCsvToDataTable(...)`
+- `DataImportService.ValidateColumns/ValidateTypes/...`
+- `DataImportService.ImportToTable(...)`
+
+### Export (`Scraps.Export`)
+
+- `ReportExporter` (Excel/PDF)
+- `ReportDataBuilder`
+
+## UI.WinForms (`Scraps.UI.WinForms`)
+
+Модуль для `net48`:
+- расширения для выделения/фильтрации/поиска в `DataGridView`;
+- FK ComboBox-колонки и связанные хелперы.
+
+## Сборка, упаковка и публикация
+
+Из корня репозитория:
+
+```bash
+./pack.sh
+./publish-nuget.sh
 ```
 
-## Основные API
+Windows:
 
-`MSSQL`:
-
-- `ConnectionStringBuilder(...)` — сборка/подбор строки подключения.
-- `Initialize(...)` / `GenerateIfNotExists(...)` — подготовка БД.
-- `GetTables(...)`, `GetTableColumns(...)`, `GetTableSchema(...)` — чтение схемы.
-- `GetTableData(...)`, `FindByColumn(...)`, `ApplyTableChanges(...)`, `BulkInsert(...)`.
-- `GetTableData(..., IEnumerable<MSSQL.ForeignKeyJoin>, params string[] baseColumns)` — выборка с `LEFT JOIN` по FK + выбор колонок.
-- `GetNx2Dictionary(...)` — прочитать таблицу формата `Nx2` (2 колонки) из БД сразу в `Dictionary`.
-- `GetNx1List(...)` — прочитать таблицу формата `Nx1` (1 колонка) из БД в `List<string>`.
-- `Roles.*` и `Users.*` — операции с пользователями и ролями.
-
-`VirtualTableRegistry`:
-
-- `Register(...)`, `RegisterSelect(...)`, `GetData(...)`, `CheckAccess(...)`, `Clear()`.
-- Пустая роль запрещена: передавайте валидное `roleName`.
-
-`DataImportService`:
-
-- `LoadExcelToDataTable(...)`, `LoadCsvToDataTable(...)`.
-- `ValidateColumns(...)`, `ValidateColumnCount(...)`, `ValidateTypes(...)`.
-- `ImportToTable(...)`, `ImportToTableSafe(...)`.
-
-`Scraps.Data.DataTables`:
-
-- `Parser.ParseDelimited(...)` — парсинг строки в `DataTable`.
-- `Parser.ParseNx2ToDictionary(...)` — парсинг таблицы формата `Nx2` в `Dictionary`.
-- `Parser.ParseNx1ToList(...)` — парсинг моно-таблицы `Nx1` в `List<string>`.
-- `Search.FindMatches(...)`, `Search.FilterRows(...)`, `Search.CreateNavigator(...)`.
-- `Search.GetMatchNavigatorHelp()` — встроенная справка по использованию навигатора в UI (в т.ч. `DataGridView`).
-
-Пример FK-выборки:
-
-```csharp
-var data = MSSQL.GetTableData(
-    tableName: "Users",
-    foreignKeys: new[]
-    {
-        new MSSQL.ForeignKeyJoin("Role", "Roles", "RoleID", "RoleName")
-        {
-            AliasPrefix = "Role"
-        }
-    },
-    baseColumns: new[] { "UserID", "Login", "Role" });
+```bat
+pack.bat
+publish-nuget.bat
 ```
 
-Пример FK-выборки с автоматическим раскрытием всех FK:
-
-```csharp
-var expanded = MSSQL.GetTableData("Users", expandForeignKeys: true);
-// Добавляются alias-колонки вида: t0_Role_RoleName
-
-var withOptions = MSSQL.GetTableData("Users", expandForeignKeys: true,
-    new MSSQL.ExpandForeignKeysOptions { AutoResolveDisplayColumn = false },
-    "Login", "Role");
-```
-
-## Add/Edit с автоматическим разрешением FK (TableRows)
-
-```csharp
-using Scraps.Database.MSSQL.Utilities.TableRows;
-```
-
-### Упрощённое создание значений
-
-```csharp
-// Вариант 1 — через Values.Create (короткий)
-var values = Values.Create("Name", "Иван", "Client_ID", "Пётр");
-
-// Вариант 2 — стандартный Dictionary (если нужна сложная логика)
-var values = new Dictionary<string, object>
-{
-    ["Name"] = "Иван",
-    ["Client_ID"] = "Пётр"
-};
-```
-
-### Добавление записи (AddRow)
-
-**Строгий режим** (`strictFk = true`) — справочник должен существовать:
-
-```csharp
-var result = RowEditor.AddRow("Users",
-    Values.Create("Login", "ivan", "Password", "pass", "Role", "Admin"),
-    strictFk: true);
-
-// result.Success = true  — роль "Admin" найдена
-// result.Success = false — роль не найдена, result.Error содержит описание
-```
-
-**Мягкий режим** (`strictFk = false`) — авто-создание в справочнике:
-
-```csharp
-// Роль "Moderator" не существует → будет создана автоматически
-var result = RowEditor.AddRow("Users",
-    Values.Create("Login", "petr", "Password", "pass", "Role", "Moderator"),
-    strictFk: false);
-
-// result.Success = true
-// result.RowId = ID нового пользователя
-// В таблице Roles появилась запись "Moderator"
-```
-
-### Редактирование записи (UpdateRow)
-
-```csharp
-var result = RowEditor.UpdateRow("Users", "Login", "ivan",
-    Values.Create("Role", "SuperAdmin"),
-    strictFk: false);
-```
-
-### Связанные таблицы (ChildInsert)
-
-Добавление в родительскую таблицу + автоматическая вставка в дочерние:
-
-```csharp
-var result = RowEditor.AddRow("Groups",
-    Values.Create("Name", "Администраторы", "Client_ID", "Пётр"),
-    strictFk: false,
-    children: new[]
-    {
-        // GroupID подставится автоматически из только что созданной Groups
-        new ChildInsert("GroupClients", Values.Create("Note", "VIP-клиент"))
-    });
-
-// Результат:
-// Clients:    создан "Пётр" (если не существовал)
-// Groups:     создана группа "Администраторы"
-// GroupClients: создана связь с Note = "VIP-клиент"
-```
-
-### Поведение Foreign Key
-
-| Входное значение | `strictFk = true` | `strictFk = false` |
-|------------------|-------------------|--------------------|
-| `null` | `NULL` | `NULL` |
-| `int` (существует) | Использовать | Использовать |
-| `int` (не существует) | **Ошибка** | **Ошибка** |
-| `string` (найден) | Использовать ID | Использовать ID |
-| `string` (не найден) | **Ошибка** | **Авто-INSERT в справочник** |
-| Тип не совпадает с DisplayColumn | **Ошибка** | **Ошибка** |
-| `""` (пустая строка) | `NULL` | `NULL` |
-
-**Авто-создание справочника** работает только для таблиц Nx1 (1 колонка) или Nx2 (`ID + поле`). Если таблица имеет больше колонок — будет ошибка.
-
-Пример `Nx2` -> `Dictionary`:
-
-```csharp
-string text = "1 Отлично\n2 Хорошо\n3 Плохо\n4 Неизвестно";
-Dictionary<int, string> grades = Parser.ParseNx2ToDictionary(text);
-```
-
-Пример `Nx2` с кастомными разделителями:
-
-```csharp
-string text = "1=>Отлично|2=>Хорошо|3=>Плохо";
-Dictionary<int, string> grades = Parser.ParseNx2ToDictionary(
-    text,
-    columnSeparator: "=>",
-    rowSeparator: "|");
-```
-
-Пример `Nx2` из таблицы БД:
-
-```csharp
-Dictionary<int, string> grades = MSSQL.GetNx2Dictionary(
-    tableName: "GradeCatalog",
-    keyColumn: "GradeID",
-    valueColumn: "GradeName");
-```
-
-Пример `Nx1` (текст и таблица БД):
-
-```csharp
-List<string> names = Parser.ParseNx1ToList("Антон\nАндрей\nВасилий");
-
-List<string> dbNames = MSSQL.GetNx1List(
-    tableName: "NameCatalog",
-    valueColumn: "Name");
-```
-
-### Обратное преобразование: Nx1/Nx2 → DataTable
-
-```csharp
-// Nx1: List → DataTable
-var list = new List<string> { "Антон", "Андрей", "Василий" };
-DataTable dt1 = Parser.FromNx1(list, columnName: "Name");
-
-// Nx2: Dictionary → DataTable
-var dict = new Dictionary<int, string>
-{
-    [1] = "Отлично",
-    [2] = "Хорошо",
-    [3] = "Плохо"
-};
-DataTable dt2 = Parser.FromNx2(dict, keyColumnName: "GradeID", valueColumnName: "GradeName");
-```
-
-Справка по `MatchNavigator`:
-
-```csharp
-string help = Search.GetMatchNavigatorHelp();
-```
-
-## Права доступа
-
-```csharp
-var flags = PermissionFlags.Read | PermissionFlags.Export;
-```
-
-Проверка для виртуальной таблицы:
-
-```csharp
-VirtualTableRegistry.Register(
-    "Virtual_Sales",
-    "SELECT * FROM [Sales]",
-    new Dictionary<string, PermissionFlags>
-    {
-        ["Admin"] = PermissionFlags.Read | PermissionFlags.Export,
-        ["*"] = PermissionFlags.None
-    });
-
-var data = VirtualTableRegistry.GetData("Virtual_Sales", roleName: "Admin");
-```
-
-## Локализация
-
-```csharp
-TranslationManager.TableTranslations["Users"] = "Пользователи";
-TranslationManager.ColumnTranslations["Users"] = new Dictionary<string, string>
-{
-    ["Login"] = "Логин",
-    ["Password"] = "Пароль"
-};
-```
-
-## UI.WinForms (DataGridView)
-
-```csharp
-using Scraps.UI.WinForms;
-```
-
-### Выделение строк/ячеек
-
-```csharp
-// Получить выделенные строки (объекты)
-var rows = dataGridView1.GetSelectedRows();
-
-// Получить индексы выделенных строк
-var rowIndices = dataGridView1.GetSelectedRowIndices();
-
-// Выделить строку (добавляет к выделению по умолчанию)
-dataGridView1.SelectRow(5);
-
-// Выделить строку со сбросом предыдущего выделения
-dataGridView1.SelectRow(5, clearOthers: true);
-
-// Получить выделенные ячейки (объекты)
-var cells = dataGridView1.GetSelectedCells();
-
-// Получить индексы выделенных ячеек (Row, Column)
-var cellIndices = dataGridView1.GetSelectedCellIndices();
-
-// Выделить ячейку (добавляет к выделению по умолчанию)
-dataGridView1.SelectCell(row: 3, column: 1);
-
-// Выделить ячейку со сбросом предыдущего выделения
-dataGridView1.SelectCell(row: 3, column: 1, clearOthers: true);
-```
-
-### Добавление/удаление из выделения
-
-```csharp
-// Добавить ячейку к выделению (не сбрасывая остальные)
-dataGridView1.AddCellToSelection(2, 3);
-
-// Снять выделение с конкретной ячейки
-dataGridView1.DeselectCell(0, 0);
-
-// Снять выделение со строки/столбца
-dataGridView1.DeselectRow(1);
-dataGridView1.DeselectColumn(2);
-
-// Очистить всё выделение
-dataGridView1.DeselectAll();
-```
-
-### Сохранение и восстановление выделения
-
-```csharp
-// Сохранить текущее выделение
-var saved = dataGridView1.SaveSelection();
-
-// ... выполняем операции, которые сбрасывают выделение (фильтрация, обновление и т.д.) ...
-
-// Восстановить выделение
-dataGridView1.RestoreSelection(saved);
-```
-
-### Работа со строками
-
-```csharp
-// Удалить строку
-dataGridView1.DeleteRow(0);
-
-// Удалить выделенные строки
-dataGridView1.DeleteSelectedRows();
-
-// Переместить строку вверх/вниз
-dataGridView1.MoveRowUp(2);
-dataGridView1.MoveRowDown(1);
-
-// Дублировать строку
-dataGridView1.DuplicateRow(0);
-```
-
-### Работа с ячейками
-
-```csharp
-// Установить значение ячейки
-dataGridView1.SetCellValue(0, 1, "Новое значение");
-
-// Получить значение ячейки
-var value = dataGridView1.GetCellValue(0, 1);
-```
-
-### Фильтрация
-
-```csharp
-// Поиск по всем текстовым колонкам (LIKE '%Александр%' для каждой колонки через OR)
-dataGridView1.ApplyFilter("Александр");
-
-// Фильтр по конкретной колонке
-dataGridView1.ApplyFilter("Name", "Иван");
-
-// Полный DataView RowFilter (сложные условия)
-dataGridView1.ApplyFilter("[Age] > 18 AND [City] = 'Москва'");
-
-// Сбросить фильтр
-dataGridView1.ClearFilter();
-
-// Получить отфильтрованные строки
-var filtered = dataGridView1.GetFilteredRows();
-```
-
-### Поиск и навигация
-
-```csharp
-// Создать навигатор по совпадениям
-var navigator = dataGridView1.CreateMatchNavigator("Иван");
-
-// Кнопка "Найти далее"
-dataGridView1.FindNext(navigator);
-
-// Кнопка "Найти назад"
-dataGridView1.FindPrevious(navigator);
-
-// Найти и подсветить все совпадения
-var matches = dataGridView1.HighlightSearchResults("Иван", highlightColor: Color.Yellow);
-
-// Снять подсветку поиска
-dataGridView1.ClearSearchHighlight();
-```
-
-### FK ComboBox-колонка
-
-```csharp
-// Колонка с выпадающим списком из справочника
-var fkCol = new DataGridViewFKComboBoxColumn
-{
-    HeaderText = "Роль",
-    DataPropertyName = "RoleID",
-    ReferenceTable = "Roles",
-    ReferenceIdColumn = "RoleID"
-};
-fkCol.LoadLookupData(); // авто-загрузка справочника
-
-dataGridView1.Columns.Add(fkCol);
-```
+Что делает `pack`:
+- `dotnet clean` -> `dotnet build` -> `dotnet pack`
+- складывает `.nupkg` в папку `NuGet/`
+
+`publish-nuget`:
+- публикует все пакеты из `NuGet/` в NuGet.org;
+- использует `--skip-duplicate` и выводит счетчик успешных/неуспешных публикаций.
 
 ## Тесты
-
-- `Scraps.Tests` (`net48`) содержит DB/UI/unit тесты.
-- DB-тесты требуют доступного SQL Server и прав на создание/удаление тестовых БД.
-- При неготовом окружении DB-тесты сейчас **падают ошибкой**, а не пропускаются.
-
-Запуск:
 
 ```bash
 dotnet test Scraps.Tests/Scraps.Tests.csproj
 ```
 
+Замечания:
+- `Scraps.Tests` таргетит `net48`;
+- часть тестов зависит от Windows Forms и/или доступного SQL Server;
+- в Linux/CI без нужного окружения такие тесты могут быть недоступны.
+
 ## Совместимость
 
-- Библиотека: `netstandard2.0`
-- Тесты: `net48`
+- основные библиотеки: `netstandard2.0`
+- WinForms и тесты: `net48`
 
-## Примечания
+## Примечание
 
-- Документация по параметрам и исключениям также доступна через XML-doc комментарии в публичном API.
+Проект учебный. Перед production-использованием рекомендуется аудит безопасности, SQL-политик и архитектурных ограничений.

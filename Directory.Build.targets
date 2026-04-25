@@ -1,0 +1,10 @@
+<Project InitialTargets="EnsureBuildDirectories">
+  <Target Name="EnsureBuildDirectories">
+    <MakeDir Directories="$(BaseIntermediateOutputPath)" Condition="'$(BaseIntermediateOutputPath)' != ''" />
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="'$(IntermediateOutputPath)' != ''" />
+    <MakeDir Directories="$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)" Condition="'$(BaseIntermediateOutputPath)' != '' and '$(Configuration)' != '' and '$(TargetFramework)' != ''" />
+    <MakeDir Directories="$(BaseOutputPath)" Condition="'$(BaseOutputPath)' != ''" />
+    <MakeDir Directories="$(OutputPath)" Condition="'$(OutputPath)' != ''" />
+    <MakeDir Directories="$(BaseOutputPath)$(Configuration)\$(TargetFramework)" Condition="'$(BaseOutputPath)' != '' and '$(Configuration)' != '' and '$(TargetFramework)' != ''" />
+  </Target>
+</Project>

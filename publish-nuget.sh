@@ -25,12 +25,25 @@ if [ -z "$APIKEY" ]; then
 fi
 
 echo "Publishing packages..."
+success_count=0
+error_count=0
+
 for pkg in "$NUGET_FOLDER"/*.nupkg; do
     echo "  - Publishing $(basename "$pkg")..."
-    dotnet nuget push "$pkg" -k "$APIKEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
+    if dotnet nuget push "$pkg" -k "$APIKEY" -s https://api.nuget.org/v3/index.json --skip-duplicate --timeout 300; then
+        echo "    SUCCESS"
+        ((success_count++))
+    else
+        echo "    FAILED"
+        ((error_count++))
+    fi
 done
 
 echo ""
 echo "=========================================="
+echo "  Published: $success_count packages"
+if [ $error_count -gt 0 ]; then
+    echo "  Failed: $error_count packages"
+fi
 echo "  Done."
 echo "=========================================="

@@ -11,7 +11,15 @@ namespace Scraps.Database.LocalFiles
     public class LocalDatabaseConnection : IDatabaseConnection
     {
         /// <summary>Строка подключения (путь к папке с JSON-файлами).</summary>
-        public string ConnectionString => ScrapsConfig.LocalDataPath;
+        public string ConnectionString => ConnectionStringBuilder();
+
+        /// <summary>Сформировать строку подключения (путь к папке данных).</summary>
+        public string ConnectionStringBuilder(string value = null)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? ScrapsConfig.LocalDataPath
+                : value;
+        }
 
         /// <summary>Выполнить SQL-запрос без возврата данных через SQL-эмулятор.</summary>
         public void ExecuteNonQuery(string sql, params object[] parameters)

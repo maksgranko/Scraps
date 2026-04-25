@@ -25,13 +25,25 @@ if "%APIKEY%"=="" (
 
 echo.
 echo Publishing packages...
+set success_count=0
+set error_count=0
+
 for %%f in ("%NUGET_FOLDER%\*.nupkg") do (
     echo   - Publishing %%~nxf...
-    dotnet nuget push "%%f" -k %APIKEY% -s https://api.nuget.org/v3/index.json --skip-duplicate
+    dotnet nuget push "%%f" -k %APIKEY% -s https://api.nuget.org/v3/index.json --skip-duplicate --timeout 300
+    if !errorlevel! equ 0 (
+        echo     SUCCESS
+        set /a success_count+=1
+    ) else (
+        echo     FAILED
+        set /a error_count+=1
+    )
 )
 
 echo.
 echo ==========================================
-echo  Done.
+echo   Published: %success_count% packages
+if %error_count% gtr 0 echo   Failed: %error_count% packages
+echo   Done.
 echo ==========================================
 pause

@@ -2,17 +2,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Database LocalFiles - local JSON/file-based database provider.</Description>
-    <AssemblyVersion>1.2026.115.5</AssemblyVersion>
-    <FileVersion>1.2026.115.5</FileVersion>
+    <AssemblyVersion>1.2026.115.11</AssemblyVersion>
+    <FileVersion>1.2026.115.11</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Scraps.Core\Scraps.Core.csproj" />
     <ProjectReference Include="..\Scraps.Database\Scraps.Database.csproj" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Scraps.Database\Local\**\*.cs" Link="Local\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

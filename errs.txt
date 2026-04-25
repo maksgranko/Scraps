@@ -1,19 +1,58 @@
- Scraps.Tests.Integration.CoverageUtilityTests.RoleAndPermissions_UtilityApi_Works
-   Источник: CoverageUtilityTests.cs строка 96
-   Длительность: 91 мс
-
-  Сообщение: 
-System.Data.SqlClient.SqlException : Конфликт инструкции DELETE с ограничением REFERENCE "FK_RolePermissions_Roles". Конфликт произошел в базе данных "Scraps_Test_f5492481dbdd440db7f3834de60597a1", таблица "dbo.RolePermissions", column 'RoleID'.
-Выполнение данной инструкции было прервано.
-
-  Трассировка стека: 
-SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
-TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-SqlCommand.FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, String resetOptionsString, Boolean isInternal, Boolean forDescribeParameterEncryption, Boolean shouldCacheForAlwaysEncrypted)
-SqlCommand.RunExecuteReaderTds(CommandBehavior cmdBehavior, RunBehavior runBehavior, Boolean returnStream, Boolean async, Int32 timeout, Task& task, Boolean asyncWrite, Boolean inRetry, SqlDataReader ds, Boolean describeParameterEncryptionRequest)
-SqlCommand.RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, Boolean returnStream, String method, TaskCompletionSource`1 completion, Int32 timeout, Task& task, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry)
-SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, String methodName, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry)
-SqlCommand.ExecuteNonQuery()
-Roles.Delete(String roleName) строка 109
-CoverageUtilityTests.RoleAndPermissions_UtilityApi_Works() строка 131
+Сборка начата в 20:34...
+1>------ Сборка начата: проект: Scraps.Core, Конфигурация: Release Any CPU ------
+Восстановлен D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Core\Scraps.Core.csproj (за 51 мс).
+1>Scraps.Core -> D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Core\bin\Release\netstandard2.0\Scraps.Core.dll
+2>------ Сборка начата: проект: Scraps.Database, Конфигурация: Release Any CPU ------
+2>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+2>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.Database.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database\obj\Release\netstandard2.0\Scraps.Database.csproj.AssemblyReference.cache".
+2>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database\obj\Release\netstandard2.0\Scraps.Database.GeneratedMSBuildEditorConfig.editorconfig".
+2>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.Database.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database\obj\Release\netstandard2.0\Scraps.Database.csproj.FileListAbsolute.txt".
+2>Сборка проекта "Scraps.Database.csproj" завершена с ошибкой.
+3>------ Сборка начата: проект: Scraps.UI.WinForms, Конфигурация: Release Any CPU ------
+4>------ Сборка начата: проект: Scraps.Export, Конфигурация: Release Any CPU ------
+5>------ Сборка начата: проект: Scraps.Import, Конфигурация: Release Any CPU ------
+6>------ Сборка начата: проект: Scraps.Database.MSSQL, Конфигурация: Release Any CPU ------
+3>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+3>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\net48\Scraps.UI.WinForms.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.UI.WinForms\obj\Release\net48\Scraps.UI.WinForms.csproj.AssemblyReference.cache".
+3>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.UI.WinForms\obj\Release\net48\Scraps.UI.WinForms.GeneratedMSBuildEditorConfig.editorconfig".
+3>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\net48\Scraps.UI.WinForms.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.UI.WinForms\obj\Release\net48\Scraps.UI.WinForms.csproj.FileListAbsolute.txt".
+3>Сборка проекта "Scraps.UI.WinForms.csproj" завершена с ошибкой.
+7>------ Сборка начата: проект: Scraps.Database.LocalFiles, Конфигурация: Release Any CPU ------
+7>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+7>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.Database.LocalFiles.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.LocalFiles\obj\Release\netstandard2.0\Scraps.Database.LocalFiles.csproj.AssemblyReference.cache".
+7>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.LocalFiles\obj\Release\netstandard2.0\Scraps.Database.LocalFiles.GeneratedMSBuildEditorConfig.editorconfig".
+7>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.Database.LocalFiles.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.LocalFiles\obj\Release\netstandard2.0\Scraps.Database.LocalFiles.csproj.FileListAbsolute.txt".
+7>Сборка проекта "Scraps.Database.LocalFiles.csproj" завершена с ошибкой.
+5>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+4>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+4>D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Export\Scraps.Export.csproj : warning NU1701: Пакет "iTextSharp 5.5.13.5" был восстановлен с помощью ".NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1", а не целевой платформы проекта ".NETStandard,Version=v2.0". Этот пакет может быть не полностью совместим с вашим проектом.
+6>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+5>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.Import.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Import\obj\Release\netstandard2.0\Scraps.Import.csproj.AssemblyReference.cache".
+5>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Import\obj\Release\netstandard2.0\Scraps.Import.GeneratedMSBuildEditorConfig.editorconfig".
+4>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.Export.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Export\obj\Release\netstandard2.0\Scraps.Export.csproj.AssemblyReference.cache".
+5>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.Import.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Import\obj\Release\netstandard2.0\Scraps.Import.csproj.FileListAbsolute.txt".
+5>Сборка проекта "Scraps.Import.csproj" завершена с ошибкой.
+4>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Export\obj\Release\netstandard2.0\Scraps.Export.GeneratedMSBuildEditorConfig.editorconfig".
+4>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.Export.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Export\obj\Release\netstandard2.0\Scraps.Export.csproj.FileListAbsolute.txt".
+4>Сборка проекта "Scraps.Export.csproj" завершена с ошибкой.
+6>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.Database.MSSQL.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.MSSQL\obj\Release\netstandard2.0\Scraps.Database.MSSQL.csproj.AssemblyReference.cache".
+6>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.MSSQL\obj\Release\netstandard2.0\Scraps.Database.MSSQL.GeneratedMSBuildEditorConfig.editorconfig".
+6>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.Database.MSSQL.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.MSSQL\obj\Release\netstandard2.0\Scraps.Database.MSSQL.csproj.FileListAbsolute.txt".
+6>Сборка проекта "Scraps.Database.MSSQL.csproj" завершена с ошибкой.
+8>------ Сборка начата: проект: Scraps.Tests, Конфигурация: Release Any CPU ------
+9>------ Сборка начата: проект: Scraps, Конфигурация: Release Any CPU ------
+9>Не удается использовать кэш ресурсов пакета из-за ошибки ввода-вывода. Это может происходить при нескольких параллельных сборках одного проекта. Это может привести к снижению производительности, но не повлияет на результат сборки.
+9>D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps\Scraps.csproj : warning NU1701: Пакет "iTextSharp 5.5.13.5" был восстановлен с помощью ".NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1", а не целевой платформы проекта ".NETStandard,Version=v2.0". Этот пакет может быть не полностью совместим с вашим проектом.
+9>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2424,5): warning MSB3101: не удалось записать файл состояния "obj\Release\netstandard2.0\Scraps.csproj.AssemblyReference.cache". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps\obj\Release\netstandard2.0\Scraps.csproj.AssemblyReference.cache".
+9>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\Microsoft.Managed.Core.targets(191,5): error : Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps\obj\Release\netstandard2.0\Scraps.GeneratedMSBuildEditorConfig.editorconfig".
+9>C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(5953,5): error MSB3491: не удалось записать строки в файл "obj\Release\netstandard2.0\Scraps.csproj.FileListAbsolute.txt". Не удалось найти часть пути "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps\obj\Release\netstandard2.0\Scraps.csproj.FileListAbsolute.txt".
+9>Сборка проекта "Scraps.csproj" завершена с ошибкой.
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database\bin\Release\netstandard2.0\Scraps.Database.dll".
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.LocalFiles\bin\Release\netstandard2.0\Scraps.Database.LocalFiles.dll".
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Database.MSSQL\bin\Release\netstandard2.0\Scraps.Database.MSSQL.dll".
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Export\bin\Release\netstandard2.0\Scraps.Export.dll".
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.Import\bin\Release\netstandard2.0\Scraps.Import.dll".
+8>CSC : error CS0006: Не удалось найти файл метаданных "D:\Visual Studio Projects\source\repos\DPGT\Scraps\Scraps.UI.WinForms\bin\Release\net48\Scraps.UI.WinForms.dll".
+8>Сборка проекта "Scraps.Tests.csproj" завершена с ошибкой.
+========== Сборка: успешно выполнено — 1 , со сбоем — 8, в актуальном состоянии — 0, пропущено — 0 ==========
+========== Сборка завершено в 20:34 и заняло 23,360 с ==========

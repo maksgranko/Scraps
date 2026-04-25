@@ -34,7 +34,10 @@ namespace Scraps.Database.MSSQL
 
     internal class MSSQLConnectionAdapter : IDatabaseConnection
     {
-        public string ConnectionString => ScrapsConfig.ConnectionString;
+        public string ConnectionString => ConnectionStringBuilder();
+
+        public string ConnectionStringBuilder(string value = null)
+            => MSSQL.ConnectionStringBuilder(value);
 
         public void ExecuteNonQuery(string sql, params object[] parameters)
         {
