@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net45;net472;netstandard2.0</TargetFrameworks>
     <Description>Scraps Core — базовые утилиты: DataTable, локализация, конфигурация.</Description>
-    <AssemblyVersion>1.2026.115.23</AssemblyVersion>
-    <FileVersion>1.2026.115.23</FileVersion>
+    <AssemblyVersion>1.2026.115.25</AssemblyVersion>
+    <FileVersion>1.2026.115.25</FileVersion>
   </PropertyGroup>
 </Project>

@@ -145,7 +145,7 @@ namespace Scraps.Localization
         /// </summary>
         public static string[] Translate(string[] values)
         {
-            if (values == null) return Array.Empty<string>();
+            if (values == null) return new string[0];
             var result = new string[values.Length];
             for (int i = 0; i < values.Length; i++)
             {
@@ -207,7 +207,7 @@ namespace Scraps.Localization
         /// </summary>
         public static string[] Untranslate(string[] translatedValues)
         {
-            if (translatedValues == null) return Array.Empty<string>();
+            if (translatedValues == null) return new string[0];
             var result = new string[translatedValues.Length];
             for (int i = 0; i < translatedValues.Length; i++)
             {

@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Description>Scraps UI WinForms — хелперы для DataGridView и FK-редакторов.</Description>
-    <AssemblyVersion>1.2026.115.32</AssemblyVersion>
-    <FileVersion>1.2026.115.32</FileVersion>
+    <AssemblyVersion>1.2026.115.33</AssemblyVersion>
+    <FileVersion>1.2026.115.33</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

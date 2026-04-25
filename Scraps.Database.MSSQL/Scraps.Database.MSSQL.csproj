@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net451;net472;netstandard2.0</TargetFrameworks>
     <Description>Scraps Database MSSQL — работа с Microsoft SQL Server.</Description>
-    <AssemblyVersion>1.2026.115.39</AssemblyVersion>
-    <FileVersion>1.2026.115.39</FileVersion>
+    <AssemblyVersion>1.2026.115.40</AssemblyVersion>
+    <FileVersion>1.2026.115.40</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

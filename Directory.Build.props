@@ -7,7 +7,7 @@
     <PackageProjectUrl>https://github.com/maksgranko/Scraps</PackageProjectUrl>
     <RepositoryUrl>https://github.com/maksgranko/Scraps</RepositoryUrl>
     <PackageOutputPath>$(MSBuildThisFileDirectory)packages</PackageOutputPath>
-    <Version>0.20.1</Version>
+    <Version>0.20.2</Version>
     <AssemblyVersion>1.2026.111.5</AssemblyVersion>
     <FileVersion>1.2026.111.5</FileVersion>
     <UseSharedCompilation>false</UseSharedCompilation>
@@ -18,5 +18,13 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
     <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 </Project>

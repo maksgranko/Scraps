@@ -13,11 +13,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Maks Granko")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Scraps Database — универсальные интерфейсы и фасад для работы с базами данных.")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.2026.115.34")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.20.1+33f1bf9e446213bfb775155b2ef0382891412b3c")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.2026.115.35")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.20.2+a2eb2fae6f0a62dbe8e363e4c8b53360f1eda438")]
 [assembly: System.Reflection.AssemblyProductAttribute("Scraps.Database")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Scraps.Database")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.2026.115.34")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.2026.115.35")]
 [assembly: System.Reflection.AssemblyMetadataAttribute("RepositoryUrl", "https://github.com/maksgranko/Scraps")]
 
 // Создано классом WriteCodeFragment MSBuild.

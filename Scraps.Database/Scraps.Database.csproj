@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net45;net472;netstandard2.0</TargetFrameworks>
     <Description>Scraps Database — универсальные интерфейсы и фасад для работы с базами данных.</Description>
-    <AssemblyVersion>1.2026.115.34</AssemblyVersion>
-    <FileVersion>1.2026.115.34</FileVersion>
+    <AssemblyVersion>1.2026.115.35</AssemblyVersion>
+    <FileVersion>1.2026.115.35</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

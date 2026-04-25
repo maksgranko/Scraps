@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <Description>Scraps Tests — юнит- и интеграционные тесты.</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <AssemblyVersion>1.2026.115.68</AssemblyVersion>
-    <FileVersion>1.2026.115.68</FileVersion>
+    <AssemblyVersion>1.2026.115.69</AssemblyVersion>
+    <FileVersion>1.2026.115.69</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
