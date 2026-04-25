@@ -9,7 +9,7 @@ namespace Scraps.Database.Local
     /// Реестр виртуальных таблиц (in-memory, как в MSSQL).
     /// Данные читаются через LocalDatabaseData.
     /// </summary>
-    internal class LocalVirtualTableRegistry : IVirtualTableRegistry
+    public class LocalVirtualTableRegistry : IVirtualTableRegistry
     {
         private readonly LocalDatabaseData _data = new LocalDatabaseData();
 

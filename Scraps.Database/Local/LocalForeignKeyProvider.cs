@@ -10,7 +10,7 @@ namespace Scraps.Database.Local
     /// Провайдер внешних ключей для файлового хранилища.
     /// FK определяются по именам колонок (оканчивающимся на ID и совпадающим с именем таблицы).
     /// </summary>
-    internal class LocalForeignKeyProvider : IForeignKeyProvider
+    public class LocalForeignKeyProvider : IForeignKeyProvider
     {
         private readonly LocalDatabaseSchema _schema = new LocalDatabaseSchema();
         private readonly LocalDatabaseData _data = new LocalDatabaseData();

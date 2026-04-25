@@ -1,5 +1,4 @@
-﻿using Scraps.Databases;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,7 +26,7 @@ namespace Scraps.Databases.Utilities
 
             if (autodetect)
             {
-                tablesTemp = MSSQL.GetTables().ToList();
+                tablesTemp = global::Scraps.Database.Database.GetTables().ToList();
                 if (removeOnAutodetect != null) tempDelete.AddRange(removeOnAutodetect);
             }
             else

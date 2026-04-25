@@ -10,7 +10,7 @@ namespace Scraps.Database.Local
     /// <summary>
     /// Схема файлового хранилища JSON.
     /// </summary>
-    internal class LocalDatabaseSchema : IDatabaseSchema
+    public class LocalDatabaseSchema : IDatabaseSchema
     {
         private string GetPath(string tableName) => Path.Combine(ScrapsConfig.LocalDataPath, tableName + ".json");
 
@@ -31,19 +31,42 @@ namespace Scraps.Database.Local
         public List<string> GetTableColumns(string tableName)
         {
             var table = JsonTableSerializer.Load(GetPath(tableName));
-            return table.Schema.Keys.ToList();
+            return table.Schema.Select(s => s.Name).ToList();
         }
 
         public DataTable GetTableSchema(string tableName)
         {
             var dt = new DataTable(tableName);
+            dt.Columns.Add("ColumnName", typeof(string));
+            dt.Columns.Add("DataType", typeof(string));
+
             var table = JsonTableSerializer.Load(GetPath(tableName));
             foreach (var col in table.Schema)
             {
-                var type = JsonTableSerializer.ToDataTable(new JsonTable { Schema = { [col.Key] = col.Value } }, tableName).Columns[col.Key].DataType;
-                dt.Columns.Add(col.Key, type);
+                var row = dt.NewRow();
+                row["ColumnName"] = col.Name;
+                row["DataType"] = MapNetTypeToSqlType(col.Type);
+                dt.Rows.Add(row);
             }
             return dt;
+        }
+
+        private static string MapNetTypeToSqlType(string netType)
+        {
+            switch (netType?.ToLowerInvariant())
+            {
+                case "int32": return "int";
+                case "int64": return "bigint";
+                case "int16": return "smallint";
+                case "byte": return "tinyint";
+                case "string": return "nvarchar";
+                case "boolean": return "bit";
+                case "datetime": return "datetime";
+                case "double": return "float";
+                case "decimal": return "decimal";
+                case "guid": return "uniqueidentifier";
+                default: return "nvarchar";
+            }
         }
 
         public bool IsIdentityColumn(string tableName, string columnName)
@@ -55,6 +78,9 @@ namespace Scraps.Database.Local
 
         public bool IsNullableColumn(string tableName, string columnName)
         {
+            var table = JsonTableSerializer.Load(GetPath(tableName));
+            if (!table.Schema.Any(s => s.Name == columnName))
+                throw new InvalidOperationException($"Колонка '{columnName}' не найдена в таблице '{tableName}'.");
             return true; // В JSON все колонки nullable
         }
 
@@ -72,7 +98,7 @@ namespace Scraps.Database.Local
             var table = new JsonTable();
             foreach (var col in columns)
             {
-                table.Schema[col.Key] = col.Value;
+                table.Schema.Add(new SchemaEntry { Name = col.Key, Type = col.Value });
             }
             JsonTableSerializer.Save(path, table);
         }

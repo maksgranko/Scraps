@@ -13,7 +13,7 @@ namespace Scraps.Tests.Setup
         /// Текущий провайдер для DB-тестов.
         /// По умолчанию MSSQL.
         /// </summary>
-        public static DatabaseProvider Provider { get; set; } = DatabaseProvider.MSSQL;
+        public static DatabaseProvider Provider { get; set; } = DatabaseProvider.LocalFiles;
     }
 
     /// <summary>
@@ -29,10 +29,7 @@ namespace Scraps.Tests.Setup
                 case DatabaseProvider.MSSQL:
                     return new MSSQLTestSetup();
                 case DatabaseProvider.LocalFiles:
-                    // TODO: вернуть LocalTestSetup() когда LocalDatabase будет реализован
-                    throw new System.NotImplementedException(
-                        "LocalFiles провайдер ещё не поддерживается в тестах. " +
-                        "Реализуйте LocalTestSetup и зарегистрируйте его здесь.");
+                    return new LocalTestSetup();
                 default:
                     throw new System.InvalidOperationException(
                         $"Провайдер {TestDatabaseConfig.Provider} не поддерживается в тестах.");

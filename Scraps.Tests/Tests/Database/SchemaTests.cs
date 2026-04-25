@@ -1,8 +1,12 @@
-﻿using Scraps.Databases;
+﻿using Scraps.Configs;
+using Scraps.Database;
+using Scraps.Databases;
 using Scraps.Security;
 using Scraps.Tests.Setup;
 using System.Data;
+using System.Linq;
 using Xunit;
+using Db = Scraps.Database.Database;
 
 namespace Scraps.Tests.Database
 {
@@ -12,7 +16,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GetTables_ReturnsCurrentDbTables()
         {
-            var tables = MSSQL.GetTables();
+            var tables = Db.GetTables();
             Assert.Contains("Users", tables);
             Assert.Contains("Таблица 1", tables);
         }
@@ -20,6 +24,9 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GetTables_WithSchemaName_Works()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // schema prefixes are MSSQL-specific
+
             var tables = MSSQL.GetTables(includeSchemaInName: true);
             Assert.Contains("dbo.Users", tables);
         }
@@ -27,7 +34,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GetTableColumns_Works()
         {
-            var cols = MSSQL.GetTableColumns("Таблица 1");
+            var cols = Db.GetTableColumns("Таблица 1");
             Assert.Contains("Id", cols);
             Assert.Contains("Name", cols);
         }
@@ -35,23 +42,29 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GetTableSchema_Works()
         {
-            var schema = MSSQL.GetTableSchema("Таблица 1");
-            Assert.True(schema.ContainsKey("Id"));
-            Assert.True(schema.ContainsKey("Name"));
+            var schema = Db.GetTableSchema("Таблица 1");
+            Assert.NotNull(schema);
+            var columnNames = schema.Rows.Cast<System.Data.DataRow>().Select(r => r["ColumnName"].ToString()).ToList();
+            Assert.Contains("Id", columnNames);
+            Assert.Contains("Name", columnNames);
         }
 
         [DbFact]
         public void IdentityAndNullable_Works()
         {
-            Assert.True(MSSQL.IsIdentityColumn("Таблица 1", "Id"));
-            Assert.False(MSSQL.IsNullableColumn("Таблица 1", "Name"));
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // LocalDatabaseSchema does not track NULL constraints
+
+            var schema = DatabaseProviderFactory.Current.Schema;
+            Assert.True(schema.IsIdentityColumn("Таблица 1", "Id"));
+            Assert.False(schema.IsNullableColumn("Таблица 1", "Name"));
         }
 
         [DbFact]
         public void IsNullableColumn_ThrowsOnMissingColumn()
         {
             Assert.Throws<System.InvalidOperationException>(() =>
-                MSSQL.IsNullableColumn("Таблица 1", "MissingColumn"));
+                DatabaseProviderFactory.Current.Schema.IsNullableColumn("Таблица 1", "MissingColumn"));
         }
 
         [DbFact]

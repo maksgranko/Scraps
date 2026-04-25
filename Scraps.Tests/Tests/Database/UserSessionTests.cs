@@ -1,9 +1,11 @@
 using Scraps.Configs;
-using Scraps.Tests.Setup;
+using Scraps.Database;
 using Scraps.Databases;
 using Scraps.Security;
+using Scraps.Tests.Setup;
 using System;
 using Xunit;
+using Db = Scraps.Database.Database;
 
 namespace Scraps.Tests.Database
 {
@@ -44,7 +46,7 @@ namespace Scraps.Tests.Database
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
                 UserSession.Logout();
             }
         }
@@ -110,8 +112,8 @@ namespace Scraps.Tests.Database
             finally
             {
                 UserSession.Logout();
-                if (UserSession.CheckIsUserExists(loginAuto)) MSSQL.Users.Delete(loginAuto);
-                if (UserSession.CheckIsUserExists(loginManual)) MSSQL.Users.Delete(loginManual);
+                if (UserSession.CheckIsUserExists(loginAuto)) Db.Users.Delete(loginAuto);
+                if (UserSession.CheckIsUserExists(loginManual)) Db.Users.Delete(loginManual);
             }
         }
 
@@ -130,7 +132,7 @@ namespace Scraps.Tests.Database
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
                 UserSession.Logout();
             }
         }
@@ -187,7 +189,7 @@ namespace Scraps.Tests.Database
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
                 UserSession.Logout();
             }
         }
@@ -230,7 +232,7 @@ namespace Scraps.Tests.Database
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
             }
         }
 

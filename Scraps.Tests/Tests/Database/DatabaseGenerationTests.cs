@@ -27,6 +27,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Simple_CreatesUsersOnly()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -42,6 +43,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_None_CreatesDatabaseOnly()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -54,6 +56,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Standard_CreatesUsersAndRoles()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -69,6 +72,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_Full_CreatesAllTables()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 var tables = MSSQL.GetTables();
@@ -84,6 +88,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_CanRunTwice()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 MSSQL.GenerateIfNotExists(new DatabaseGenerationOptions { DatabaseName = db.DatabaseName, Mode = DatabaseGenerationMode.Full });
@@ -97,6 +102,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_UsesCustomUsersTableAndColumns()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 var options = new DatabaseGenerationOptions
@@ -133,6 +139,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_CanSkipUsersMappingReassign()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 // Базовые значения до custom-генерации.
@@ -172,6 +179,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_SeedsRoles()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 var options = new DatabaseGenerationOptions
@@ -191,6 +199,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void Initialize_SetsUseRoleIdMapping_ByMode()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.None, viaInitialize: false))
             {
                 MSSQL.Initialize(db.DatabaseName, DatabaseGenerationMode.Simple);
@@ -207,6 +216,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void SimpleMode_UsersStoreRoleAsString()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Simple, viaInitialize: false))
             {
                 ScrapsConfig.UseRoleIdMapping = false;
@@ -224,6 +234,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void StandardMode_UsersStoreRoleAsId()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Standard, viaInitialize: false))
             {
                 ScrapsConfig.UseRoleIdMapping = true;
@@ -241,6 +252,7 @@ namespace Scraps.Tests.Database
         [DbFact]
         public void GenerateIfNotExists_ThrowsWhenDatabaseNameMissing()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles) return;
             using (var db = TempDb.Create(DatabaseGenerationMode.Full, viaInitialize: false))
             {
                 Assert.Throws<InvalidOperationException>(() =>

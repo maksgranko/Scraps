@@ -1,6 +1,7 @@
 using Scraps.Configs;
 using Scraps.Database;
 using Scraps.Database.Local;
+using Scraps.Security;
 using System;
 using System.Collections.Generic;
 using System.Data;

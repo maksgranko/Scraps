@@ -69,7 +69,7 @@ namespace Scraps.Database.Local
             foreach (var col in columns)
             {
                 var type = col.Key == "UserID" ? "Int32" : "String";
-                table.Schema[col.Value] = type;
+                table.Schema.Add(new SchemaEntry { Name = col.Value, Type = type });
             }
 
             // Создаём default пользователя
@@ -90,10 +90,10 @@ namespace Scraps.Database.Local
 
             var table = new JsonTable
             {
-                Schema = new System.Collections.Generic.Dictionary<string, string>
+                Schema = new System.Collections.Generic.List<SchemaEntry>
                 {
-                    ["RoleID"] = "Int32",
-                    ["RoleName"] = "String"
+                    new SchemaEntry { Name = "RoleID", Type = "Int32" },
+                    new SchemaEntry { Name = "RoleName", Type = "String" }
                 }
             };
 
@@ -113,11 +113,11 @@ namespace Scraps.Database.Local
 
             var table = new JsonTable
             {
-                Schema = new System.Collections.Generic.Dictionary<string, string>
+                Schema = new System.Collections.Generic.List<SchemaEntry>
                 {
-                    ["RoleID"] = "Int32",
-                    ["TableName"] = "String",
-                    ["Flags"] = "Int32"
+                    new SchemaEntry { Name = "RoleID", Type = "Int32" },
+                    new SchemaEntry { Name = "TableName", Type = "String" },
+                    new SchemaEntry { Name = "Flags", Type = "Int32" }
                 }
             };
 

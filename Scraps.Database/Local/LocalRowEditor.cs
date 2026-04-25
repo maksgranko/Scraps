@@ -8,7 +8,7 @@ namespace Scraps.Database.Local
     /// <summary>
     /// Редактор строк для файлового хранилища.
     /// </summary>
-    internal class LocalRowEditor : IRowEditor
+    public class LocalRowEditor : IRowEditor
     {
         private readonly LocalDatabaseData _data = new LocalDatabaseData();
 

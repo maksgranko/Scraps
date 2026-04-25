@@ -10,7 +10,7 @@ namespace Scraps.Database.Local
     /// <summary>
     /// Управление правами ролей в JSON-файле.
     /// </summary>
-    internal class LocalDatabaseRolePermissions : IDatabaseRolePermissions
+    public class LocalDatabaseRolePermissions : IDatabaseRolePermissions
     {
         private readonly LocalDatabaseData _data = new LocalDatabaseData();
         private const string TableName = "RolePermissions";
@@ -22,11 +22,11 @@ namespace Scraps.Database.Local
             {
                 var empty = new JsonTable
                 {
-                    Schema = new Dictionary<string, string>
+                    Schema = new System.Collections.Generic.List<SchemaEntry>
                     {
-                        ["RoleID"] = "Int32",
-                        ["TableName"] = "String",
-                        ["Flags"] = "Int32"
+                        new SchemaEntry { Name = "RoleID", Type = "Int32" },
+                        new SchemaEntry { Name = "TableName", Type = "String" },
+                        new SchemaEntry { Name = "Flags", Type = "Int32" }
                     }
                 };
                 JsonTableSerializer.Save(path, empty);

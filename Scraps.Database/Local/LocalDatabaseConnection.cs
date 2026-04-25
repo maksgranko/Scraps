@@ -8,7 +8,7 @@ namespace Scraps.Database.Local
     /// Подключение к файловому хранилищу JSON.
     /// SQL-операции не поддерживаются (NotSupportedException).
     /// </summary>
-    internal class LocalDatabaseConnection : IDatabaseConnection
+    public class LocalDatabaseConnection : IDatabaseConnection
     {
         public string ConnectionString => ScrapsConfig.LocalDataPath;
 

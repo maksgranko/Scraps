@@ -813,31 +813,4 @@ namespace Scraps.Tests.DatabaseLayer
 
         #endregion
     }
-
-    public class LocalDatabaseTests
-    {
-        [Fact]
-        public void Constructor_DoesNotThrow()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            Assert.NotNull(db);
-            Assert.Equal(DatabaseProvider.LocalFiles, db.Provider);
-        }
-
-        [Fact]
-        public void TestConnection_ThrowsNotImplemented()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            var ex = Assert.Throws<NotImplementedException>(() => db.TestConnection());
-            Assert.Contains("LocalDatabase", ex.Message);
-        }
-
-        [Fact]
-        public void Initialize_ThrowsNotImplemented()
-        {
-            var db = new global::Scraps.Database.Local.LocalDatabase();
-            var ex = Assert.Throws<NotImplementedException>(() => db.Initialize(DatabaseGenerationMode.Full));
-            Assert.Contains("LocalDatabase", ex.Message);
-        }
-    }
 }

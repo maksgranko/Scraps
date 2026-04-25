@@ -1,4 +1,5 @@
-﻿using Scraps.Export;
+﻿using Scraps.Configs;
+using Scraps.Export;
 using Scraps.Localization;
 using Scraps.Tests.Setup;
 using System.Data;
@@ -12,6 +13,9 @@ namespace Scraps.Tests.ImportExport
         [DbFact]
         public void GetBySql_UsesTranslations()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // SQL not supported in LocalFiles
+
             TranslationManager.Translations.Clear();
 
             TranslationManager.Translations[TranslationManager.ColumnKey("Таблица 1", "Name")] = "Имя";
@@ -23,6 +27,9 @@ namespace Scraps.Tests.ImportExport
         [DbFact]
         public void GetBySql_TranslatesWhenRequested()
         {
+            if (TestDatabaseConfig.Provider == DatabaseProvider.LocalFiles)
+                return; // SQL not supported in LocalFiles
+
             TranslationManager.Translations.Clear();
 
             TranslationManager.Translations[TranslationManager.ColumnKey("Таблица 1", "Name")] = "Имя";

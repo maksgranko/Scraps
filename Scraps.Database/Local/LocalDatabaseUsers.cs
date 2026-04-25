@@ -8,7 +8,7 @@ namespace Scraps.Database.Local
     /// <summary>
     /// Управление пользователями в JSON-файле.
     /// </summary>
-    internal class LocalDatabaseUsers : IDatabaseUsers
+    public class LocalDatabaseUsers : IDatabaseUsers
     {
         private readonly LocalDatabaseData _data = new LocalDatabaseData();
         private readonly string _tableName;
@@ -75,13 +75,21 @@ namespace Scraps.Database.Local
             var dt = _data.GetTableData(_tableName);
             var loginCol = ScrapsConfig.UsersTableColumnsNames.TryGetValue("Login", out var c) ? c : "Login";
 
+            if (!dt.Columns.Contains(loginCol))
+                throw new InvalidOperationException($"Колонка '{loginCol}' не найдена в таблице '{_tableName}'.");
+
+            bool found = false;
             for (int i = dt.Rows.Count - 1; i >= 0; i--)
             {
                 if (string.Equals(dt.Rows[i][loginCol]?.ToString(), login, StringComparison.OrdinalIgnoreCase))
                 {
                     dt.Rows[i].Delete();
+                    found = true;
                 }
             }
+
+            if (!found)
+                throw new InvalidOperationException($"Пользователь '{login}' не найден.");
 
             dt.AcceptChanges();
             _data.ApplyTableChanges(_tableName, dt);

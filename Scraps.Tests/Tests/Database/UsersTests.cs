@@ -1,7 +1,9 @@
-﻿using Scraps.Databases;
-using System;
+﻿using Scraps.Database;
+using Scraps.Databases;
 using Scraps.Tests.Setup;
+using System;
 using Xunit;
+using Db = Scraps.Database.Database;
 
 namespace Scraps.Tests.Database
 {
@@ -15,19 +17,19 @@ namespace Scraps.Tests.Database
             var password = "Pass1!";
             var roleName = "role_" + Guid.NewGuid().ToString("N");
 
-            var roleId = MSSQL.Roles.Create(roleName);
+            var roleId = Db.Roles.Create(roleName);
             try
             {
-                MSSQL.Users.Create(login, password, "default");
-                MSSQL.Users.ChangeRole(login, roleName);
+                Db.Users.Create(login, password, "default");
+                Db.Users.ChangeRole(login, roleName);
 
-                var role = MSSQL.Users.GetUserStatus(login);
+                var role = Db.Users.GetUserStatus(login);
                 Assert.Equal(roleName, role);
             }
             finally
             {
-                MSSQL.Users.Delete(login);
-                MSSQL.Roles.Delete(roleName);
+                Db.Users.Delete(login);
+                Db.Roles.Delete(roleName);
             }
         }
 
@@ -38,16 +40,16 @@ namespace Scraps.Tests.Database
             var password = "Pass1!";
             var newPassword = "Pass2!";
 
-            MSSQL.Users.Create(login, password, "default");
+            Db.Users.Create(login, password, "default");
             try
             {
-                MSSQL.Users.ChangePassword(login, newPassword);
-                var user = MSSQL.Users.GetByLogin(login);
+                Db.Users.ChangePassword(login, newPassword);
+                var user = Db.Users.GetByLogin(login);
                 Assert.Equal(newPassword, user["Password"].ToString());
             }
             finally
             {
-                MSSQL.Users.Delete(login);
+                Db.Users.Delete(login);
             }
         }
 
@@ -55,7 +57,7 @@ namespace Scraps.Tests.Database
         public void Delete_ThrowsWhenMissing()
         {
             var login = "missing_" + Guid.NewGuid().ToString("N");
-            Assert.Throws<InvalidOperationException>(() => MSSQL.Users.Delete(login));
+            Assert.Throws<InvalidOperationException>(() => Db.Users.Delete(login));
         }
     }
 

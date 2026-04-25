@@ -10,7 +10,7 @@ namespace Scraps.Database.Local
     /// <summary>
     /// CRUD-операции с JSON-таблицами.
     /// </summary>
-    internal class LocalDatabaseData : IDatabaseData
+    public class LocalDatabaseData : IDatabaseData
     {
         private string GetPath(string tableName) => Path.Combine(ScrapsConfig.LocalDataPath, tableName + ".json");
 
