@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace Scraps.Database.MSSQL
 {
@@ -18,6 +19,7 @@ namespace Scraps.Database.MSSQL
         }
 
         private static readonly Dictionary<string, VirtualTableEntry> Entries = new Dictionary<string, VirtualTableEntry>(StringComparer.OrdinalIgnoreCase);
+        private static readonly object EntriesLock = new object();
 
         /// <summary>
         /// Зарегистрировать виртуальную таблицу.
@@ -74,9 +76,23 @@ namespace Scraps.Database.MSSQL
             var sql = $"SELECT {selectColumns} FROM {MSSQL.QuoteIdentifier(tableName)}";
             if (!string.IsNullOrWhiteSpace(where))
             {
+                ValidateWhereClause(where);
                 sql += " WHERE " + where;
             }
             return sql;
+        }
+
+        private static void ValidateWhereClause(string where)
+        {
+            var trimmed = where.Trim();
+            if (trimmed.Length == 0)
+                throw new ArgumentException("WHERE не может быть пустым.", nameof(where));
+
+            if (trimmed.Contains(";") || trimmed.Contains("--") || trimmed.Contains("/*") || trimmed.Contains("*/") || trimmed.Contains("'"))
+                throw new ArgumentException("WHERE содержит небезопасные конструкции.", nameof(where));
+
+            if (Regex.IsMatch(trimmed, @"\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|MERGE|EXEC|EXECUTE|TRUNCATE)\b", RegexOptions.IgnoreCase))
+                throw new ArgumentException("WHERE содержит запрещенные SQL-операторы.", nameof(where));
         }
 
         /// <summary>
@@ -95,7 +111,10 @@ namespace Scraps.Database.MSSQL
                 RolePermissions = new Dictionary<string, PermissionFlags>(rolePermissions, StringComparer.OrdinalIgnoreCase)
             };
 
-            Entries[name] = entry;
+            lock (EntriesLock)
+            {
+                Entries[name] = entry;
+            }
         }
 
         /// <summary>
@@ -116,7 +135,10 @@ namespace Scraps.Database.MSSQL
         public static bool Remove(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
-            return Entries.Remove(name);
+            lock (EntriesLock)
+            {
+                return Entries.Remove(name);
+            }
         }
 
         /// <summary>
@@ -124,7 +146,10 @@ namespace Scraps.Database.MSSQL
         /// </summary>
         public static void Clear()
         {
-            Entries.Clear();
+            lock (EntriesLock)
+            {
+                Entries.Clear();
+            }
         }
 
         /// <summary>
@@ -132,9 +157,12 @@ namespace Scraps.Database.MSSQL
         /// </summary>
         public static string[] GetNames()
         {
-            var result = new string[Entries.Count];
-            Entries.Keys.CopyTo(result, 0);
-            return result;
+            lock (EntriesLock)
+            {
+                var result = new string[Entries.Count];
+                Entries.Keys.CopyTo(result, 0);
+                return result;
+            }
         }
 
         /// <summary>
@@ -144,9 +172,12 @@ namespace Scraps.Database.MSSQL
         {
             sql = null;
             if (string.IsNullOrWhiteSpace(name)) return false;
-            if (!Entries.TryGetValue(name, out var entry)) return false;
-            sql = entry.Sql;
-            return true;
+            lock (EntriesLock)
+            {
+                if (!Entries.TryGetValue(name, out var entry)) return false;
+                sql = entry.Sql;
+                return true;
+            }
         }
 
         /// <summary>
@@ -156,9 +187,12 @@ namespace Scraps.Database.MSSQL
         {
             permissions = null;
             if (string.IsNullOrWhiteSpace(name)) return false;
-            if (!Entries.TryGetValue(name, out var entry)) return false;
-            permissions = new Dictionary<string, PermissionFlags>(entry.RolePermissions, StringComparer.OrdinalIgnoreCase);
-            return true;
+            lock (EntriesLock)
+            {
+                if (!Entries.TryGetValue(name, out var entry)) return false;
+                permissions = new Dictionary<string, PermissionFlags>(entry.RolePermissions, StringComparer.OrdinalIgnoreCase);
+                return true;
+            }
         }
 
         /// <summary>
@@ -167,10 +201,14 @@ namespace Scraps.Database.MSSQL
         public static bool CheckAccess(string name, string roleName, PermissionFlags required, out string error)
         {
             error = null;
-            if (!Entries.TryGetValue(name, out var entry))
+            VirtualTableEntry entry;
+            lock (EntriesLock)
             {
-                error = $"Виртуальная таблица '{name}' не зарегистрирована.";
-                return false;
+                if (!Entries.TryGetValue(name, out entry))
+                {
+                    error = $"Виртуальная таблица '{name}' не зарегистрирована.";
+                    return false;
+                }
             }
 
             if (string.IsNullOrWhiteSpace(roleName))
@@ -201,14 +239,18 @@ namespace Scraps.Database.MSSQL
             if (!CheckAccess(name, roleName, required, out var error))
                 throw new UnauthorizedAccessException(error);
 
-            if (!Entries.TryGetValue(name, out var entry))
-                throw new KeyNotFoundException($"Виртуальная таблица '{name}' не зарегистрирована.");
+            string sql;
+            lock (EntriesLock)
+            {
+                if (!Entries.TryGetValue(name, out var entry))
+                    throw new KeyNotFoundException($"Виртуальная таблица '{name}' не зарегистрирована.");
+                sql = entry.Sql;
+            }
 
-            return MSSQL.GetDataTableFromSQL(entry.Sql);
+            return MSSQL.GetDataTableFromSQL(sql);
         }
     }
 }
-
 
 
 

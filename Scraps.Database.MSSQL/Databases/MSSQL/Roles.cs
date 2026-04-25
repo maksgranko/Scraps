@@ -101,15 +101,47 @@ namespace Scraps.Database.MSSQL
 
                 using (SqlConnection conn = new SqlConnection(ScrapsConfig.ConnectionString))
                 {
-                    var cmd = new SqlCommand(
-                        $"DELETE FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName",
-                        conn);
-                    cmd.Parameters.AddWithValue("@RoleName", roleName);
                     conn.Open();
-                    var affected = cmd.ExecuteNonQuery();
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        var findRoleIdCmd = new SqlCommand(
+                            $"SELECT {QuoteIdentifier(RoleIdColumnName)} FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleNameColumnName)} = @RoleName",
+                            conn,
+                            tx);
+                        findRoleIdCmd.Parameters.AddWithValue("@RoleName", roleName);
+                        var roleIdObj = findRoleIdCmd.ExecuteScalar();
 
-                    if (affected == 0)
-                        throw new InvalidOperationException($"Роль '{roleName}' не найдена.");
+                        if (roleIdObj == null || roleIdObj == DBNull.Value)
+                            throw new InvalidOperationException($"Роль '{roleName}' не найдена.");
+
+                        var roleId = Convert.ToInt32(roleIdObj);
+
+                        var checkPermissionsTableCmd = new SqlCommand(
+                            "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName",
+                            conn,
+                            tx);
+                        checkPermissionsTableCmd.Parameters.AddWithValue("@TableName", RolePermissions.RolePermissionsTableName);
+                        var hasPermissionsTable = checkPermissionsTableCmd.ExecuteScalar() != null;
+
+                        if (hasPermissionsTable)
+                        {
+                            var deletePermissionsCmd = new SqlCommand(
+                                $"DELETE FROM {QuoteIdentifier(RolePermissions.RolePermissionsTableName)} WHERE RoleID = @RoleID",
+                                conn,
+                                tx);
+                            deletePermissionsCmd.Parameters.AddWithValue("@RoleID", roleId);
+                            deletePermissionsCmd.ExecuteNonQuery();
+                        }
+
+                        var deleteRoleCmd = new SqlCommand(
+                            $"DELETE FROM {QuoteIdentifier(RolesTableName)} WHERE {QuoteIdentifier(RoleIdColumnName)} = @RoleID",
+                            conn,
+                            tx);
+                        deleteRoleCmd.Parameters.AddWithValue("@RoleID", roleId);
+                        deleteRoleCmd.ExecuteNonQuery();
+
+                        tx.Commit();
+                    }
                 }
             }
 
@@ -180,7 +212,6 @@ namespace Scraps.Database.MSSQL
         }
     }
 }
-
 
 
 

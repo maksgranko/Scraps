@@ -1,4 +1,5 @@
-﻿using Scraps.Database.MSSQL;
+﻿using System;
+using Scraps.Database.MSSQL;
 using Scraps.Database.MSSQL.Utilities;
 using Xunit;
 
@@ -39,6 +40,12 @@ namespace Scraps.Tests.Database
             Assert.Contains("A", tables);
             Assert.DoesNotContain("B", tables);
         }
+
+        [Fact]
+        public void VirtualTableRegistry_BuildSelectQuery_UnsafeWhere_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                VirtualTableRegistry.BuildSelectQuery("Users", where: "1=1; DROP TABLE Users"));
+        }
     }
 }
-

@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Database LocalFiles - local JSON/file-based database provider.</Description>
-    <AssemblyVersion>1.2026.115.4</AssemblyVersion>
-    <FileVersion>1.2026.115.4</FileVersion>
+    <AssemblyVersion>1.2026.115.5</AssemblyVersion>
+    <FileVersion>1.2026.115.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

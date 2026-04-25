@@ -169,6 +169,23 @@ namespace Scraps.Tests.DatabaseLayer
         }
 
         [Fact]
+        public void Data_FindByColumn_IsNull_IgnoresValue()
+        {
+            var schema = new LocalDatabaseSchema();
+            schema.CreateTable("NullableData", new Dictionary<string, string> { ["ID"] = "Int32", ["Title"] = "String" });
+            var data = new LocalDatabaseData();
+
+            var dt = data.GetTableData("NullableData");
+            dt.Rows.Add(1, "");
+            dt.Rows.Add(2, "Filled");
+            data.ApplyTableChanges("NullableData", dt);
+
+            var found = data.FindByColumn("NullableData", "Title", "ignored", op: SqlFilterOperator.IsNull);
+            Assert.Single(found.Rows);
+            Assert.Equal("1", found.Rows[0]["ID"].ToString());
+        }
+
+        [Fact]
         public void Data_BulkInsert_Works()
         {
             var schema = new LocalDatabaseSchema();
@@ -258,6 +275,22 @@ namespace Scraps.Tests.DatabaseLayer
             users.ChangePassword("petr", "newpass");
             var row = users.GetByLogin("petr");
             Assert.Equal("newpass", row["Password"]);
+        }
+
+        [Fact]
+        public void Users_ChangePassword_Missing_Throws()
+        {
+            LocalDatabase.GenerateIfNotExists(DatabaseGenerationOptions.Simple());
+            var users = new LocalDatabaseUsers();
+            Assert.Throws<InvalidOperationException>(() => users.ChangePassword("missing", "newpass"));
+        }
+
+        [Fact]
+        public void Users_ChangeRole_Missing_Throws()
+        {
+            LocalDatabase.GenerateIfNotExists(DatabaseGenerationOptions.Simple());
+            var users = new LocalDatabaseUsers();
+            Assert.Throws<InvalidOperationException>(() => users.ChangeRole("missing", "admin"));
         }
 
         [Fact]

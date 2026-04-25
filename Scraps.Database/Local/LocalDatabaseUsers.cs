@@ -114,14 +114,20 @@ namespace Scraps.Database.LocalFiles
             var dt = _data.GetTableData(_tableName);
             var loginCol = ScrapsConfig.UsersTableColumnsNames.TryGetValue("Login", out var lc) ? lc : "Login";
             var passCol = ScrapsConfig.UsersTableColumnsNames.TryGetValue("Password", out var pc) ? pc : "Password";
+            var found = false;
 
             foreach (DataRow row in dt.Rows)
             {
                 if (string.Equals(row[loginCol]?.ToString(), login, StringComparison.OrdinalIgnoreCase))
                 {
                     row[passCol] = newPassword;
+                    found = true;
+                    break;
                 }
             }
+
+            if (!found)
+                throw new InvalidOperationException($"Пользователь '{login}' не найден.");
 
             _data.ApplyTableChanges(_tableName, dt);
         }
@@ -132,14 +138,20 @@ namespace Scraps.Database.LocalFiles
             var dt = _data.GetTableData(_tableName);
             var loginCol = ScrapsConfig.UsersTableColumnsNames.TryGetValue("Login", out var lc) ? lc : "Login";
             var roleCol = ScrapsConfig.UsersTableColumnsNames.TryGetValue("Role", out var rc) ? rc : "Role";
+            var found = false;
 
             foreach (DataRow row in dt.Rows)
             {
                 if (string.Equals(row[loginCol]?.ToString(), login, StringComparison.OrdinalIgnoreCase))
                 {
                     row[roleCol] = newRole;
+                    found = true;
+                    break;
                 }
             }
+
+            if (!found)
+                throw new InvalidOperationException($"Пользователь '{login}' не найден.");
 
             _data.ApplyTableChanges(_tableName, dt);
         }

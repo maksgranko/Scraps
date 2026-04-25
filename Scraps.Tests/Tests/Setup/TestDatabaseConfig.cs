@@ -13,7 +13,7 @@ namespace Scraps.Tests.Setup
         /// Текущий провайдер для DB-тестов.
         /// По умолчанию MSSQL.
         /// </summary>
-        public static DatabaseProvider Provider { get; set; } = DatabaseProvider.MSSQL;
+        public static DatabaseProvider Provider { get; set; } = DatabaseProvider.LocalFiles;
     }
 
     /// <summary>

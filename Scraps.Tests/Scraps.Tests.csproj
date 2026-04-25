@@ -6,8 +6,8 @@
     <IsPackable>false</IsPackable>
     <Description>Scraps Tests — юнит- и интеграционные тесты.</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <AssemblyVersion>1.2026.115.59</AssemblyVersion>
-    <FileVersion>1.2026.115.59</FileVersion>
+    <AssemblyVersion>1.2026.115.61</AssemblyVersion>
+    <FileVersion>1.2026.115.61</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Export — экспорт отчётов в Excel и PDF.</Description>
-    <AssemblyVersion>1.2026.115.25</AssemblyVersion>
-    <FileVersion>1.2026.115.25</FileVersion>
+    <AssemblyVersion>1.2026.115.26</AssemblyVersion>
+    <FileVersion>1.2026.115.26</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

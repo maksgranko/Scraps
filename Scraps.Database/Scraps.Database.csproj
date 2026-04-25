@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Scraps Database — универсальные интерфейсы и фасад для работы с базами данных.</Description>
-    <AssemblyVersion>1.2026.115.26</AssemblyVersion>
-    <FileVersion>1.2026.115.26</FileVersion>
+    <AssemblyVersion>1.2026.115.27</AssemblyVersion>
+    <FileVersion>1.2026.115.27</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

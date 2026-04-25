@@ -66,7 +66,7 @@ namespace Scraps.Database.LocalFiles
                         match = rowValue.IndexOf(searchValue, StringComparison.OrdinalIgnoreCase) >= 0;
                         break;
                     case SqlFilterOperator.IsNull:
-                        match = value == null && string.IsNullOrEmpty(rowValue);
+                        match = string.IsNullOrEmpty(rowValue);
                         break;
                     case SqlFilterOperator.IsNotNull:
                         match = !string.IsNullOrEmpty(rowValue);
